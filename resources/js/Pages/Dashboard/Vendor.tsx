@@ -229,34 +229,45 @@ function VendorService() {
     onError: () => showToast('Failed to save details. Please try again.', 'error'),
   });
 
-  const deactivateMutation = useMutation({
-    mutationFn: () => vendorApi.updateService(apiSvc.id, { status: 'inactive' }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['vendor-services'] });
-      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
-    },
-  });
-
-  const activateMutation = useMutation({
+  const publishMutation = useMutation({
     mutationFn: () => vendorApi.updateService(apiSvc.id, { status: 'active' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vendor-services'] });
       qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+      showToast('Service published! It is now visible to customers.', 'success');
     },
   });
 
-  const isActive = (apiSvc?.status ?? 'active') === 'active';
+  const unpublishMutation = useMutation({
+    mutationFn: () => vendorApi.updateService(apiSvc.id, { status: 'draft' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-services'] });
+      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+      showToast('Service unpublished and set to draft.', 'info');
+    },
+  });
+
+  const svcStatus = apiSvc?.status ?? 'draft';
+  const isPublished = svcStatus === 'active';
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <h1 style={{ fontSize: 32 }}>My Service</h1>
         <div className="flex gap-10">
-          {apiSvc && (
-            isActive
-              ? <button className="btn btn-ghost" style={{ color: '#E11D48' }} onClick={() => deactivateMutation.mutate()} disabled={deactivateMutation.isPending}>Deactivate</button>
-              : <button className="btn btn-ghost" style={{ color: '#059669' }} onClick={() => activateMutation.mutate()} disabled={activateMutation.isPending}>Activate</button>
-          )}
+          {apiSvc && (<>
+            {!isPublished && (
+              <span className="chip" style={{ background: '#FFF7E6', color: '#D97706', fontWeight: 700, fontSize: 12, border: '1px solid #FDE68A' }}>
+                Draft — not visible to customers
+              </span>
+            )}
+            {isPublished
+              ? <button className="btn btn-ghost" style={{ color: '#E11D48' }} onClick={() => unpublishMutation.mutate()} disabled={unpublishMutation.isPending}>Unpublish</button>
+              : <button className="btn btn-primary" style={{ background: '#059669', borderColor: '#059669' }} onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending}>
+                  {publishMutation.isPending ? 'Publishing…' : 'Publish'}
+                </button>
+            }
+          </>)}
           {tab === 'basic' && (
             <button className="btn btn-primary" onClick={() => apiSvc && updateMutation.mutate()} disabled={!apiSvc || updateMutation.isPending}>
               {saved ? '✓ Saved' : updateMutation.isPending ? 'Saving…' : 'Update'}

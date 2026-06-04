@@ -30,7 +30,7 @@ class VendorServiceController extends Controller
                     'location'      => $profile->city ?? $profile->address1 ?? null,
                     'minimum_price' => 0,
                     'images'        => [],
-                    'status'        => 'active',
+                    'status'        => 'draft',
                 ]);
                 $services = collect([$service->load('category')]);
             }
@@ -386,7 +386,7 @@ class VendorServiceController extends Controller
             'location'      => $data['location'] ?? null,
             'minimum_price' => $data['minimum_price'] ?? 0,
             'images'        => $data['images'] ?? [],
-            'status'        => 'active',
+            'status'        => 'draft',
         ]);
 
         return response()->json($service->load('category'), 201);
@@ -414,7 +414,7 @@ class VendorServiceController extends Controller
             'location'      => 'nullable|string',
             'minimum_price' => 'nullable|numeric|min:0',
             'images'        => 'nullable|array',
-            'status'        => 'in:active,inactive',
+            'status'        => 'in:active,inactive,draft',
         ]);
 
         $service->update($data);

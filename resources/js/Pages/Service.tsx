@@ -264,19 +264,30 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
   );
 }
 
+const CATEGORY_INITIAL_COUNT = 5;
 function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? CATEGORIES : CATEGORIES.slice(0, CATEGORY_INITIAL_COUNT);
   return (
-    <div className="card" style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, overflow: 'auto', background: 'var(--bg-2)', border: 0 }}>
-      <span className="text-12 muted fw-600" style={{ paddingLeft: 6, paddingRight: 6, whiteSpace: 'nowrap' }}>BROWSE:</span>
-      {CATEGORIES.map((c) => {
-        const on = c.slug === currentSlug;
-        return (
-          <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
-            style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
-            <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
-          </button>
-        );
-      })}
+    <div className="card" style={{ padding: '10px 12px', background: 'var(--bg-2)', border: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span className="text-12 muted fw-600" style={{ paddingLeft: 6, paddingRight: 6, whiteSpace: 'nowrap' }}>BROWSE:</span>
+        {visible.map((c) => {
+          const on = c.slug === currentSlug;
+          return (
+            <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
+              style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
+              <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
+            </button>
+          );
+        })}
+        <button
+          className="chip chip-selectable"
+          style={{ background: 'transparent', color: 'var(--primary)', border: '1px dashed var(--primary)', whiteSpace: 'nowrap', fontWeight: 600 }}
+          onClick={() => setExpanded((e) => !e)}>
+          {expanded ? '↑ Show less' : `+${CATEGORIES.length - CATEGORY_INITIAL_COUNT} more`}
+        </button>
+      </div>
     </div>
   );
 }
