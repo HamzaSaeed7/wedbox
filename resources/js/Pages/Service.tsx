@@ -264,30 +264,93 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
   );
 }
 
-const CATEGORY_INITIAL_COUNT = 5;
 function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? CATEGORIES : CATEGORIES.slice(0, CATEGORY_INITIAL_COUNT);
+  const [visibleCount, setVisibleCount] = useState(CATEGORIES.length);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  // Measure how many chips fit in one row
+  useEffect(() => {
+    const measure = () => {
+      const row = rowRef.current;
+      const ghost = measureRef.current;
+      if (!row || !ghost) return;
+      const rowW = row.offsetWidth;
+      const chips = Array.from(ghost.querySelectorAll<HTMLElement>('.qs-chip'));
+      const moreW = 80; // reserved for "+N more" button
+      let used = 0;
+      let count = 0;
+      for (const chip of chips) {
+        const w = chip.offsetWidth + 8; // 8 = gap
+        if (used + w + moreW > rowW) break;
+        used += w;
+        count++;
+      }
+      setVisibleCount(Math.max(1, count));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (rowRef.current) ro.observe(rowRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const hidden = CATEGORIES.length - visibleCount;
+
   return (
-    <div className="card" style={{ padding: '10px 12px', background: 'var(--bg-2)', border: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span className="text-12 muted fw-600" style={{ paddingLeft: 6, paddingRight: 6, whiteSpace: 'nowrap' }}>BROWSE:</span>
-        {visible.map((c) => {
+    <div className="card" style={{ padding: '10px 12px', background: 'var(--bg-2)', border: 0, overflow: 'hidden' }}>
+      {/* Invisible ghost row used only for measurement — never wraps */}
+      <div ref={measureRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
+        {CATEGORIES.map((c) => (
+          <span key={c.slug} className="chip chip-selectable qs-chip" style={{ whiteSpace: 'nowrap' }}>
+            {c.name}
+          </span>
+        ))}
+      </div>
+
+      {/* Visible single row */}
+      <div ref={rowRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', flexWrap: 'nowrap' }}>
+        <span className="text-12 muted fw-600" style={{ paddingLeft: 6, paddingRight: 6, whiteSpace: 'nowrap', flexShrink: 0 }}>BROWSE:</span>
+        {CATEGORIES.slice(0, visibleCount).map((c) => {
           const on = c.slug === currentSlug;
           return (
             <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
-              style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
+              style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
               <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
             </button>
           );
         })}
-        <button
-          className="chip chip-selectable"
-          style={{ background: 'transparent', color: 'var(--primary)', border: '1px dashed var(--primary)', whiteSpace: 'nowrap', fontWeight: 600 }}
-          onClick={() => setExpanded((e) => !e)}>
-          {expanded ? '↑ Show less' : `+${CATEGORIES.length - CATEGORY_INITIAL_COUNT} more`}
-        </button>
+        {hidden > 0 && (
+          <button
+            className="chip chip-selectable"
+            style={{ background: 'transparent', color: 'var(--primary)', border: '1px dashed var(--primary)', whiteSpace: 'nowrap', fontWeight: 600, flexShrink: 0 }}
+            onClick={() => setExpanded((e) => !e)}>
+            {`+${hidden} more`}
+          </button>
+        )}
       </div>
+
+      {/* Expanded overflow row */}
+      {expanded && hidden > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line)' }}>
+          {CATEGORIES.slice(visibleCount).map((c) => {
+            const on = c.slug === currentSlug;
+            return (
+              <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
+                style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
+                <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
+              </button>
+            );
+          })}
+          <button
+            className="chip chip-selectable"
+            style={{ background: 'transparent', color: 'var(--muted)', border: '1px solid var(--line)', whiteSpace: 'nowrap', fontWeight: 600 }}
+            onClick={() => setExpanded(false)}>
+            ↑ Show less
+          </button>
+        </div>
+      )}
     </div>
   );
 }
