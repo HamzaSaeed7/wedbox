@@ -29,6 +29,8 @@ function normalizeService(s: any): Service {
   };
 }
 
+const FILTER_INITIAL_COUNT = 5;
+
 function FilterPanel({
   category, setCategory, priceMin, setPriceMin, priceMax, setPriceMax, ratingMin, setRatingMin,
 }: {
@@ -37,6 +39,8 @@ function FilterPanel({
   priceMax: number; setPriceMax: (v: number) => void;
   ratingMin: number; setRatingMin: (v: number) => void;
 }) {
+  const [catExpanded, setCatExpanded] = useState(false);
+
   const { data: apiCats } = useQuery({
     queryKey: ['categories'],
     queryFn: () => publicApi.categories(),
@@ -46,18 +50,27 @@ function FilterPanel({
   const catList: { slug: string; name: string }[] =
     Array.isArray(apiCats) && apiCats.length > 0 ? apiCats : CATEGORIES;
 
+  const allCats = [{ slug: '', name: 'All categories' }, ...catList];
+  const visibleCats = catExpanded ? allCats : allCats.slice(0, FILTER_INITIAL_COUNT + 1); // +1 for "All categories"
+
   return (
     <div className="card card-pad" style={{ position: 'sticky', top: 96 }}>
       <div className="fw-700 text-14">Filters</div>
       <div className="mt-20">
         <div className="field-label mb-8">Category</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {[{ slug: '', name: 'All categories' }, ...catList.slice(0, 12)].map((c) => (
+          {visibleCats.map((c) => (
             <label key={c.slug} className="flex items-center gap-8" style={{ padding: '6px 0', cursor: 'pointer' }}>
               <input type="radio" name="cat" checked={category === c.slug} onChange={() => setCategory(c.slug)} style={{ accentColor: 'var(--primary)' }} />
               <span className="text-14">{c.name}</span>
             </label>
           ))}
+          <button
+            type="button"
+            onClick={() => setCatExpanded((e) => !e)}
+            style={{ alignSelf: 'flex-start', marginTop: 4, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontSize: 13, fontWeight: 600 }}>
+            {catExpanded ? '↑ Show less' : `+ ${allCats.length - (FILTER_INITIAL_COUNT + 1)} more categories`}
+          </button>
         </div>
       </div>
       <div className="mt-20">
