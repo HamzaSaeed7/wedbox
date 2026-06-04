@@ -79,30 +79,47 @@ function SkRow() {
 function AdminUsers() {
   const [q, setQ] = useState('');
   const [role, setRole] = useState('all');
+  const [page, setPage] = useState(1);
   const qc = useQueryClient();
   const user = useAuthUser();
 
+  // Debounce search
+  const [debouncedQ, setDebouncedQ] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedQ(q); setPage(1); }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+  useEffect(() => { setPage(1); }, [role]);
+
   const { data: apiResult, isLoading } = useQuery({
-    queryKey: ['admin-users', q, role],
+    queryKey: ['admin-users', debouncedQ, role, page],
     queryFn: () => adminApi.users({
-      ...(q && { search: q }),
+      ...(debouncedQ && { search: debouncedQ }),
       ...(role !== 'all' && { role }),
+      page,
     }),
     enabled: !!user,
     staleTime: 30_000,
+    placeholderData: (prev) => prev,
   });
 
-  const banMutation   = useMutation({ mutationFn: (id: number) => adminApi.ban(id),   onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }) });
-  const unbanMutation = useMutation({ mutationFn: (id: number) => adminApi.unban(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }) });
+  const banMutation   = useMutation({ mutationFn: (id: number) => adminApi.ban(id),   onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmBanId(null); } });
+  const unbanMutation = useMutation({ mutationFn: (id: number) => adminApi.unban(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmUnbanId(null); } });
+  const inviteMutation = useMutation({
+    mutationFn: (d: { name: string; email: string; role: string }) => adminApi.invite(d),
+    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setInviteResult(res); },
+    onError: () => setInviteErr('This email is already in use or is invalid.'),
+  });
 
   const list: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
-  const total = apiResult?.meta?.total ?? list.length;
+  const total: number  = apiResult?.total ?? 0;
+  const lastPage: number = apiResult?.last_page ?? 1;
 
   const stats = {
     total,
-    active:    list.filter((u: any) => !u.banned_at).length, // eslint-disable-line @typescript-eslint/no-explicit-any
-    customers: list.filter((u: any) => u.role === 'customer').length, // eslint-disable-line @typescript-eslint/no-explicit-any
-    vendors:   list.filter((u: any) => u.role === 'vendor').length, // eslint-disable-line @typescript-eslint/no-explicit-any
+    active:    apiResult?.active_count    ?? list.filter((u: any) => !u.banned_at).length,
+    customers: apiResult?.customer_count  ?? list.filter((u: any) => u.role === 'customer').length,
+    vendors:   apiResult?.vendor_count    ?? list.filter((u: any) => u.role === 'vendor').length,
   };
 
   const roleChipStyle = (r: string) => {
@@ -111,11 +128,34 @@ function AdminUsers() {
     return { background: 'var(--bg-3)', color: 'var(--ink-2)' };
   };
 
+  // Ban / Unban confirmation
+  const [confirmBanId, setConfirmBanId]     = useState<number | null>(null);
+  const [confirmUnbanId, setConfirmUnbanId] = useState<number | null>(null);
+  const confirmBanUser   = confirmBanId   != null ? list.find((u: any) => u.id === confirmBanId)   : null;
+  const confirmUnbanUser = confirmUnbanId != null ? list.find((u: any) => u.id === confirmUnbanId) : null;
+
+  // View modal
+  const [viewUser, setViewUser] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  // Invite modal
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ name: '', email: '', role: 'customer' });
+  const [inviteErr, setInviteErr] = useState('');
+  const [inviteResult, setInviteResult] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const pageNumbers = (() => {
+    if (lastPage <= 7) return Array.from({ length: lastPage }, (_, i) => i + 1);
+    if (page <= 4) return [1, 2, 3, 4, 5, -1, lastPage];
+    if (page >= lastPage - 3) return [1, -1, lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1, lastPage];
+    return [1, -1, page - 1, page, page + 1, -2, lastPage];
+  })();
+
   return (
     <div>
       <div className="flex items-center justify-between">
         <h1 style={{ fontSize: 32 }}>Users</h1>
-        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={() => { setInviteForm({ name: '', email: '', role: 'customer' }); setInviteErr(''); setInviteResult(null); setShowInvite(true); }}>
           <Icon name="plus" size={14} /> Invite user
         </button>
       </div>
@@ -143,9 +183,6 @@ function AdminUsers() {
               </button>
             ))}
           </div>
-          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="filter" size={14} /> Filters
-          </button>
         </div>
 
         <table className="tbl">
@@ -169,40 +206,51 @@ function AdminUsers() {
               const name = u.profile?.first_name ? `${u.profile.first_name} ${u.profile.last_name ?? ''}`.trim() : (u.name ?? u.email ?? '?');
               const joined = formatDate(u.created_at);
               return (
-                <tr key={u.id}>
+                <tr key={u.id} style={isBanned ? { background: 'rgba(225,29,72,0.04)' } : {}}>
                   <td><input type="checkbox" /></td>
                   <td>
                     <div className="flex items-center gap-10">
-                      <div style={{ width: 32, height: 32, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
-                        {name[0]?.toUpperCase()}
+                      {/* Avatar — grey + ban badge when banned */}
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 999, display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14,
+                          background: isBanned ? '#F3F4F6' : 'var(--primary-50)',
+                          color:      isBanned ? '#9CA3AF' : 'var(--primary-700)',
+                          opacity:    isBanned ? 0.8 : 1 }}>
+                          {name[0]?.toUpperCase()}
+                        </div>
+                        {isBanned && (
+                          <span style={{ position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, borderRadius: 999, background: '#E11D48', border: '2px solid white', display: 'grid', placeItems: 'center' }}>
+                            <svg width="6" height="6" viewBox="0 0 8 8" fill="none"><path d="M1 1l6 6M7 1L1 7" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                          </span>
+                        )}
                       </div>
-                      <div>
-                        <div className="fw-600 text-14">{name}</div>
+                      <div style={{ opacity: isBanned ? 0.6 : 1 }}>
+                        <div className="fw-600 text-14" style={isBanned ? { textDecoration: 'line-through', color: 'var(--muted)' } : {}}>{name}</div>
                         <div className="muted text-12">{u.email}</div>
                       </div>
                     </div>
                   </td>
                   <td>
-                    <span className="chip" style={{ ...roleChipStyle(u.role), textTransform: 'capitalize', fontSize: 11 }}>{u.role}</span>
+                    <span className="chip" style={{ ...roleChipStyle(u.role), textTransform: 'capitalize', fontSize: 11, opacity: isBanned ? 0.5 : 1 }}>{u.role}</span>
                   </td>
-                  <td className="muted text-13">{joined}</td>
+                  <td className="muted text-13" style={{ opacity: isBanned ? 0.6 : 1 }}>{joined}</td>
                   <td>
                     <span className="chip" style={!isBanned
                       ? { background: '#E6F7F0', color: '#059669', fontSize: 11 }
-                      : { background: '#FFF0F0', color: '#E11D48', fontSize: 11 }}>
-                      {isBanned ? 'banned' : 'active'}
+                      : { background: '#FFF0F0', color: '#E11D48', fontSize: 11, fontWeight: 700 }}>
+                      {isBanned ? 'ban' : 'active'}
                     </span>
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div className="flex gap-6" style={{ justifyContent: 'flex-end' }}>
                       {!isBanned ? (
                         <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
-                          onClick={() => banMutation.mutate(u.id)}>Ban</button>
+                          onClick={() => setConfirmBanId(u.id)}>Ban</button>
                       ) : (
-                        <button className="btn btn-ghost btn-sm"
-                          onClick={() => unbanMutation.mutate(u.id)}>Unban</button>
+                        <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none', fontSize: 12 }}
+                          onClick={() => setConfirmUnbanId(u.id)}>Unban</button>
                       )}
-                      <button className="btn btn-ghost btn-sm">View</button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setViewUser(u)}>View</button>
                     </div>
                   </td>
                 </tr>
@@ -211,49 +259,253 @@ function AdminUsers() {
           </tbody>
         </table>
 
-        <div className="flex items-center justify-between" style={{ padding: '12px 18px' }}>
+        <div className="flex items-center justify-between" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
           <span className="muted text-13">Showing {list.length} of {total} users</span>
-          <div className="flex gap-6">
-            <button className="btn btn-ghost btn-sm">Prev</button>
-            <button className="btn btn-soft btn-sm">1</button>
-            <button className="btn btn-ghost btn-sm">2</button>
-            <button className="btn btn-ghost btn-sm">Next</button>
-          </div>
+          {lastPage > 1 && (
+            <div className="flex gap-4">
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+              {pageNumbers.map((n, i) =>
+                n < 0 ? (
+                  <span key={n + '_' + i} style={{ padding: '0 4px', color: 'var(--muted)', alignSelf: 'center' }}>…</span>
+                ) : (
+                  <button key={n} className="btn btn-sm"
+                    style={n === page
+                      ? { background: 'var(--primary)', color: '#fff', border: 'none', minWidth: 32 }
+                      : { background: 'transparent', border: '1px solid var(--border)', minWidth: 32 }}
+                    onClick={() => setPage(n)}>{n}</button>
+                )
+              )}
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.min(lastPage, p + 1))} disabled={page === lastPage}>Next ›</button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* ── Ban confirmation modal ── */}
+      {confirmBanId != null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 420, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Ban user?</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14 }}>
+              Are you sure you want to ban <strong>{confirmBanUser?.name ?? confirmBanUser?.email ?? 'this user'}</strong>? They will be immediately locked out.
+            </p>
+            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setConfirmBanId(null)} disabled={banMutation.isPending}>Cancel</button>
+              <button className="btn btn-primary" style={{ background: '#E11D48', borderColor: '#E11D48' }}
+                onClick={() => banMutation.mutate(confirmBanId!)}
+                disabled={banMutation.isPending}>
+                {banMutation.isPending ? 'Banning…' : 'Ban user'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Unban confirmation modal ── */}
+      {confirmUnbanId != null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 420, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Unban user?</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14 }}>
+              This will restore access for <strong>{confirmUnbanUser?.name ?? confirmUnbanUser?.email ?? 'this user'}</strong>. They will be able to log in immediately.
+            </p>
+            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setConfirmUnbanId(null)} disabled={unbanMutation.isPending}>Cancel</button>
+              <button className="btn btn-primary"
+                onClick={() => unbanMutation.mutate(confirmUnbanId!)}
+                disabled={unbanMutation.isPending}>
+                {unbanMutation.isPending ? 'Unbanning…' : 'Unban user'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── View user modal ── */}
+      {viewUser != null && (() => {
+        const u = viewUser;
+        const isBanned = !!u.banned_at;
+        const name = u.profile?.first_name ? `${u.profile.first_name} ${u.profile.last_name ?? ''}`.trim() : (u.name ?? u.email ?? '?');
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setViewUser(null)}>
+            <div className="card" style={{ width: 460, padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}
+              onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="flex items-center gap-14">
+                <div style={{ width: 52, height: 52, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 22, flexShrink: 0 }}>
+                  {name[0]?.toUpperCase()}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 17 }}>{name}</div>
+                  <div className="muted text-13">{u.email}</div>
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={() => setViewUser(null)} style={{ fontSize: 18, lineHeight: 1 }}>×</button>
+              </div>
+              {/* Details grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
+                {[
+                  ['Role',    <span className="chip" style={{ ...roleChipStyle(u.role), textTransform: 'capitalize', fontSize: 11 }}>{u.role}</span>],
+                  ['Status',  <span className="chip" style={!isBanned ? { background: '#E6F7F0', color: '#059669', fontSize: 11 } : { background: '#FFF0F0', color: '#E11D48', fontSize: 11 }}>{isBanned ? 'Banned' : 'Active'}</span>],
+                  ['Joined',  <span className="text-13">{formatDate(u.created_at)}</span>],
+                  ['User ID', <span className="muted text-13">#{u.id}</span>],
+                  ...(u.role === 'vendor' ? [
+                    ['Subscription', <span className="text-13">{u.vendor_subscription_status ?? 'none'}</span>],
+                    ['Plan',         <span className="text-13">{u.vendor_plan ?? '—'}</span>],
+                  ] : []),
+                ].map(([label, val], i) => (
+                  <div key={i}>
+                    <div className="muted text-12" style={{ marginBottom: 3 }}>{label as string}</div>
+                    <div>{val as React.ReactNode}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Actions */}
+              <div className="flex gap-10" style={{ justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                {!isBanned ? (
+                  <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
+                    onClick={() => { setViewUser(null); setConfirmBanId(u.id); }}>Ban user</button>
+                ) : (
+                  <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none' }}
+                    onClick={() => { setViewUser(null); setConfirmUnbanId(u.id); }}>Unban user</button>
+                )}
+                <button className="btn btn-ghost" onClick={() => setViewUser(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Invite user modal ── */}
+      {showInvite && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 440, padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {inviteResult ? (
+              <>
+                <h2 style={{ fontSize: 18, fontWeight: 700 }}>User created ✓</h2>
+                <p style={{ color: 'var(--muted)', fontSize: 14 }}>
+                  Share these credentials with <strong>{inviteResult.user?.name}</strong>:
+                </p>
+                <div style={{ background: 'var(--bg-2)', borderRadius: 8, padding: '12px 16px', fontSize: 13 }}>
+                  <div><span className="muted">Email: </span><strong>{inviteResult.user?.email}</strong></div>
+                  <div style={{ marginTop: 6 }}><span className="muted">Temp password: </span><strong style={{ fontFamily: 'monospace' }}>{inviteResult.temporary_password}</strong></div>
+                </div>
+                <p style={{ color: 'var(--muted)', fontSize: 12 }}>Ask the user to change their password after first login.</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button className="btn btn-primary" onClick={() => setShowInvite(false)}>Done</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 style={{ fontSize: 18, fontWeight: 700 }}>Invite user</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Full name</label>
+                    <input className="input" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                      placeholder="Jane Smith" value={inviteForm.name}
+                      onChange={(e) => setInviteForm((f) => ({ ...f, name: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Email address</label>
+                    <input className="input" type="email" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                      placeholder="jane@example.com" value={inviteForm.email}
+                      onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Role</label>
+                    <select className="input" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                      value={inviteForm.role}
+                      onChange={(e) => setInviteForm((f) => ({ ...f, role: e.target.value }))}>
+                      <option value="customer">Customer</option>
+                      <option value="vendor">Vendor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  {inviteErr && <p style={{ color: '#E11D48', fontSize: 13 }}>{inviteErr}</p>}
+                </div>
+                <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+                  <button className="btn btn-ghost" onClick={() => setShowInvite(false)} disabled={inviteMutation.isPending}>Cancel</button>
+                  <button className="btn btn-primary"
+                    disabled={inviteMutation.isPending || !inviteForm.name || !inviteForm.email}
+                    onClick={() => { setInviteErr(''); inviteMutation.mutate(inviteForm); }}>
+                    {inviteMutation.isPending ? 'Creating…' : 'Create user'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Services
+const PER_PAGE = 15;
 function AdminServices() {
   const user = useAuthUser();
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Debounce search input 350 ms
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const { data: apiResult, isLoading } = useQuery({
-    queryKey: ['admin-services'],
-    queryFn: () => adminApi.services(),
+    queryKey: ['admin-services', debouncedSearch, page],
+    queryFn: () => adminApi.services({ search: debouncedSearch || undefined, page, per_page: PER_PAGE }),
     enabled: !!user,
-    staleTime: 60_000,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
   });
   const qc = useQueryClient();
   const deleteMutation = useMutation({
     mutationFn: (id: number) => adminApi.deleteService(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-services'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-services'] }); setConfirmId(null); },
   });
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const services: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const total: number = apiResult?.total ?? 0;
+  const lastPage: number = apiResult?.last_page ?? 1;
+  const confirmService = confirmId != null ? services.find((s: any) => s.id === confirmId) : null;
 
   const sk = { height: 14, borderRadius: 6, background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' } as const;
+
+  // Page number list (max 7 buttons)
+  const pageNumbers = (() => {
+    if (lastPage <= 7) return Array.from({ length: lastPage }, (_, i) => i + 1);
+    if (page <= 4) return [1, 2, 3, 4, 5, -1, lastPage];
+    if (page >= lastPage - 3) return [1, -1, lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1, lastPage];
+    return [1, -1, page - 1, page, page + 1, -2, lastPage];
+  })();
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 style={{ fontSize: 32 }}>Services</h1>
-        <div className="flex gap-10">
+        <div>
+          <h1 style={{ fontSize: 32 }}>Services</h1>
+          {!isLoading && <p className="muted text-13 mt-4">{total.toLocaleString()} service{total !== 1 ? 's' : ''} total</p>}
+        </div>
+        <div className="flex gap-10 items-center">
+          {/* Search */}
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <Icon name="search" size={14} color="var(--muted)" />
+            </span>
+            <input
+              type="text"
+              placeholder="Search services…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }}
+            />
+          </div>
           <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Icon name="download" size={14} /> Export
-          </button>
-          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="plus" size={14} /> New service
           </button>
         </div>
       </div>
@@ -275,7 +527,7 @@ function AdminServices() {
           </thead>
           <tbody>
             {isLoading ? (
-              [1,2,3,4].map((i) => (
+              [1,2,3,4,5].map((i) => (
                 <tr key={i}>
                   <td><div style={{ ...sk, width: 56, height: 40, borderRadius: 8 }} /></td>
                   <td><div style={{ ...sk, width: 140 }} /></td>
@@ -289,7 +541,9 @@ function AdminServices() {
                 </tr>
               ))
             ) : services.length === 0 ? (
-              <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No services yet.</td></tr>
+              <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>
+                {debouncedSearch ? `No services match "${debouncedSearch}".` : 'No services yet.'}
+              </td></tr>
             ) : services.map((s: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
               const slug = s.category?.slug ?? '';
               const cat  = CATEGORIES.find((c) => c.slug === slug);
@@ -316,16 +570,67 @@ function AdminServices() {
                     <span className="chip" style={{ background: status === 'active' ? '#E6F7F0' : '#FFF7E6', color: status === 'active' ? '#059669' : '#D97706', fontSize: 11 }}>{status}</span>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <button className="btn btn-ghost btn-sm"><Icon name="eye" size={12} /></button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => router.visit(`/service/${s.id}`)}><Icon name="eye" size={12} /></button>
                     <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
-                      onClick={() => deleteMutation.mutate(s.id)}><Icon name="trash" size={12} /></button>
+                      onClick={() => setConfirmId(s.id)}><Icon name="trash" size={12} /></button>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+
+        {/* Pagination footer */}
+        {lastPage > 1 && (
+          <div className="flex items-center justify-between" style={{ padding: '12px 20px', borderTop: '1px solid var(--border)' }}>
+            <span className="muted text-13">
+              Page {page} of {lastPage}
+            </span>
+            <div className="flex gap-4">
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+                ‹ Prev
+              </button>
+              {pageNumbers.map((n, i) =>
+                n < 0 ? (
+                  <span key={n + '_' + i} style={{ padding: '0 4px', color: 'var(--muted)', alignSelf: 'center' }}>…</span>
+                ) : (
+                  <button
+                    key={n}
+                    className="btn btn-sm"
+                    style={n === page
+                      ? { background: 'var(--primary)', color: '#fff', border: 'none', minWidth: 32 }
+                      : { background: 'transparent', border: '1px solid var(--border)', minWidth: 32 }}
+                    onClick={() => setPage(n)}
+                  >{n}</button>
+                )
+              )}
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.min(lastPage, p + 1))} disabled={page === lastPage}>
+                Next ›
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmId != null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 420, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Delete service?</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14 }}>
+              Are you sure you want to delete <strong>{confirmService?.title ?? 'this service'}</strong>? This action cannot be undone.
+            </p>
+            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setConfirmId(null)} disabled={deleteMutation.isPending}>Cancel</button>
+              <button className="btn btn-primary" style={{ background: '#E11D48', borderColor: '#E11D48' }}
+                onClick={() => deleteMutation.mutate(confirmId)}
+                disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

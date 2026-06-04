@@ -175,9 +175,10 @@ export const vendorApi = {
 // ─── Admin
 export const adminApi = {
   users: (params?: object) => api.get('/admin/users', { params }).then((r) => r.data),
+  invite: (d: { name: string; email: string; role: string }) => api.post('/admin/users/invite', d).then((r) => r.data),
   ban: (id: number) => api.post(`/admin/users/${id}/ban`),
   unban: (id: number) => api.post(`/admin/users/${id}/unban`),
-  services: () => api.get('/admin/services').then((r) => r.data),
+  services: (params?: Record<string, string | number | undefined>) => api.get('/admin/services', { params }).then((r) => r.data),
   deleteService: (id: number) => api.delete(`/admin/services/${id}`),
   blog: () => api.get('/admin/blog').then((r) => r.data),
   createPost: (d: object) => api.post('/admin/blog', d).then((r) => r.data),
