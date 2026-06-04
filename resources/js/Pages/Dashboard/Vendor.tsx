@@ -1,0 +1,999 @@
+import { useState, useEffect } from 'react';
+import { Link, usePage, router } from '@inertiajs/react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Icon from '../../components/shared/Icon';
+import Logo from '../../components/shared/Logo';
+import Stars from '../../components/shared/Stars';
+import { useStore, useAuthUser } from '../../store';
+import { vendorApi, uploadApi, conversationsApi } from '../../lib/api';
+import { formatDate } from '../../lib/utils';
+import CurrencyInput from '../../components/shared/CurrencyInput';
+import ServiceSubdataEditor from '../../components/vendor/ServiceSubdataEditor';
+
+function Stat({ tone, icon, label, value }: { tone: string; icon: string; label: string; value: number | string }) {
+  const bg: Record<string, string> = { amber: '#FFF7E6', green: '#E6F7F0', neutral: '#F5F5F5', rose: '#FFF0F0', blue: '#E6F0FF' };
+  const fg: Record<string, string> = { amber: '#D97706', green: '#059669', neutral: '#6B7280', rose: '#E11D48', blue: '#2563EB' };
+  return (
+    <div className="card card-pad" style={{ background: bg[tone] || 'white' }}>
+      <div style={{ color: fg[tone] }}><Icon name={icon} size={20} /></div>
+      <div style={{ fontSize: 32, fontWeight: 700, marginTop: 12 }}>{value}</div>
+      <div className="muted text-13 mt-4">{label}</div>
+    </div>
+  );
+}
+
+function VendorSidebar({ active }: { active: string }) {
+  const { logout } = useStore();
+  const items = [
+    { id: '',        href: '/dashboard/vendor',          label: 'Dashboard', icon: 'home' },
+    { id: 'service', href: '/dashboard/vendor/service',  label: 'Service',   icon: 'services' },
+    { id: 'orders',  href: '/dashboard/vendor/orders',   label: 'Orders',    icon: 'bookings' },
+    { id: 'messages',href: '/dashboard/vendor/messages', label: 'Messages',  icon: 'msg' },
+    { id: 'billing', href: '/dashboard/vendor/billing',  label: 'Billing',   icon: 'billing' },
+    { id: 'settings',href: '/dashboard/vendor/settings', label: 'Settings',  icon: 'settings' },
+  ];
+  return (
+    <aside className="dash-side" style={{ background: 'var(--primary)' }}>
+      <div className="brand" style={{ color: 'white', justifyContent: 'center' }}>
+        <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+      </div>
+      <nav className="dash-nav">
+        {items.map((i) => (
+          <Link key={i.id} href={i.href}
+            style={{ background: active === i.id ? 'rgba(255,255,255,.18)' : 'transparent',
+              color: 'white', fontWeight: active === i.id ? 700 : 500,
+              display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+              borderRadius: 10, fontSize: 14, textDecoration: 'none' }}>
+            <Icon name={i.icon} size={18} color="white" /> {i.label}
+          </Link>
+        ))}
+      </nav>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
+          <Icon name="home" size={18} color="white" /> Back to site
+        </Link>
+        <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.08)', border: 0, cursor: 'pointer', width: '100%' }}>
+          <Icon name="logout" size={18} color="white" /> Sign out
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+// ─── Dashboard home
+function VendorHome() {
+  const user = useAuthUser();
+  const { data: ordersResult, isLoading: ordersLoading } = useQuery({
+    queryKey: ['vendor-orders-all'],
+    queryFn: () => vendorApi.orders(),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
+  const dbOrders: any[] = ordersResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const displayOrders = dbOrders;
+
+  const stats = {
+    approved: dbOrders.filter((o: any) => o.status === 'approved').length, // eslint-disable-line @typescript-eslint/no-explicit-any
+    pending:  dbOrders.filter((o: any) => o.status === 'pending').length,  // eslint-disable-line @typescript-eslint/no-explicit-any
+    revenue:  dbOrders.filter((o: any) => ['approved', 'completed'].includes(o.status)).reduce((s: number, o: any) => s + Number(o.price), 0), // eslint-disable-line @typescript-eslint/no-explicit-any
+    total:    ordersResult?.meta?.total ?? 0,
+  };
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Vendor Dashboard</h1>
+      <div className="grid r-grid-4 mt-20" style={{ gap: 16 }}>
+        {ordersLoading ? (
+          [1,2,3,4].map((i) => (
+            <div key={i} className="card card-pad">
+              <div style={{ height: 20, width: 28, borderRadius: 6, background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ height: 36, width: '55%', borderRadius: 8, marginTop: 12, background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+              <div style={{ height: 14, width: '80%', borderRadius: 6, marginTop: 8, background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+            </div>
+          ))
+        ) : (
+          <>
+            <Stat tone="green"   icon="check"    label="Approved Orders"  value={stats.approved} />
+            <Stat tone="amber"   icon="clock"    label="Pending Orders"   value={stats.pending} />
+            <Stat tone="blue"    icon="billing"  label="Revenue (€)"      value={`€${stats.revenue.toLocaleString()}`} />
+            <Stat tone="neutral" icon="bookings" label="Total Orders"     value={stats.total} />
+          </>
+        )}
+      </div>
+      <div className="grid mt-24" style={{ gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+        <div className="card card-pad">
+          <h3 style={{ fontSize: 17 }}>Recent activity</h3>
+          <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {ordersLoading && [1,2,3].map((i) => (
+              <div key={i} style={{ height: 64, borderRadius: 12, background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+            ))}
+            {!ordersLoading && displayOrders.length === 0 && (
+              <div className="muted text-14 text-center" style={{ padding: '20px 0' }}>No recent activity.</div>
+            )}
+            {!ordersLoading && displayOrders.slice(0, 5).map((o: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+              const title  = o.service?.title ?? '—';
+              const imgRaw = o.service?.images?.[0];
+              const img    = typeof imgRaw === 'string' ? imgRaw : (imgRaw?.url ?? '');
+              const date   = formatDate(o.deliver_date ?? o.created_at);
+              return (
+                <div key={o.id} className="flex items-center gap-12" style={{ padding: '10px 14px', background: 'var(--bg-2)', borderRadius: 12 }}>
+                  {img ? <img src={img} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                       : <div style={{ width: 44, height: 44, borderRadius: 8, background: 'var(--bg-3)' }} />}
+                  <div style={{ flex: 1 }}>
+                    <div className="fw-600 text-14">{title}</div>
+                    <div className="muted text-12">{date}</div>
+                  </div>
+                  <span className="fw-700">€{Number(o.price).toLocaleString()}</span>
+                  <span className={`chip ${o.status === 'approved' ? 'chip-green' : o.status === 'pending' ? 'chip-amber' : ''}`}>{o.status}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="card card-pad" style={{ background: 'linear-gradient(135deg, var(--primary-50), var(--bg-2))' }}>
+          <h3 style={{ fontSize: 17 }}>Profile strength</h3>
+          <p className="muted text-13 mt-8">Complete your listing to reach more couples.</p>
+          <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { label: 'Profile photo', done: true },
+              { label: 'Description', done: true },
+              { label: 'Pricing set', done: true },
+              { label: 'Min. 2 images', done: false },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-8">
+                <Icon name={item.done ? 'check' : 'close'} size={14} color={item.done ? 'var(--primary)' : 'var(--muted)'} />
+                <span className="text-13" style={{ color: item.done ? 'var(--ink)' : 'var(--muted)' }}>{item.label}</span>
+              </div>
+            ))}
+          </div>
+          <Link href="/dashboard/vendor/service" className="btn btn-primary btn-block mt-20">Boost visibility</Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Service editor
+function VendorService() {
+  const user = useAuthUser();
+  const { showToast } = useStore();
+  const qc = useQueryClient();
+  const [tab, setTab] = useState<'basic' | 'details' | 'reviews'>('basic');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const { data: apiServices } = useQuery({
+    queryKey: ['vendor-services'],
+    queryFn: () => vendorApi.services(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const svcList: any[] = Array.isArray(apiServices) // eslint-disable-line @typescript-eslint/no-explicit-any
+    ? apiServices
+    : (apiServices as any)?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  useEffect(() => {
+    if (svcList.length > 0 && !selectedId) {
+      setSelectedId(svcList[0].id);
+    }
+  }, [svcList.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data: fullService, isLoading: isLoadingFull } = useQuery({
+    queryKey: ['vendor-service', selectedId],
+    queryFn: () => vendorApi.showService(selectedId!),
+    enabled: !!selectedId,
+    staleTime: 60_000,
+  });
+
+  const apiSvc: any = fullService ?? svcList.find((s: any) => s.id === selectedId) ?? svcList[0] ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const [svcTitle, setSvcTitle]         = useState('');
+  const [svcDesc,  setSvcDesc]          = useState('');
+  const [svcLoc,   setSvcLoc]           = useState('');
+  const [svcPrice, setSvcPrice]         = useState('');
+  const [saved, setSaved]               = useState(false);
+  const [uploadingImg, setUploadingImg] = useState(false);
+
+  useEffect(() => {
+    if (!apiSvc) return;
+    setSvcTitle(apiSvc.title ?? '');
+    setSvcDesc(apiSvc.description ?? '');
+    setSvcLoc(apiSvc.location ?? '');
+    setSvcPrice(String(apiSvc.minimum_price ?? ''));
+  }, [apiSvc?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const imgs: string[] = apiSvc
+    ? (apiSvc.images ?? []).map((img: any) => typeof img === 'string' ? img : img.url).filter(Boolean) // eslint-disable-line @typescript-eslint/no-explicit-any
+    : [];
+  const rating = Number(apiSvc?.rating ?? 0);
+  const reviewCount = apiSvc?.review_count ?? 0;
+  const apiReviews: any[] = apiSvc?.reviews ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const updateMutation = useMutation({
+    mutationFn: () => vendorApi.updateService(apiSvc.id, { title: svcTitle, description: svcDesc, location: svcLoc, minimum_price: Number(svcPrice) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-services'] });
+      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    },
+  });
+
+  const subdataMutation = useMutation({
+    mutationFn: (data: object) => vendorApi.updateSubdata(apiSvc.id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+      showToast('Service details saved!');
+    },
+    onError: () => showToast('Failed to save details. Please try again.', 'error'),
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: () => vendorApi.updateService(apiSvc.id, { status: 'inactive' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-services'] });
+      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+    },
+  });
+
+  const activateMutation = useMutation({
+    mutationFn: () => vendorApi.updateService(apiSvc.id, { status: 'active' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-services'] });
+      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+    },
+  });
+
+  const isActive = (apiSvc?.status ?? 'active') === 'active';
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h1 style={{ fontSize: 32 }}>My Service</h1>
+        <div className="flex gap-10">
+          {apiSvc && (
+            isActive
+              ? <button className="btn btn-ghost" style={{ color: '#E11D48' }} onClick={() => deactivateMutation.mutate()} disabled={deactivateMutation.isPending}>Deactivate</button>
+              : <button className="btn btn-ghost" style={{ color: '#059669' }} onClick={() => activateMutation.mutate()} disabled={activateMutation.isPending}>Activate</button>
+          )}
+          {tab === 'basic' && (
+            <button className="btn btn-primary" onClick={() => apiSvc && updateMutation.mutate()} disabled={!apiSvc || updateMutation.isPending}>
+              {saved ? '✓ Saved' : updateMutation.isPending ? 'Saving…' : 'Update'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Multi-service selector */}
+      {svcList.length > 1 && (
+        <div className="flex gap-8 mt-16" style={{ flexWrap: 'wrap' }}>
+          {svcList.map((s: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+            <button key={s.id} onClick={() => setSelectedId(s.id)}
+              className={selectedId === s.id ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'}>
+              {s.title}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!apiSvc && !svcList.length && <p className="muted mt-8 text-13">No service found. Create your first listing to get started.</p>}
+
+      {/* Tab row */}
+      <div className="tabs mt-20">
+        {(['basic', 'details', 'reviews'] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`tab ${tab === t ? 'tab-active' : ''}`}
+            style={{ background: 'transparent', border: 0 }}>
+            {t === 'basic' ? 'Basic Info' : t === 'details' ? 'Service Details' : 'Reviews'}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Basic Info ── */}
+      {tab === 'basic' && (
+        <div className="card card-pad mt-16">
+          <div><label className="field-label">Service title</label>
+            <input className="input mt-8" value={svcTitle} onChange={(e) => setSvcTitle(e.target.value)} /></div>
+          <div className="mt-16">
+            <div className="flex gap-12">
+              <div style={{ flex: 1 }}><label className="field-label">Location</label><input className="input mt-8" value={svcLoc} onChange={(e) => setSvcLoc(e.target.value)} /></div>
+              <div style={{ width: 140 }}><label className="field-label">Min. price (€)</label><CurrencyInput className="input mt-8" value={svcPrice} onChange={(e) => setSvcPrice(e.target.value)} /></div>
+            </div>
+          </div>
+          <div className="mt-16">
+            <label className="field-label">Images <span className="muted fw-500 text-12">(minimum 2 required)</span></label>
+            <div className="grid mt-8" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              {imgs.map((im, i) => (
+                <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden' }}>
+                  <img src={im} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newImgs = imgs.filter((_, j) => j !== i);
+                      vendorApi.updateService(apiSvc.id, { images: newImgs }).then(() => {
+                        qc.invalidateQueries({ queryKey: ['vendor-services'] });
+                        qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+                      });
+                    }}
+                    style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 999, background: 'rgba(0,0,0,0.55)', border: 0, color: 'white', cursor: 'pointer', display: 'grid', placeItems: 'center', lineHeight: 1 }}
+                  >
+                    <Icon name="close" size={10} color="white" />
+                  </button>
+                </div>
+              ))}
+              <label style={{ aspectRatio: '1/1', borderRadius: 12, border: '2px dashed var(--line)', display: 'grid', placeItems: 'center', cursor: uploadingImg ? 'wait' : 'pointer', color: 'var(--muted)', opacity: uploadingImg ? 0.6 : 1 }}>
+                <div style={{ textAlign: 'center' }}>
+                  {uploadingImg
+                    ? <div className="text-11">Uploading…</div>
+                    : <><Icon name="plus" size={20} /><div className="text-11 mt-4">Add photo</div></>}
+                </div>
+                <input
+                  type="file"
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  disabled={uploadingImg}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !apiSvc) return;
+                    e.target.value = '';
+                    setUploadingImg(true);
+                    try {
+                      const url = await uploadApi.serviceImage(file);
+                      await vendorApi.updateService(apiSvc.id, { images: [...imgs, url] });
+                      qc.invalidateQueries({ queryKey: ['vendor-services'] });
+                      qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+                    } catch {
+                      showToast('Image upload failed. Please try again.', 'error');
+                    } finally {
+                      setUploadingImg(false);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="mt-16">
+            <label className="field-label">Description</label>
+            <textarea className="textarea mt-8" rows={5} value={svcDesc} onChange={(e) => setSvcDesc(e.target.value)} />
+          </div>
+          {updateMutation.isError && <p className="mt-8 text-13" style={{ color: '#E11D48' }}>Save failed.</p>}
+        </div>
+      )}
+
+      {/* ── Service Details ── */}
+      {tab === 'details' && (
+        <div className="card card-pad mt-16">
+          {isLoadingFull
+            ? <div className="muted text-14 py-20" style={{ textAlign: 'center' }}>Loading service details…</div>
+            : <ServiceSubdataEditor
+                service={fullService ?? apiSvc}
+                onSave={(data) => subdataMutation.mutate(data)}
+                isSaving={subdataMutation.isPending}
+              />
+          }
+        </div>
+      )}
+
+      {/* ── Reviews ── */}
+      {tab === 'reviews' && (
+        <div className="card card-pad mt-16">
+          <div className="flex items-center gap-10">
+            <Stars value={rating} />
+            <span className="fw-700" style={{ fontSize: 18 }}>{rating}</span>
+            <span className="muted text-13">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
+          </div>
+          <div className="mt-20" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {apiReviews.length > 0
+              ? apiReviews.map((r: any, i: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                  <div key={i} style={{ padding: '14px 16px', background: 'var(--bg-2)', borderRadius: 12 }}>
+                    <div className="flex items-center gap-10">
+                      <div style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700, flexShrink: 0, fontSize: 15 }}>
+                        {(r.user?.profile?.first_name ?? r.user?.name ?? '?')[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="fw-600 text-14">
+                          {r.user?.profile?.first_name
+                            ? `${r.user.profile.first_name} ${r.user.profile.last_name ?? ''}`.trim()
+                            : (r.user?.name ?? 'Customer')}
+                        </div>
+                        <Stars value={r.rating} size={12} />
+                      </div>
+                      <span className="muted text-11" style={{ marginLeft: 'auto' }}>{formatDate(r.created_at)}</span>
+                    </div>
+                    {r.comment && <p className="text-13 muted mt-8" style={{ marginLeft: 46 }}>{r.comment}</p>}
+                  </div>
+                ))
+              : <div className="muted text-14 text-center" style={{ padding: '24px 0' }}>No reviews yet.</div>
+            }
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Orders
+// ─── Order detail drawer ─────────────────────────────────────────────────────
+
+function labelise(key: string) {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function DetailValue({ v }: { v: unknown }) {
+  if (v === null || v === undefined || v === '') return <span className="muted">—</span>;
+  if (Array.isArray(v)) {
+    if (v.length === 0) return <span className="muted">—</span>;
+    return <span>{v.join(', ')}</span>;
+  }
+  if (typeof v === 'object') return <span className="muted text-12">{JSON.stringify(v)}</span>;
+  const str = String(v);
+  // ISO datetime? format it
+  if (/^\d{4}-\d{2}-\d{2}T/.test(str)) return <span>{formatDate(str.slice(0, 10))}</span>;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return <span>{formatDate(str)}</span>;
+  return <span>{str}</span>;
+}
+
+const SKIP_DETAIL_KEYS = new Set(['id', 'order_id', 'created_at', 'updated_at']);
+
+function OrderDetailDrawer({ orderId, onClose, onApprove, onReject, approving, rejecting }: {
+  orderId: number;
+  onClose: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+  approving: boolean;
+  rejecting: boolean;
+}) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['vendor-order-detail', orderId],
+    queryFn: () => vendorApi.order(orderId),
+    staleTime: 10_000,
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const o: any = data ?? {};
+  const imgRaw = o.service?.images?.[0];
+  const img = typeof imgRaw === 'string' ? imgRaw : (imgRaw?.url ?? '');
+  const customerName = o.user?.profile?.first_name
+    ? `${o.user.profile.first_name} ${o.user.profile.last_name ?? ''}`.trim()
+    : (o.user?.name ?? 'Customer');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detail: Record<string, any> | null = o.detail ?? null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 999 }} />
+      {/* Panel */}
+      <div style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 420,
+        background: 'white', zIndex: 1000, overflowY: 'auto',
+        boxShadow: '-4px 0 32px rgba(0,0,0,.15)', display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span className="fw-700" style={{ fontSize: 17 }}>Order #{orderId}</span>
+          <button onClick={onClose} style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div style={{ flex: 1, display: 'grid', placeItems: 'center', color: 'var(--muted)' }}>Loading…</div>
+        ) : (
+          <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Service */}
+            <div className="card" style={{ padding: 14, display: 'flex', gap: 14, alignItems: 'center' }}>
+              {img
+                ? <img src={img} alt="" style={{ width: 72, height: 56, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                : <div style={{ width: 72, height: 56, borderRadius: 8, background: 'var(--bg-3)', flexShrink: 0 }} />
+              }
+              <div>
+                <div className="fw-700">{o.service?.title ?? '—'}</div>
+                <div className="muted text-13 mt-2">{o.service?.category?.name ?? ''}</div>
+              </div>
+            </div>
+
+            {/* Summary row */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+              {[
+                ['Customer',   customerName],
+                ['Date',       formatDate(o.deliver_date ?? o.created_at)],
+                ['Amount',     `€${Number(o.price).toLocaleString()}`],
+              ].map(([label, value]) => (
+                <div key={label} className="card" style={{ padding: '10px 14px' }}>
+                  <div className="muted text-11" style={{ textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
+                  <div className="fw-700 mt-4 text-13">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="muted text-13">Status:</span>
+              <span className={`chip ${o.status === 'approved' ? 'chip-green' : o.status === 'pending' ? 'chip-amber' : o.status === 'rejected' ? 'chip-rose' : ''}`} style={{ textTransform: 'capitalize' }}>
+                {o.status}
+              </span>
+            </div>
+
+            {/* Order note */}
+            {o.note && (
+              <div>
+                <div className="muted text-12 fw-600" style={{ textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>Customer Note</div>
+                <div className="card" style={{ padding: '10px 14px', fontSize: 14, lineHeight: 1.5 }}>{o.note}</div>
+              </div>
+            )}
+
+            {/* Order details */}
+            {detail && (
+              <div>
+                <div className="muted text-12 fw-600" style={{ textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 10 }}>Booking Details</div>
+                <div className="card" style={{ padding: '4px 0', overflow: 'hidden' }}>
+                  {Object.entries(detail)
+                    .filter(([k]) => !SKIP_DETAIL_KEYS.has(k))
+                    .map(([k, v]) => (
+                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '9px 14px', borderBottom: '1px solid var(--line-2)', gap: 12 }}>
+                        <span className="muted text-13" style={{ flexShrink: 0 }}>{labelise(k)}</span>
+                        <span className="text-13 fw-600" style={{ textAlign: 'right' }}><DetailValue v={v} /></span>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            )}
+            {!detail && (
+              <p className="muted text-13" style={{ textAlign: 'center' }}>No detailed booking data available.</p>
+            )}
+          </div>
+        )}
+
+        {/* Footer actions (pending only) */}
+        {o.status === 'pending' && (
+          <div style={{ padding: '16px 20px', borderTop: '1px solid var(--line)', display: 'flex', gap: 10 }}>
+            <button className="btn btn-soft btn-block" style={{ color: '#059669', flex: 1 }} disabled={approving} onClick={onApprove}>
+              {approving ? 'Approving…' : 'Approve'}
+            </button>
+            <button className="btn btn-ghost btn-block" style={{ color: '#E11D48', flex: 1 }} disabled={rejecting} onClick={onReject}>
+              {rejecting ? 'Rejecting…' : 'Reject'}
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ─── Vendor Orders ────────────────────────────────────────────────────────────
+
+function VendorOrders() {
+  const { showToast } = useStore();
+  const [tab, setTab] = useState('pending');
+  const [drawerOrderId, setDrawerOrderId] = useState<number | null>(null);
+  const tabs = ['pending', 'approved', 'rejected', 'completed'];
+  const qc = useQueryClient();
+  const user = useAuthUser();
+
+  const { data: ordersResult } = useQuery({
+    queryKey: ['vendor-orders', tab],
+    queryFn: () => vendorApi.orders({ status: tab }),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
+  const apiOrders: any[] = ordersResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const closeDrawer = () => setDrawerOrderId(null);
+
+  const approveMutation = useMutation({
+    mutationFn: (id: number) => vendorApi.approveOrder(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-orders'] });
+      qc.invalidateQueries({ queryKey: ['vendor-order-detail', drawerOrderId] });
+      showToast('Order approved!');
+      closeDrawer();
+    },
+    onError: () => showToast('Could not approve order. Please try again.', 'error'),
+  });
+  const rejectMutation = useMutation({
+    mutationFn: (id: number) => vendorApi.rejectOrder(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-orders'] });
+      qc.invalidateQueries({ queryKey: ['vendor-order-detail', drawerOrderId] });
+      showToast('Order rejected.', 'info');
+      closeDrawer();
+    },
+    onError: () => showToast('Could not reject order. Please try again.', 'error'),
+  });
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Orders</h1>
+      <div className="tabs mt-20">
+        {tabs.map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`tab ${tab === t ? 'tab-active' : ''}`}
+            style={{ background: 'transparent', border: 0, textTransform: 'capitalize' }}>{t}</button>
+        ))}
+      </div>
+      <div className="card mt-8" style={{ overflow: 'hidden' }}>
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th>Service</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {apiOrders.map((o: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+              const imgRaw = o.service?.images?.[0];
+              const img = typeof imgRaw === 'string' ? imgRaw : (imgRaw?.url ?? '');
+              const customerName = o.user?.profile?.first_name
+                ? `${o.user.profile.first_name} ${o.user.profile.last_name ?? ''}`
+                : (o.user?.name ?? 'Customer');
+              return (
+                <tr key={o.id} style={{ cursor: 'pointer' }} onClick={() => setDrawerOrderId(o.id)}>
+                  <td>
+                    <div className="flex items-center gap-10">
+                      {img ? <img src={img} alt="" style={{ width: 44, height: 36, borderRadius: 6, objectFit: 'cover' }} /> : null}
+                      <span className="fw-600">{o.service?.title ?? '—'}</span>
+                    </div>
+                  </td>
+                  <td className="muted">{customerName}</td>
+                  <td className="muted">{formatDate(o.deliver_date ?? o.created_at)}</td>
+                  <td className="fw-700">€{Number(o.price).toLocaleString()}</td>
+                  <td><span className={`chip ${o.status === 'approved' ? 'chip-green' : o.status === 'pending' ? 'chip-amber' : o.status === 'rejected' ? 'chip-rose' : ''}`}>{o.status}</span></td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div className="flex gap-6" style={{ justifyContent: 'flex-end' }}>
+                      {o.status === 'pending' && (<>
+                        <button className="btn btn-soft btn-sm" style={{ color: '#059669' }}
+                          onClick={(e) => { e.stopPropagation(); approveMutation.mutate(o.id); }}>Approve</button>
+                        <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
+                          onClick={(e) => { e.stopPropagation(); rejectMutation.mutate(o.id); }}>Reject</button>
+                      </>)}
+                      <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); setDrawerOrderId(o.id); }}>View</button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {apiOrders.length === 0 && (
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 30, color: 'var(--muted)' }}>No {tab} orders.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {drawerOrderId !== null && (
+        <OrderDetailDrawer
+          orderId={drawerOrderId}
+          onClose={closeDrawer}
+          onApprove={() => approveMutation.mutate(drawerOrderId)}
+          onReject={() => rejectMutation.mutate(drawerOrderId)}
+          approving={approveMutation.isPending}
+          rejecting={rejectMutation.isPending}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Messages
+function VendorMessages() {
+  const [active, setActive] = useState<number | null>(null);
+  const [msg, setMsg] = useState('');
+  const qc = useQueryClient();
+  const user = useAuthUser();
+
+  const { data: apiThreads } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => conversationsApi.list(),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
+  const threads: any[] = Array.isArray(apiThreads) ? apiThreads : []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const activeId = active ?? threads[0]?.id ?? null;
+  const thread = threads.find((t: any) => t.id === activeId) ?? threads[0] ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const { data: apiMessages } = useQuery({
+    queryKey: ['conversation-messages', activeId],
+    queryFn: () => conversationsApi.messages(activeId as number),
+    enabled: !!activeId,
+    staleTime: 10_000,
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: (body: string) => conversationsApi.send(activeId as number, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversation-messages', activeId] });
+      setMsg('');
+    },
+  });
+
+  type MsgItem = { from: 'me' | 'them'; text: string; time: string };
+  const displayMessages: MsgItem[] = Array.isArray((apiMessages as any)?.data ?? apiMessages) // eslint-disable-line @typescript-eslint/no-explicit-any
+    ? ((apiMessages as any)?.data ?? apiMessages as any[]).map((m: any): MsgItem => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+        from: m.sender_id === user?.id ? 'me' : 'them',
+        text: m.body,
+        time: m.created_at?.slice(11, 16) ?? '',
+      }))
+    : [];
+
+  if (threads.length === 0) return (
+    <div>
+      <h1 style={{ fontSize: 32, marginBottom: 20 }}>Messages</h1>
+      <div className="card card-pad" style={{ textAlign: 'center', padding: 60 }}>
+        <Icon name="msg" size={36} color="var(--line)" />
+        <div className="fw-700 mt-12">No conversations yet</div>
+        <p className="muted text-14 mt-8">Customer messages will appear here once they contact you.</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 32, marginBottom: 20 }}>Messages</h1>
+      <div className="card" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: 600, overflow: 'hidden' }}>
+        <div style={{ borderRight: '1px solid var(--line)', overflow: 'auto' }}>
+          {threads.map((t: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+            const name   = t.customer?.profile?.first_name
+              ? `${t.customer.profile.first_name} ${t.customer.profile.last_name ?? ''}`.trim()
+              : t.customer?.name ?? t.name ?? '—';
+            const avatar = t.customer?.profile?.avatar_url ?? t.avatar;
+            const lastMsg = t.last_message?.body ?? t.last ?? '';
+            const timeStr = t.last_message_at?.slice(11, 16) ?? '';
+            return (
+              <div key={t.id} onClick={() => setActive(t.id)}
+                style={{ padding: '14px 16px', cursor: 'pointer', background: activeId === t.id ? 'var(--primary-50)' : 'white',
+                  borderBottom: '1px solid var(--line-2)', display: 'flex', gap: 12, alignItems: 'center' }}>
+                {avatar
+                  ? <img src={avatar} alt="" style={{ width: 40, height: 40, borderRadius: 999, objectFit: 'cover' }} />
+                  : <div style={{ width: 40, height: 40, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700 }}>{name[0]}</div>
+                }
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="flex items-center justify-between">
+                    <span className="fw-700 text-13">{name}</span>
+                    <span className="muted text-11">{timeStr}</span>
+                  </div>
+                  <div className="text-12 muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{lastMsg}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span className="fw-700">
+              {(thread as any)?.customer?.profile?.first_name // eslint-disable-line @typescript-eslint/no-explicit-any
+                ? `${(thread as any).customer.profile.first_name} ${(thread as any).customer.profile.last_name ?? ''}`.trim() // eslint-disable-line @typescript-eslint/no-explicit-any
+                : (thread as any)?.customer?.name ?? (thread as any)?.name ?? '—'} {/* eslint-disable-line @typescript-eslint/no-explicit-any */}
+            </span>
+          </div>
+          <div style={{ flex: 1, overflow: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {displayMessages.map((m, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: m.from === 'me' ? 'flex-end' : 'flex-start' }}>
+                <div style={{ maxWidth: '72%', padding: '10px 14px', borderRadius: m.from === 'me' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  background: m.from === 'me' ? 'var(--primary)' : 'var(--bg-2)', color: m.from === 'me' ? 'white' : 'var(--ink)', fontSize: 14 }}>
+                  {m.text}
+                  {'time' in m && m.time && <div style={{ fontSize: 10, opacity: .7, marginTop: 4 }}>{m.time}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ padding: '12px 20px', borderTop: '1px solid var(--line)', display: 'flex', gap: 10 }}>
+            <input className="input" style={{ flex: 1 }} placeholder="Type your message…" value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && msg.trim()) sendMutation.mutate(msg.trim()); }} />
+            <button className="btn btn-primary" style={{ padding: '0 18px' }}
+              onClick={() => { if (msg.trim()) sendMutation.mutate(msg.trim()); }}>
+              <Icon name="send" size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Billing
+function VendorBilling() {
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Billing</h1>
+      <div className="card mt-20" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-700))', color: 'white', padding: 28, borderRadius: 20 }}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div style={{ opacity: .8, fontSize: 13, fontWeight: 600 }}>Current Plan</div>
+            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>Professional</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 36, fontWeight: 700 }}>€49</div>
+            <div style={{ opacity: .8, fontSize: 13 }}>/ month</div>
+          </div>
+        </div>
+        <div className="flex gap-10 mt-20" style={{ flexWrap: 'wrap' }}>
+          {['Unlimited listings', 'Priority support', 'Analytics dashboard', 'Featured placement'].map((f) => (
+            <span key={f} style={{ background: 'rgba(255,255,255,.2)', padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600 }}>{f}</span>
+          ))}
+        </div>
+        <div className="flex gap-10 mt-20">
+          <button className="btn btn-sm" style={{ background: 'white', color: 'var(--primary)', borderRadius: 999 }}>Manage subscription</button>
+          <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.2)', color: 'white', borderRadius: 999 }}>Cancel plan</button>
+        </div>
+      </div>
+      <div className="card mt-20" style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', fontWeight: 700 }}>Recent invoices</div>
+        <table className="tbl">
+          <thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {['Apr 2026', 'Mar 2026', 'Feb 2026'].map((m) => (
+              <tr key={m}>
+                <td className="fw-600">WB-{Math.random().toString(36).slice(2, 8).toUpperCase()}</td>
+                <td className="muted">{m}</td>
+                <td>€49.00</td>
+                <td><span className="chip chip-green">Paid</span></td>
+                <td><button className="btn btn-ghost btn-sm"><Icon name="download" size={12} /></button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Settings
+function VendorSettings() {
+  const user = useAuthUser();
+  const { logout } = useStore();
+  const qc = useQueryClient();
+
+  const { data: profile } = useQuery({
+    queryKey: ['vendor-profile'],
+    queryFn: () => vendorApi.profile(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+  const vp = profile?.vendor_profile ?? profile?.vendorProfile ?? profile;
+
+  const [bizName, setBizName]   = useState('');
+  const [bizDesc, setBizDesc]   = useState('');
+  const [bizLoc,  setBizLoc]    = useState('');
+  const [bizSaved, setBizSaved] = useState(false);
+
+  const [cfn, setCfn]           = useState('');
+  const [cln, setCln]           = useState('');
+  const [ctitle, setCtitle]     = useState('');
+  const [conSaved, setConSaved] = useState(false);
+
+  const [curPwd,  setCurPwd]  = useState('');
+  const [newPwd,  setNewPwd]  = useState('');
+  const [confPwd, setConfPwd] = useState('');
+  const [pwdMsg, setPwdMsg]   = useState('');
+
+  useEffect(() => {
+    if (!vp) return;
+    setBizName(vp.business_name ?? '');
+    setBizDesc(vp.business_description ?? '');
+    setBizLoc(vp.location ?? '');
+    setCfn(vp.contact_first_name ?? '');
+    setCln(vp.contact_last_name ?? '');
+    setCtitle(vp.contact_title ?? '');
+  }, [vp]);
+
+  const bizMutation = useMutation({
+    mutationFn: () => vendorApi.updateProfile({ business_name: bizName, business_description: bizDesc, location: bizLoc }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['vendor-profile'] }); setBizSaved(true); setTimeout(() => setBizSaved(false), 2500); },
+  });
+
+  const conMutation = useMutation({
+    mutationFn: () => vendorApi.updateProfile({ contact_first_name: cfn, contact_last_name: cln, contact_title: ctitle }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['vendor-profile'] }); setConSaved(true); setTimeout(() => setConSaved(false), 2500); },
+  });
+
+  const pwdMutation = useMutation({
+    mutationFn: () => vendorApi.updatePassword({ current_password: curPwd, password: newPwd, password_confirmation: confPwd }),
+    onSuccess: () => { setPwdMsg('Password updated!'); setCurPwd(''); setNewPwd(''); setConfPwd(''); },
+    onError: (e: any) => setPwdMsg(e?.response?.data?.message ?? 'Password update failed.'), // eslint-disable-line @typescript-eslint/no-explicit-any
+  });
+
+  const delMutation = useMutation({
+    mutationFn: () => vendorApi.deleteAccount(),
+    onSuccess: async () => { await logout(); router.visit('/'); },
+  });
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Settings</h1>
+      <div className="grid mt-20" style={{ gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {/* Business Profile */}
+        <div className="card card-pad">
+          <h3 style={{ fontSize: 17 }}>Business Profile</h3>
+          <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div><label className="field-label">Business name</label><input className="input mt-4" value={bizName} onChange={(e) => setBizName(e.target.value)} /></div>
+            <div><label className="field-label">Business description</label><textarea className="textarea mt-4" rows={3} value={bizDesc} onChange={(e) => setBizDesc(e.target.value)} /></div>
+            <div><label className="field-label">Location</label><input className="input mt-4" value={bizLoc} onChange={(e) => setBizLoc(e.target.value)} /></div>
+          </div>
+          <button className="btn btn-primary btn-block mt-16" onClick={() => bizMutation.mutate()} disabled={bizMutation.isPending}>
+            {bizSaved ? '✓ Saved' : bizMutation.isPending ? 'Saving…' : 'Save changes'}
+          </button>
+          {bizMutation.isError && <p className="mt-8 text-13" style={{ color: '#E11D48' }}>Save failed.</p>}
+        </div>
+
+        {/* Contact */}
+        <div className="card card-pad">
+          <h3 style={{ fontSize: 17 }}>Contact</h3>
+          <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div><label className="field-label">First name</label><input className="input mt-4" value={cfn} onChange={(e) => setCfn(e.target.value)} /></div>
+            <div><label className="field-label">Last name</label><input className="input mt-4" value={cln} onChange={(e) => setCln(e.target.value)} /></div>
+            <div><label className="field-label">Title / Role</label><input className="input mt-4" value={ctitle} onChange={(e) => setCtitle(e.target.value)} /></div>
+            <div><label className="field-label">Email</label><input className="input mt-4" value={user?.email ?? ''} disabled style={{ opacity: .6 }} /></div>
+          </div>
+          <button className="btn btn-primary btn-block mt-16" onClick={() => conMutation.mutate()} disabled={conMutation.isPending}>
+            {conSaved ? '✓ Saved' : conMutation.isPending ? 'Saving…' : 'Save changes'}
+          </button>
+          {conMutation.isError && <p className="mt-8 text-13" style={{ color: '#E11D48' }}>Save failed.</p>}
+        </div>
+
+        {/* Password */}
+        <div className="card card-pad">
+          <h3 style={{ fontSize: 17 }}>Change Password</h3>
+          <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div><label className="field-label">Current password</label><input type="password" className="input mt-4" value={curPwd} onChange={(e) => setCurPwd(e.target.value)} /></div>
+            <div><label className="field-label">New password</label><input type="password" className="input mt-4" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} /></div>
+            <div><label className="field-label">Confirm new password</label><input type="password" className="input mt-4" value={confPwd} onChange={(e) => setConfPwd(e.target.value)} /></div>
+          </div>
+          {pwdMsg && <p className="mt-8 text-13" style={{ color: pwdMsg.startsWith('Password updated') ? '#059669' : '#E11D48' }}>{pwdMsg}</p>}
+          <button className="btn btn-primary btn-block mt-16" onClick={() => pwdMutation.mutate()} disabled={pwdMutation.isPending || !curPwd || !newPwd}>
+            {pwdMutation.isPending ? 'Updating…' : 'Update password'}
+          </button>
+        </div>
+
+        {/* Danger zone */}
+        <div className="card card-pad" style={{ border: '1px solid #FCA5A5' }}>
+          <h3 style={{ fontSize: 17, color: '#E11D48' }}>Danger Zone</h3>
+          <p className="muted text-13 mt-8">Permanently delete your account and all associated data. This action cannot be undone.</p>
+          <button className="btn mt-16" style={{ background: '#FEE2E2', color: '#E11D48', border: 0 }}
+            onClick={() => { if (confirm('Delete your account permanently?')) delMutation.mutate(); }}
+            disabled={delMutation.isPending}>
+            {delMutation.isPending ? 'Deleting…' : 'Delete account'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface VendorProps {
+  sub?: string;
+}
+
+export default function VendorDashboard({ sub: subProp }: VendorProps) {
+  const pageProps = usePage().props as VendorProps;
+  const sub = subProp ?? pageProps.sub ?? '';
+  const active = sub;
+  const user = useAuthUser();
+
+  useEffect(() => {
+    if (!user) router.visit('/auth', { replace: true });
+  }, [user]);
+
+  useEffect(() => {
+    document.title = 'Vendor Dashboard | WedBox';
+    return () => { document.title = 'WedBox'; };
+  }, []);
+
+  if (!user) return null;
+
+  return (
+    <div className="dash-shell">
+      <VendorSidebar active={active} />
+      <main className="dash-main">
+        {active === ''         && <VendorHome />}
+        {active === 'service'  && <VendorService />}
+        {active === 'orders'   && <VendorOrders />}
+        {active === 'messages' && <VendorMessages />}
+        {active === 'billing'  && <VendorBilling />}
+        {active === 'settings' && <VendorSettings />}
+      </main>
+    </div>
+  );
+}
