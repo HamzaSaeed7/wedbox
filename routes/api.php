@@ -108,8 +108,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/invite', [AdminController::class, 'invite']);
         Route::post('/users/{user}/ban', [AdminController::class, 'ban']);
         Route::post('/users/{user}/unban', [AdminController::class, 'unban']);
+        Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
         Route::get('/services', [AdminController::class, 'services']);
         Route::delete('/services/{service}', [AdminController::class, 'deleteService']);
+        Route::patch('/services/{service}/feature', [AdminController::class, 'toggleFeatured']);
         Route::get('/blog', [BlogController::class, 'index']);
         Route::post('/blog', [BlogController::class, 'store']);
         Route::put('/blog/{blogPost}', [BlogController::class, 'update']);

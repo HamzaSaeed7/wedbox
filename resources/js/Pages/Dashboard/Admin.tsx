@@ -105,6 +105,7 @@ function AdminUsers() {
 
   const banMutation   = useMutation({ mutationFn: (id: number) => adminApi.ban(id),   onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmBanId(null); } });
   const unbanMutation = useMutation({ mutationFn: (id: number) => adminApi.unban(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmUnbanId(null); } });
+  const deleteMutation = useMutation({ mutationFn: (id: number) => adminApi.deleteUser(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmDeleteId(null); } });
   const inviteMutation = useMutation({
     mutationFn: (d: { name: string; email: string; role: string }) => adminApi.invite(d),
     onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setInviteResult(res); },
@@ -128,11 +129,13 @@ function AdminUsers() {
     return { background: 'var(--bg-3)', color: 'var(--ink-2)' };
   };
 
-  // Ban / Unban confirmation
-  const [confirmBanId, setConfirmBanId]     = useState<number | null>(null);
-  const [confirmUnbanId, setConfirmUnbanId] = useState<number | null>(null);
-  const confirmBanUser   = confirmBanId   != null ? list.find((u: any) => u.id === confirmBanId)   : null;
-  const confirmUnbanUser = confirmUnbanId != null ? list.find((u: any) => u.id === confirmUnbanId) : null;
+  // Ban / Unban / Delete confirmation
+  const [confirmBanId, setConfirmBanId]       = useState<number | null>(null);
+  const [confirmUnbanId, setConfirmUnbanId]   = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const confirmBanUser    = confirmBanId    != null ? list.find((u: any) => u.id === confirmBanId)    : null;
+  const confirmUnbanUser  = confirmUnbanId  != null ? list.find((u: any) => u.id === confirmUnbanId)  : null;
+  const confirmDeleteUser = confirmDeleteId != null ? list.find((u: any) => u.id === confirmDeleteId) : null;
 
   // View modal
   const [viewUser, setViewUser] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -251,6 +254,10 @@ function AdminUsers() {
                           onClick={() => setConfirmUnbanId(u.id)}>Unban</button>
                       )}
                       <button className="btn btn-ghost btn-sm" onClick={() => setViewUser(u)}>View</button>
+                      <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Delete user"
+                        onClick={() => setConfirmDeleteId(u.id)}>
+                        <Icon name="trash" size={12} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -321,6 +328,26 @@ function AdminUsers() {
         </div>
       )}
 
+      {/* ── Delete confirmation modal ── */}
+      {confirmDeleteId != null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 420, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Delete user?</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14 }}>
+              Permanently delete <strong>{confirmDeleteUser?.name ?? confirmDeleteUser?.email ?? 'this user'}</strong>? Their account, profile, and all associated data will be removed. <span style={{ color: '#E11D48', fontWeight: 600 }}>This cannot be undone.</span>
+            </p>
+            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setConfirmDeleteId(null)} disabled={deleteMutation.isPending}>Cancel</button>
+              <button className="btn btn-primary" style={{ background: '#E11D48', borderColor: '#E11D48' }}
+                onClick={() => deleteMutation.mutate(confirmDeleteId!)}
+                disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? 'Deleting…' : 'Delete user'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── View user modal ── */}
       {viewUser != null && (() => {
         const u = viewUser;
@@ -369,6 +396,8 @@ function AdminUsers() {
                   <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none' }}
                     onClick={() => { setViewUser(null); setConfirmUnbanId(u.id); }}>Unban user</button>
                 )}
+                <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
+                  onClick={() => { setViewUser(null); setConfirmDeleteId(u.id); }}>Delete</button>
                 <button className="btn btn-ghost" onClick={() => setViewUser(null)}>Close</button>
               </div>
             </div>
@@ -466,6 +495,15 @@ function AdminServices() {
     mutationFn: (id: number) => adminApi.deleteService(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-services'] }); setConfirmId(null); },
   });
+  const featureMutation = useMutation({
+    mutationFn: (id: number) => adminApi.toggleFeatured(id),
+    onSuccess: (_data, id) => {
+      qc.setQueryData(['admin-services', debouncedSearch, page], (old: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (!old) return old;
+        return { ...old, data: old.data.map((s: any) => s.id === id ? { ...s, is_featured: !s.is_featured } : s) }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      });
+    },
+  });
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
   const services: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -522,6 +560,7 @@ function AdminServices() {
               <th>Price</th>
               <th>Rating</th>
               <th>Status</th>
+              <th>Featured</th>
               <th style={{ textAlign: 'right' }}></th>
             </tr>
           </thead>
@@ -537,11 +576,12 @@ function AdminServices() {
                   <td><div style={{ ...sk, width: 60 }} /></td>
                   <td><div style={{ ...sk, width: 40 }} /></td>
                   <td><div style={{ ...sk, width: 50 }} /></td>
+                  <td><div style={{ ...sk, width: 36, height: 20, borderRadius: 999 }} /></td>
                   <td></td>
                 </tr>
               ))
             ) : services.length === 0 ? (
-              <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>
+              <tr><td colSpan={10} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>
                 {debouncedSearch ? `No services match "${debouncedSearch}".` : 'No services yet.'}
               </td></tr>
             ) : services.map((s: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -568,6 +608,29 @@ function AdminServices() {
                   </td>
                   <td>
                     <span className="chip" style={{ background: status === 'active' ? '#E6F7F0' : '#FFF7E6', color: status === 'active' ? '#059669' : '#D97706', fontSize: 11 }}>{status}</span>
+                  </td>
+                  <td>
+                    {/* Featured toggle */}
+                    <button
+                      onClick={() => featureMutation.mutate(s.id)}
+                      disabled={featureMutation.isPending && featureMutation.variables === s.id}
+                      title={s.is_featured ? 'Remove from featured' : 'Mark as featured'}
+                      style={{
+                        position: 'relative', display: 'inline-flex', alignItems: 'center',
+                        width: 36, height: 20, borderRadius: 999, border: 'none', cursor: 'pointer',
+                        padding: 0, flexShrink: 0, outline: 'none',
+                        background: s.is_featured ? 'var(--primary)' : 'var(--bg-3)',
+                        transition: 'background 0.2s',
+                        opacity: (featureMutation.isPending && featureMutation.variables === s.id) ? 0.6 : 1,
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', width: 14, height: 14, borderRadius: 999, background: 'white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                        left: s.is_featured ? 19 : 3,
+                        transition: 'left 0.2s',
+                      }} />
+                    </button>
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <button className="btn btn-ghost btn-sm" onClick={() => router.visit(`/service/${s.id}`)}><Icon name="eye" size={12} /></button>

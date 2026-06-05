@@ -66,6 +66,23 @@ class AdminController extends Controller
         return response()->json(null, 204);
     }
 
+    public function toggleFeatured(Service $service)
+    {
+        $service->is_featured = !$service->is_featured;
+        $service->save();
+        return response()->json(['is_featured' => $service->is_featured]);
+    }
+
+    public function deleteUser(User $user)
+    {
+        // Prevent self-deletion
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 403);
+        }
+        $user->delete();
+        return response()->json(null, 204);
+    }
+
     public function invite(Request $request)
     {
         $request->validate([
