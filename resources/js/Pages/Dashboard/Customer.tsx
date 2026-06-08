@@ -40,7 +40,7 @@ function StatSkeleton() {
   return <div className="card card-pad"><Shimmer w={28} h={28} radius={8} /><Shimmer w="55%" h={36} radius={8} style={{ marginTop: 12 }} /><Shimmer w="80%" h={14} radius={6} style={{ marginTop: 8 }} /></div>;
 }
 function OrderRowSkeleton() {
-  return <div className="card" style={{ display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: 16, padding: '14px 16px', marginBottom: 10 }}><Shimmer w={80} h={64} radius={10} /><div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}><Shimmer w="40%" h={14} /><Shimmer w="70%" h={16} /><Shimmer w="50%" h={12} /></div><div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, justifyContent: 'center' }}><Shimmer w={72} h={22} radius={999} /><Shimmer w={56} h={18} /></div></div>;
+  return <div className="card order-row-grid" style={{ padding: '14px 16px', marginBottom: 10 }}><Shimmer w={80} h={64} radius={10} /><div style={{ display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}><Shimmer w="40%" h={14} /><Shimmer w="70%" h={16} /><Shimmer w="50%" h={12} /></div><div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, justifyContent: 'center' }}><Shimmer w={72} h={22} radius={999} /><Shimmer w={56} h={18} /></div></div>;
 }
 
 function Stat({ tone, icon, label, value }: { tone: string; icon: string; label: string; value: number }) {
@@ -99,7 +99,7 @@ function OrderRow({ order }: { order: DisplayOrder }) {
   };
   const ss = statusStyle[order.status] || statusStyle.pending;
   return (
-    <div className="card" style={{ display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: 16, padding: '14px 16px', marginBottom: 10 }}>
+    <div className="card order-row-grid" style={{ padding: '14px 16px', marginBottom: 10 }}>
       {order.serviceImage
         ? <img src={order.serviceImage} alt="" style={{ width: 80, height: 64, borderRadius: 10, objectFit: 'cover' }} />
         : <div style={{ width: 80, height: 64, borderRadius: 10, background: 'var(--bg-3)' }} />
@@ -245,8 +245,8 @@ function BuyerMessages() {
   return (
     <div>
       <h1 style={{ fontSize: 32, marginBottom: 20 }}>Messages</h1>
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: 600, overflow: 'hidden' }}>
-        <div style={{ borderRight: '1px solid var(--line)', overflow: 'auto' }}>
+      <div className="card dash-msg-pane dash-msg-wrap">
+        <div style={{ overflow: 'auto' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
             <div className="input flex items-center gap-8" style={{ padding: '6px 12px' }}>
               <Icon name="search" size={14} color="var(--muted)" />
@@ -279,7 +279,7 @@ function BuyerMessages() {
             );
           })}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="dash-msg-chat" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <span className="fw-700">{(thread as any)?.vendor?.vendorProfile?.business_name ?? (thread as any)?.vendor?.name ?? '—'}</span>
@@ -347,7 +347,7 @@ function BuyerFavorites() {
           <Link href="/search" className="btn btn-primary mt-16">Browse vendors</Link>
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+      <div className="grid dash-grid-3" style={{ gap: 20 }}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {favServices.map((s: any) => <ServiceCard key={s.id} service={s} />)}
       </div>
@@ -401,7 +401,7 @@ function BuyerAccount() {
   return (
     <div>
       <h1 style={{ fontSize: 32, marginBottom: 20 }}>My Account</h1>
-      <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+      <div className="grid dash-grid-3" style={{ gap: 20 }}>
         <div className="card card-pad">
           <h3 style={{ fontSize: 17 }}>Profile</h3>
           <div className="flex items-center gap-14 mt-16">

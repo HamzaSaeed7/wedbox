@@ -101,7 +101,7 @@ function VendorHome() {
           </>
         )}
       </div>
-      <div className="grid mt-24" style={{ gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+      <div className="grid mt-24 dash-home-split" style={{ gap: 20 }}>
         <div className="card card-pad">
           <h3 style={{ fontSize: 17 }}>Recent activity</h3>
           <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -314,7 +314,7 @@ function VendorService() {
           </div>
           <div className="mt-16">
             <label className="field-label">Images <span className="muted fw-500 text-12">(minimum 2 required)</span></label>
-            <div className="grid mt-8" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            <div className="dash-img-4 mt-8">
               {imgs.map((im, i) => (
                 <div key={i} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden' }}>
                   <img src={im} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -477,7 +477,7 @@ function OrderDetailDrawer({ orderId, onClose, onApprove, onReject, approving, r
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', zIndex: 999 }} />
       {/* Panel */}
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 420,
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: 420, maxWidth: '100vw',
         background: 'white', zIndex: 1000, overflowY: 'auto',
         boxShadow: '-4px 0 32px rgba(0,0,0,.15)', display: 'flex', flexDirection: 'column',
       }}>
@@ -506,7 +506,7 @@ function OrderDetailDrawer({ orderId, onClose, onApprove, onReject, approving, r
             </div>
 
             {/* Summary row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div className="dash-summary-3" style={{ gap: 12 }}>
               {[
                 ['Customer',   customerName],
                 ['Date',       formatDate(o.deliver_date ?? o.created_at)],
@@ -744,8 +744,8 @@ function VendorMessages() {
   return (
     <div>
       <h1 style={{ fontSize: 32, marginBottom: 20 }}>Messages</h1>
-      <div className="card" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', height: 600, overflow: 'hidden' }}>
-        <div style={{ borderRight: '1px solid var(--line)', overflow: 'auto' }}>
+      <div className="card dash-msg-pane dash-msg-wrap">
+        <div style={{ overflow: 'auto' }}>
           {threads.map((t: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
             const name   = t.customer?.profile?.first_name
               ? `${t.customer.profile.first_name} ${t.customer.profile.last_name ?? ''}`.trim()
@@ -772,7 +772,7 @@ function VendorMessages() {
             );
           })}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="dash-msg-chat" style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', gap: 12 }}>
             <span className="fw-700">
               {(thread as any)?.customer?.profile?.first_name // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -918,7 +918,7 @@ function VendorSettings() {
   return (
     <div>
       <h1 style={{ fontSize: 32 }}>Settings</h1>
-      <div className="grid mt-20" style={{ gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="grid mt-20 dash-grid-2" style={{ gap: 20 }}>
         {/* Business Profile */}
         <div className="card card-pad">
           <h3 style={{ fontSize: 17 }}>Business Profile</h3>

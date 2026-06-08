@@ -92,11 +92,47 @@ class BlogSeeder extends Seeder
 <p>Don\'t underestimate the power of pre-ceremony portraits. The natural light of a hotel room in the morning, the quiet intimacy of the final preparations — these images often become couples\' favourites. Brief your bridesmaids to keep the space tidy and well-lit the morning of your wedding.</p>',
             ],
             [
+                'slug'               => 'how-to-choose-wedding-flowers-cyprus',
+                'title'              => 'How to Choose Wedding Flowers for a Cyprus Summer',
+                'cover_image_url'    => 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1200&h=630&fit=crop&auto=format&q=75',
+                'read_time_minutes'  => 5,
+                'published_at'       => '2026-05-12 09:00:00',
+                'body'               => '<p>Choosing flowers for a Mediterranean summer wedding is both a joy and a challenge. The intense heat, the brilliant light, and the island\'s own extraordinary flora all play a role. Here\'s how to get it right.</p>
+<h2>Work with the season, not against it</h2>
+<p>Cyprus in May through September is warm to very hot. Delicate blooms like garden roses and sweet peas wilt quickly in high temperatures — especially during a long outdoor ceremony. Your florist\'s first priority should be choosing varieties that hold their shape: <strong>proteas, orchids, anthuriums, tropical foliage, succulents, and dried pampas grass</strong> all perform beautifully in the heat and add striking modern texture.</p>
+<h2>Embrace local flora</h2>
+<p>Cyprus has spectacular native plants that are rarely used in weddings but look extraordinary in arrangements: wild lavender, cistus (rock rose), myrtle — which is traditionally symbolic of love — and the vibrant bougainvillea that drapes the island\'s stone walls all summer long. Using local flora reduces cost, supports the environment, and gives your floristry an authentic sense of place.</p>
+<h2>Colour palettes that work in Mediterranean light</h2>
+<p>The intensity of Cyprus light bleaches out very pale pastels in photographs. Florals that photograph beautifully here tend toward richer tones: deep coral, terracotta, dusty rose, saffron yellow, and warm white. If you love the pale, romantic look, ask your photographer to time portraits for golden hour when the light is softer.</p>
+<h2>Ceremony vs. reception flowers</h2>
+<p>For an outdoor ceremony, focus your budget on the arch or altar structure — it becomes the backdrop for all your ceremony photographs. Reception tables can be dressed more simply with low arrangements of greenery and candles, letting your venue\'s natural beauty carry the space. Repurposing ceremony flowers at the reception is a great way to maximise your floristry budget.</p>
+<h2>How much to budget</h2>
+<p>A realistic floristry budget for an 80-person Cyprus wedding is <strong>€1,500–€4,000</strong>, depending on the scale of your arch, the number of table arrangements, and your choice of flowers. Book your florist at least six months ahead — the best ones are in high demand during peak season.</p>',
+            ],
+            [
+                'slug'               => 'wedding-music-bands-djs-cyprus',
+                'title'              => 'Live Band or DJ? Choosing Wedding Music in Cyprus',
+                'cover_image_url'    => 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1200&h=630&fit=crop&auto=format&q=75',
+                'read_time_minutes'  => 4,
+                'published_at'       => '2026-05-28 10:00:00',
+                'body'               => '<p>Music sets the emotional tone of your entire wedding day. From the ceremony processional to the last dance, the right choice of entertainment transforms a good wedding into an unforgettable one. Here\'s how to decide between a live band and a DJ for your Cyprus celebration.</p>
+<h2>The case for a live band</h2>
+<p>There is simply nothing that matches the energy of a live performance. A talented wedding band reading the room, building atmosphere, and responding to your guests\' energy creates moments you can\'t engineer. In Cyprus, several outstanding bands specialise in weddings — many offer a mix of Cypriot folk music, international classics, and current pop that works brilliantly for mixed-nationality guest lists.</p>
+<p>The main considerations: live bands cost more (typically <strong>€2,500–€6,000</strong> for a four-piece), require a larger performance space, and have set set-lists. Always ask to attend a live performance before booking, or request a recent wedding video.</p>
+<h2>The case for a DJ</h2>
+<p>A skilled wedding DJ offers infinite musical flexibility — every genre, every era, every request. DJ sets also work better in outdoor or acoustically challenging spaces and are more adaptable to timing changes (inevitable at every wedding). Budget: <strong>€800–€1,800</strong> for a professional wedding DJ with full sound and lighting setup.</p>
+<p>The key is choosing a DJ with genuine wedding experience, not just club experience. Wedding DJs understand pacing — building energy gradually, reading when guests need a breather, knowing exactly when to drop the big floor-fillers.</p>
+<h2>The hybrid option</h2>
+<p>Many couples now book a live band for the first two hours of dancing and a DJ for the final hours of the night. The band creates the big showpiece moment; the DJ keeps the energy high as the evening winds on. This is our editorial team\'s favourite option for larger weddings with mixed audiences.</p>
+<h2>Ceremony music</h2>
+<p>Don\'t overlook your ceremony music. A solo acoustic guitarist or string quartet for the ceremony creates a beautifully different atmosphere to the evening entertainment. Cyprus has exceptional classical musicians available for ceremony hire — many conservatory graduates based in Limassol and Nicosia.</p>',
+            ],
+            [
                 'slug'               => 'hen-stag-party-ideas-cyprus',
                 'title'              => 'The Best Hen & Stag Party Ideas in Cyprus for 2026',
                 'cover_image_url'    => 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=1200&h=630&fit=crop&auto=format&q=75',
                 'read_time_minutes'  => 5,
-                'published_at'       => '2026-05-20 11:00:00',
+                'published_at'       => '2026-06-05 11:00:00',
                 'body'               => '<p>Cyprus is Europe\'s undisputed capital of pre-wedding celebrations. Between Ayia Napa\'s legendary nightlife, Paphos\'s beach clubs, and the island\'s adventure activities, there\'s something for every group.</p>
 <h2>Hen party ideas</h2>
 <h3>Sunset catamaran cruise</h3>

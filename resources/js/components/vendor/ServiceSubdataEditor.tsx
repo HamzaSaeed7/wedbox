@@ -595,11 +595,9 @@ function MakeupForm({ data, onChange }: { data: any; onChange: (d: any) => void 
       <SectionTitle title="Trial sessions" />
       <Row cols={2}>
         <Field label="Trial 1 price (€)"><CurrencyInput value={d.price_trial_1 ?? ''} onChange={(e) => onChange({ ...d, price_trial_1: +e.target.value })} /></Field>
-        <Field label="Trial 1 date"><input className="input" type="date" value={d.available_date_trial_1 ?? ''} onChange={set('available_date_trial_1')} /></Field>
       </Row>
       <Row cols={2}>
         <Field label="Trial 2 price (€)"><CurrencyInput value={d.price_trial_2 ?? ''} onChange={(e) => onChange({ ...d, price_trial_2: +e.target.value })} /></Field>
-        <Field label="Trial 2 date"><input className="input" type="date" value={d.available_date_trial_2 ?? ''} onChange={set('available_date_trial_2')} /></Field>
       </Row>
     </div>
   );

@@ -7,19 +7,40 @@ use Illuminate\Http\Request;
 
 class BlogController extends Controller
 {
+    private function transform(BlogPost $p): array
+    {
+        $bodyText = strip_tags($p->body ?? '');
+        $excerpt  = mb_strlen($bodyText) > 180
+            ? mb_substr($bodyText, 0, 180) . '…'
+            : $bodyText;
+
+        return [
+            'id'       => $p->id,
+            'slug'     => $p->slug,
+            'title'    => $p->title,
+            'excerpt'  => $excerpt,
+            'cover'    => $p->cover_image_url ?? '',
+            'author'   => $p->author ?? 'WedBox Editorial',
+            'readTime' => $p->read_time_minutes ?? 5,
+            'date'     => $p->published_at?->format('d M Y') ?? '',
+            'category' => $p->category ?? 'Editorial',
+            'body'     => $p->body ?? '',
+        ];
+    }
+
     public function index()
     {
-        return response()->json(
-            BlogPost::whereNotNull('published_at')
-                ->orderBy('published_at', 'desc')
-                ->paginate(10)
-        );
+        $posts = BlogPost::whereNotNull('published_at')
+            ->orderBy('published_at', 'desc')
+            ->get();
+
+        return response()->json($posts->map(fn ($p) => $this->transform($p))->values());
     }
 
     public function show(string $slug)
     {
         $post = BlogPost::where('slug', $slug)->whereNotNull('published_at')->firstOrFail();
-        return response()->json($post);
+        return response()->json($this->transform($post));
     }
 
     public function store(Request $request)
@@ -31,6 +52,8 @@ class BlogController extends Controller
             'cover_image_url'   => 'nullable|string',
             'read_time_minutes' => 'nullable|integer',
             'published_at'      => 'nullable|date',
+            'author'            => 'nullable|string',
+            'category'          => 'nullable|string',
         ]);
 
         return response()->json(BlogPost::create($data), 201);
@@ -45,6 +68,8 @@ class BlogController extends Controller
             'cover_image_url'   => 'nullable|string',
             'read_time_minutes' => 'nullable|integer',
             'published_at'      => 'nullable|date',
+            'author'            => 'nullable|string',
+            'category'          => 'nullable|string',
         ]);
 
         $blogPost->update($data);

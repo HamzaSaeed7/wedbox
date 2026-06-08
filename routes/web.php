@@ -25,7 +25,7 @@ Route::get('/blog/{slug}',   fn (string $slug)  => inertia('Blog/Show', ['slug' 
 // ─── Auth pages ───────────────────────────────────────────────────────────────
 
 Route::get('/auth',         fn () => inertia('Auth'));
-Route::get('/login',        fn () => inertia('Auth'));
+Route::get('/login',        fn () => inertia('Auth'))->name('login');
 Route::get('/login_signup', fn () => inertia('Auth'));
 
 // ─── Session auth (web-middleware — CSRF protected) ───────────────────────────
