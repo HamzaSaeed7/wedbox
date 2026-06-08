@@ -188,15 +188,16 @@ function AdminUsers() {
           </div>
         </div>
 
+        <div className="tbl-wrap">
         <table className="tbl">
           <thead>
             <tr>
-              <th><input type="checkbox" /></th>
+              <th className="hide-mobile"><input type="checkbox" /></th>
               <th>Name</th>
-              <th>Role</th>
-              <th>Joined</th>
-              <th>Status</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th className="hide-mobile">Role</th>
+              <th className="hide-mobile">Joined</th>
+              <th className="hide-mobile">Status</th>
+              <th className="tbl-actions" style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -210,8 +211,8 @@ function AdminUsers() {
               const joined = formatDate(u.created_at);
               return (
                 <tr key={u.id} style={isBanned ? { background: 'rgba(225,29,72,0.04)' } : {}}>
-                  <td><input type="checkbox" /></td>
-                  <td>
+                  <td className="hide-mobile"><input type="checkbox" /></td>
+                  <td className="tbl-name-cell">
                     <div className="flex items-center gap-10">
                       {/* Avatar — grey + ban badge when banned */}
                       <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -233,28 +234,34 @@ function AdminUsers() {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td className="hide-mobile">
                     <span className="chip" style={{ ...roleChipStyle(u.role), textTransform: 'capitalize', fontSize: 11, opacity: isBanned ? 0.5 : 1 }}>{u.role}</span>
                   </td>
-                  <td className="muted text-13" style={{ opacity: isBanned ? 0.6 : 1 }}>{joined}</td>
-                  <td>
+                  <td className="muted text-13 hide-mobile" style={{ opacity: isBanned ? 0.6 : 1 }}>{joined}</td>
+                  <td className="hide-mobile">
                     <span className="chip" style={!isBanned
                       ? { background: '#E6F7F0', color: '#059669', fontSize: 11 }
                       : { background: '#FFF0F0', color: '#E11D48', fontSize: 11, fontWeight: 700 }}>
                       {isBanned ? 'ban' : 'active'}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="tbl-actions" style={{ textAlign: 'right' }}>
                     <div className="flex gap-6" style={{ justifyContent: 'flex-end' }}>
                       {!isBanned ? (
-                        <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
-                          onClick={() => setConfirmBanId(u.id)}>Ban</button>
+                        <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Ban"
+                          onClick={() => setConfirmBanId(u.id)}>
+                          <Icon name="close" size={12} /><span className="hide-mobile" style={{ marginLeft: 4 }}>Ban</span>
+                        </button>
                       ) : (
-                        <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none', fontSize: 12 }}
-                          onClick={() => setConfirmUnbanId(u.id)}>Unban</button>
+                        <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none', fontSize: 12 }} title="Unban"
+                          onClick={() => setConfirmUnbanId(u.id)}>
+                          <Icon name="check" size={12} /><span className="hide-mobile" style={{ marginLeft: 4 }}>Unban</span>
+                        </button>
                       )}
-                      <button className="btn btn-ghost btn-sm" onClick={() => setViewUser(u)}>View</button>
-                      <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Delete user"
+                      <button className="btn btn-ghost btn-sm" title="View" onClick={() => setViewUser(u)}>
+                        <Icon name="eye" size={12} /><span className="hide-mobile" style={{ marginLeft: 4 }}>View</span>
+                      </button>
+                      <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Delete"
                         onClick={() => setConfirmDeleteId(u.id)}>
                         <Icon name="trash" size={12} />
                       </button>
@@ -265,6 +272,7 @@ function AdminUsers() {
             })}
           </tbody>
         </table>
+        </div>{/* tbl-wrap */}
 
         <div className="flex items-center justify-between" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
           <span className="muted text-13">Showing {list.length} of {total} users</span>
@@ -549,17 +557,18 @@ function AdminServices() {
       </div>
 
       <div className="card mt-20" style={{ overflow: 'hidden' }}>
+        <div className="tbl-wrap">
         <table className="tbl">
           <thead>
             <tr>
-              <th></th>
+              <th className="hide-mobile"></th>
               <th>Service</th>
-              <th>Vendor</th>
-              <th>Category</th>
-              <th>Location</th>
+              <th className="hide-mobile">Vendor</th>
+              <th className="hide-mobile">Category</th>
+              <th className="hide-tablet">Location</th>
               <th>Price</th>
-              <th>Rating</th>
-              <th>Status</th>
+              <th className="hide-tablet">Rating</th>
+              <th className="hide-mobile">Status</th>
               <th>Featured</th>
               <th style={{ textAlign: 'right' }}></th>
             </tr>
@@ -568,14 +577,14 @@ function AdminServices() {
             {isLoading ? (
               [1,2,3,4,5].map((i) => (
                 <tr key={i}>
-                  <td><div style={{ ...sk, width: 56, height: 40, borderRadius: 8 }} /></td>
+                  <td className="hide-mobile"><div style={{ ...sk, width: 56, height: 40, borderRadius: 8 }} /></td>
                   <td><div style={{ ...sk, width: 140 }} /></td>
-                  <td><div style={{ ...sk, width: 100 }} /></td>
-                  <td><div style={{ ...sk, width: 80 }} /></td>
-                  <td><div style={{ ...sk, width: 80 }} /></td>
+                  <td className="hide-mobile"><div style={{ ...sk, width: 100 }} /></td>
+                  <td className="hide-mobile"><div style={{ ...sk, width: 80 }} /></td>
+                  <td className="hide-tablet"><div style={{ ...sk, width: 80 }} /></td>
                   <td><div style={{ ...sk, width: 60 }} /></td>
-                  <td><div style={{ ...sk, width: 40 }} /></td>
-                  <td><div style={{ ...sk, width: 50 }} /></td>
+                  <td className="hide-tablet"><div style={{ ...sk, width: 40 }} /></td>
+                  <td className="hide-mobile"><div style={{ ...sk, width: 50 }} /></td>
                   <td><div style={{ ...sk, width: 36, height: 20, borderRadius: 999 }} /></td>
                   <td></td>
                 </tr>
@@ -594,19 +603,19 @@ function AdminServices() {
               const status = s.status ?? 'active';
               return (
                 <tr key={s.id}>
-                  <td>{img && <img src={img} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover' }} />}</td>
+                  <td className="hide-mobile">{img && <img src={img} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover' }} />}</td>
                   <td className="fw-600">{s.title}</td>
-                  <td className="muted text-13">{vendorName}</td>
-                  <td><span className="chip chip-soft" style={{ fontSize: 11 }}>{catName}</span></td>
-                  <td className="muted text-13">{s.location}</td>
+                  <td className="muted text-13 hide-mobile">{vendorName}</td>
+                  <td className="hide-mobile"><span className="chip chip-soft" style={{ fontSize: 11 }}>{catName}</span></td>
+                  <td className="muted text-13 hide-tablet">{s.location}</td>
                   <td className="fw-700">€{Number(s.minimum_price).toLocaleString()}</td>
-                  <td>
+                  <td className="hide-tablet">
                     <div className="flex items-center gap-4">
                       <Icon name="star" size={12} color="#F7C24A" />
                       <span className="fw-600 text-13">{Number(s.rating).toFixed(1)}</span>
                     </div>
                   </td>
-                  <td>
+                  <td className="hide-mobile">
                     <span className="chip" style={{ background: status === 'active' ? '#E6F7F0' : '#FFF7E6', color: status === 'active' ? '#059669' : '#D97706', fontSize: 11 }}>{status}</span>
                   </td>
                   <td>
@@ -642,6 +651,8 @@ function AdminServices() {
             })}
           </tbody>
         </table>
+
+        </div>{/* tbl-wrap */}
 
         {/* Pagination footer */}
         {lastPage > 1 && (

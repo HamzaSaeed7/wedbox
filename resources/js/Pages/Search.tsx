@@ -103,7 +103,7 @@ function FilterPanel({
 function ListRow({ service }: { service: Service }) {
   const cat = CATEGORIES.find((c) => c.slug === service.slug);
   return (
-    <Link href={`/service/${service.id}`} className="card flex" style={{ overflow: 'hidden' }}>
+    <Link href={`/service/${service.id}`} className="card search-list-row flex" style={{ overflow: 'hidden' }}>
       <img src={service.images[0]} alt="" style={{ width: 240, height: 180, objectFit: 'cover', flexShrink: 0 }} />
       <div style={{ padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flex: 1 }}>
         <div>
@@ -145,6 +145,7 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(10000);
   const [ratingMin, setRatingMin] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Re-sync when Inertia navigates with new props
   useEffect(() => {
@@ -178,11 +179,15 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
 
   const cat = CATEGORIES.find((c) => c.slug === category);
 
+  const activeFilterCount = (category ? 1 : 0) + (priceMin > 0 ? 1 : 0) + (priceMax < 10000 ? 1 : 0) + (ratingMin > 0 ? 1 : 0);
+
   return (
     <PublicLayout>
-      <div className="container-wide fade-up" style={{ padding: '32px 28px 64px' }}>
-        <SearchBar />
-        <div className="flex items-center justify-between mt-24 mb-16" style={{ flexWrap: 'wrap', gap: 12 }}>
+      <div className="container-wide fade-up" style={{ padding: '24px 0 64px' }}>
+        <div style={{ padding: '0 28px' }}>
+          <SearchBar />
+        </div>
+        <div className="flex items-center justify-between mt-24 mb-16" style={{ flexWrap: 'wrap', gap: 12, padding: '0 28px' }}>
           <div>
             <h1 style={{ fontSize: 28 }}>
               {cat ? cat.name : 'All vendors'}
@@ -190,11 +195,24 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
             </h1>
             <div className="muted mt-4">{isLoading ? 'Searching…' : `${results.length} results`}</div>
           </div>
-          <div className="flex items-center gap-12">
-            <select className="select" style={{ width: 'auto' }} value={sort} onChange={(e) => setSort(e.target.value)}>
+          <div className="flex items-center gap-12" style={{ flexWrap: 'wrap' }}>
+            {/* Mobile filters toggle */}
+            <button
+              className="search-filter-toggle btn btn-ghost"
+              onClick={() => setFiltersOpen((o) => !o)}
+              style={{ alignItems: 'center', gap: 6, fontSize: 13 }}>
+              <Icon name="filter" size={14} />
+              Filters
+              {activeFilterCount > 0 && (
+                <span style={{ background: 'var(--primary)', color: 'white', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 6px', marginLeft: 2 }}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+            <select className="select" style={{ width: 'auto', minWidth: 0, fontSize: 13 }} value={sort} onChange={(e) => setSort(e.target.value)}>
               <option value="popular">Most popular</option>
-              <option value="priceAsc">Price (low → high)</option>
-              <option value="priceDesc">Price (high → low)</option>
+              <option value="priceAsc">Price: low → high</option>
+              <option value="priceDesc">Price: high → low</option>
               <option value="rating">Highest rated</option>
             </select>
             <div className="flex" style={{ background: 'var(--bg-3)', padding: 3, borderRadius: 999 }}>
@@ -208,16 +226,16 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 28 }}>
-          <aside>
-            <FilterPanel category={category} setCategory={setCategory}
+        <div className="search-layout" style={{ padding: '0 28px' }}>
+          <aside className={`search-filter-aside${filtersOpen ? ' open' : ''}`}>
+            <FilterPanel category={category} setCategory={(v) => { setCategory(v); setFiltersOpen(false); }}
               priceMin={priceMin} setPriceMin={setPriceMin}
               priceMax={priceMax} setPriceMax={setPriceMax}
               ratingMin={ratingMin} setRatingMin={setRatingMin} />
           </aside>
           <div>
             {isLoading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+              <div className="search-cards-grid">
                 {[1,2,3,4,5,6].map((i) => (
                   <div key={i} className="card" style={{ borderRadius: 18, overflow: 'hidden' }}>
                     <div style={{ width: '100%', aspectRatio: '4/3', background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
@@ -229,7 +247,7 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
                 ))}
               </div>
             ) : view === 'grid' ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+              <div className="search-cards-grid">
                 {results.map((s) => <ServiceCard key={s.id} service={s} />)}
                 {results.length === 0 && <div className="muted">No matches found — try clearing some filters.</div>}
               </div>

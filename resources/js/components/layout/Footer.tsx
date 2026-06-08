@@ -23,7 +23,7 @@ export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="container-wide" style={{ padding: '52px 28px 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 40 }}>
+        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 40 }}>
           {/* Brand */}
           <div>
             <img src={logoWhite} alt="WedBox" style={{ height: 40, width: 'auto' }} />

@@ -626,10 +626,11 @@ function VendorOrders() {
         ))}
       </div>
       <div className="card mt-8" style={{ overflow: 'hidden' }}>
+        <div className="tbl-wrap">
         <table className="tbl">
           <thead>
             <tr>
-              <th>Service</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th>
+              <th>Service</th><th className="hide-mobile">Customer</th><th className="hide-mobile">Date</th><th>Amount</th><th>Status</th><th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -647,8 +648,8 @@ function VendorOrders() {
                       <span className="fw-600">{o.service?.title ?? '—'}</span>
                     </div>
                   </td>
-                  <td className="muted">{customerName}</td>
-                  <td className="muted">{formatDate(o.deliver_date ?? o.created_at)}</td>
+                  <td className="muted hide-mobile">{customerName}</td>
+                  <td className="muted hide-mobile">{formatDate(o.deliver_date ?? o.created_at)}</td>
                   <td className="fw-700">€{Number(o.price).toLocaleString()}</td>
                   <td><span className={`chip ${o.status === 'approved' ? 'chip-green' : o.status === 'pending' ? 'chip-amber' : o.status === 'rejected' ? 'chip-rose' : ''}`}>{o.status}</span></td>
                   <td style={{ textAlign: 'right' }}>
@@ -670,6 +671,7 @@ function VendorOrders() {
             )}
           </tbody>
         </table>
+        </div>{/* tbl-wrap */}
       </div>
 
       {drawerOrderId !== null && (
@@ -832,13 +834,14 @@ function VendorBilling() {
       </div>
       <div className="card mt-20" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', fontWeight: 700 }}>Recent invoices</div>
+        <div className="tbl-wrap">
         <table className="tbl">
-          <thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Invoice</th><th className="hide-mobile">Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {['Apr 2026', 'Mar 2026', 'Feb 2026'].map((m) => (
               <tr key={m}>
                 <td className="fw-600">WB-{Math.random().toString(36).slice(2, 8).toUpperCase()}</td>
-                <td className="muted">{m}</td>
+                <td className="muted hide-mobile">{m}</td>
                 <td>€49.00</td>
                 <td><span className="chip chip-green">Paid</span></td>
                 <td><button className="btn btn-ghost btn-sm"><Icon name="download" size={12} /></button></td>
@@ -846,6 +849,7 @@ function VendorBilling() {
             ))}
           </tbody>
         </table>
+        </div>{/* tbl-wrap */}
       </div>
     </div>
   );
