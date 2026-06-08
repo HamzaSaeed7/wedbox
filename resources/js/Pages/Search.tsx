@@ -127,6 +127,47 @@ function ListRow({ service }: { service: Service }) {
   );
 }
 
+function Pagination({ current, last, onChange }: { current: number; last: number; onChange: (p: number) => void }) {
+  const pages: (number | '…')[] = [];
+  if (last <= 7) {
+    for (let i = 1; i <= last; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (current > 3) pages.push('…');
+    for (let i = Math.max(2, current - 1); i <= Math.min(last - 1, current + 1); i++) pages.push(i);
+    if (current < last - 2) pages.push('…');
+    pages.push(last);
+  }
+
+  const btn = (label: React.ReactNode, target: number | null, active = false, disabled = false) => (
+    <button
+      key={String(label)}
+      type="button"
+      disabled={disabled}
+      onClick={() => target !== null && onChange(target)}
+      style={{
+        minWidth: 38, height: 38, borderRadius: 10, border: active ? '2px solid var(--primary)' : '1px solid var(--line)',
+        background: active ? 'var(--primary)' : 'white', color: active ? 'white' : disabled ? 'var(--muted)' : 'var(--ink)',
+        fontWeight: active ? 700 : 400, fontSize: 14, cursor: disabled ? 'default' : 'pointer',
+        display: 'grid', placeItems: 'center', padding: '0 10px', transition: 'all .15s',
+      }}>
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="flex items-center justify-center gap-6 mt-32" style={{ flexWrap: 'wrap' }}>
+      {btn('←', current - 1, false, current === 1)}
+      {pages.map((p, i) =>
+        p === '…'
+          ? <span key={`ellipsis-${i}`} style={{ padding: '0 4px', color: 'var(--muted)', lineHeight: '38px' }}>…</span>
+          : btn(p, p as number, p === current)
+      )}
+      {btn('→', current + 1, false, current === last)}
+    </div>
+  );
+}
+
 interface SearchProps {
   initialCategory?: string;
   initialLocation?: string;
@@ -146,11 +187,15 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
   const [priceMax, setPriceMax] = useState(10000);
   const [ratingMin, setRatingMin] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Re-sync when Inertia navigates with new props
   useEffect(() => {
     setCategory(pageProps.initialCategory || '');
   }, [pageProps.initialCategory]);
+
+  // Reset to page 1 whenever filters/sort change
+  useEffect(() => { setPage(1); }, [category, location, priceMin, priceMax, ratingMin, sort]);
 
   const sortParams = sort === 'priceAsc'
     ? { sort: 'minimum_price', sort_dir: 'asc' }
@@ -161,21 +206,27 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
     : { sort: 'created_at' };
 
   const { data: apiResult, isLoading } = useQuery({
-    queryKey: ['services', category, location, priceMin, priceMax, sort],
+    queryKey: ['services', category, location, priceMin, priceMax, ratingMin, sort, page],
     queryFn: () => servicesApi.list({
       ...(category && { category }),
       ...(location && { location }),
       ...(priceMin > 0 && { min_price: priceMin }),
       ...(priceMax < 10000 && { max_price: priceMax }),
+      ...(ratingMin > 0 && { rating_min: ratingMin }),
       ...sortParams,
+      page,
     }),
     staleTime: 30_000,
   });
 
   const results: Service[] = useMemo(
-    () => (apiResult?.data ?? []).map(normalizeService).filter((s: Service) => s.rating >= ratingMin),
-    [apiResult, ratingMin],
+    () => (apiResult?.data ?? []).map(normalizeService),
+    [apiResult],
   );
+
+  const totalResults: number = apiResult?.total ?? results.length;
+  const lastPage: number     = apiResult?.last_page ?? 1;
+  const currentPage: number  = apiResult?.current_page ?? page;
 
   const cat = CATEGORIES.find((c) => c.slug === category);
 
@@ -193,7 +244,7 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
               {cat ? cat.name : 'All vendors'}
               {location && <span className="muted" style={{ fontWeight: 400 }}> · {location}</span>}
             </h1>
-            <div className="muted mt-4">{isLoading ? 'Searching…' : `${results.length} results`}</div>
+            <div className="muted mt-4">{isLoading ? 'Searching…' : `${totalResults} results`}</div>
           </div>
           <div className="flex items-center gap-12" style={{ flexWrap: 'wrap' }}>
             {/* Mobile filters toggle */}
@@ -256,6 +307,9 @@ export default function Search({ initialCategory = '', initialLocation = '' }: S
                 {results.map((s) => <ListRow key={s.id} service={s} />)}
                 {results.length === 0 && <div className="muted">No matches found — try clearing some filters.</div>}
               </div>
+            )}
+            {!isLoading && lastPage > 1 && (
+              <Pagination current={currentPage} last={lastPage} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
             )}
           </div>
         </div>

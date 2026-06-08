@@ -24,6 +24,9 @@ class ServiceController extends Controller
         if ($request->max_price) {
             $query->where('minimum_price', '<=', $request->max_price);
         }
+        if ($request->rating_min) {
+            $query->where('rating', '>=', $request->rating_min);
+        }
 
         $sort = $request->sort ?? 'created_at';
         $dir  = $request->get('sort_dir', 'desc') === 'asc' ? 'asc' : 'desc';

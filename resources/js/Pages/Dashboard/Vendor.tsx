@@ -70,6 +70,40 @@ function VendorHome() {
     staleTime: 30_000,
   });
 
+  const { data: apiServices } = useQuery({
+    queryKey: ['vendor-services'],
+    queryFn: () => vendorApi.services(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const svcList: any[] = Array.isArray(apiServices) // eslint-disable-line @typescript-eslint/no-explicit-any
+    ? apiServices
+    : (apiServices as any)?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const firstSvc: any = svcList[0] ?? null; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const { data: fullService } = useQuery({
+    queryKey: ['vendor-service', firstSvc?.id],
+    queryFn: () => vendorApi.showService(firstSvc!.id),
+    enabled: !!firstSvc?.id,
+    staleTime: 60_000,
+  });
+
+  const svc: any = fullService ?? firstSvc; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const svcImages: string[] = svc
+    ? (svc.images ?? []).map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean) // eslint-disable-line @typescript-eslint/no-explicit-any
+    : [];
+
+  const profileChecks = [
+    { label: 'Profile photo',  done: !!(user as any)?.avatar, href: '/dashboard/vendor/settings' }, // eslint-disable-line @typescript-eslint/no-explicit-any
+    { label: 'Description',    done: !!(svc?.description?.trim()), href: '/dashboard/vendor/service' },
+    { label: 'Pricing set',    done: !!(svc?.minimum_price && Number(svc.minimum_price) > 0), href: '/dashboard/vendor/service' },
+    { label: 'Min. 2 images',  done: svcImages.length >= 2, href: '/dashboard/vendor/service' },
+  ];
+  const completedCount = profileChecks.filter((c) => c.done).length;
+  const strengthPct = Math.round((completedCount / profileChecks.length) * 100);
+
   const dbOrders: any[] = ordersResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
   const displayOrders = dbOrders;
 
@@ -132,22 +166,35 @@ function VendorHome() {
           </div>
         </div>
         <div className="card card-pad" style={{ background: 'linear-gradient(135deg, var(--primary-50), var(--bg-2))' }}>
-          <h3 style={{ fontSize: 17 }}>Profile strength</h3>
+          <div className="flex items-center" style={{ justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: 17 }}>Profile strength</h3>
+            <span className="fw-700 text-14" style={{ color: strengthPct === 100 ? 'var(--primary)' : 'var(--ink)' }}>{strengthPct}%</span>
+          </div>
+          <div style={{ marginTop: 8, height: 6, borderRadius: 99, background: 'var(--bg-3)' }}>
+            <div style={{ height: '100%', borderRadius: 99, background: 'var(--primary)', width: `${strengthPct}%`, transition: 'width .4s ease' }} />
+          </div>
           <p className="muted text-13 mt-8">Complete your listing to reach more couples.</p>
           <div className="mt-16" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              { label: 'Profile photo', done: true },
-              { label: 'Description', done: true },
-              { label: 'Pricing set', done: true },
-              { label: 'Min. 2 images', done: false },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-8">
-                <Icon name={item.done ? 'check' : 'close'} size={14} color={item.done ? 'var(--primary)' : 'var(--muted)'} />
-                <span className="text-13" style={{ color: item.done ? 'var(--ink)' : 'var(--muted)' }}>{item.label}</span>
-              </div>
+            {profileChecks.map((item) => (
+              <Link key={item.label} href={item.done ? '#' : item.href}
+                style={{ textDecoration: 'none', pointerEvents: item.done ? 'none' : 'auto' }}
+                onClick={(e) => { if (item.done) e.preventDefault(); }}>
+                <div className="flex items-center gap-8" style={{ opacity: item.done ? 1 : 0.85 }}>
+                  <Icon name={item.done ? 'check' : 'close'} size={14} color={item.done ? 'var(--primary)' : 'var(--muted)'} />
+                  <span className="text-13" style={{ color: item.done ? 'var(--ink)' : 'var(--muted)', textDecoration: item.done ? 'none' : 'underline dotted' }}>{item.label}</span>
+                </div>
+              </Link>
             ))}
           </div>
-          <Link href="/dashboard/vendor/service" className="btn btn-primary btn-block mt-20">Boost visibility</Link>
+          {strengthPct < 100 ? (
+            <Link href={profileChecks.find((c) => !c.done)?.href ?? '/dashboard/vendor/service'} className="btn btn-primary btn-block mt-20">
+              Complete profile
+            </Link>
+          ) : (
+            <div className="btn btn-primary btn-block mt-20" style={{ opacity: .75, cursor: 'default', textAlign: 'center' }}>
+              Profile complete ✓
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -884,6 +931,11 @@ function VendorSettings() {
   const [confPwd, setConfPwd] = useState('');
   const [pwdMsg, setPwdMsg]   = useState('');
 
+  const [avatarUrl, setAvatarUrl]       = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarSaved, setAvatarSaved]   = useState(false);
+  const [avatarError, setAvatarError]   = useState('');
+
   useEffect(() => {
     if (!vp) return;
     setBizName(vp.business_name ?? '');
@@ -892,7 +944,36 @@ function VendorSettings() {
     setCfn(vp.contact_first_name ?? '');
     setCln(vp.contact_last_name ?? '');
     setCtitle(vp.contact_title ?? '');
+    setAvatarUrl(vp.avatar_url ?? '');
   }, [vp]);
+
+  const avatarMutation = useMutation({
+    mutationFn: () => vendorApi.updateProfile({ avatar_url: avatarUrl }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['vendor-profile'] });
+      setAvatarSaved(true);
+      setTimeout(() => setAvatarSaved(false), 2500);
+    },
+    onError: () => setAvatarError('Failed to save profile photo.'),
+  });
+
+  const handleAvatarFile = async (file: File) => {
+    setAvatarError('');
+    setAvatarUploading(true);
+    try {
+      const url = await uploadApi.avatar(file);
+      setAvatarUrl(url);
+      // auto-save immediately after upload
+      await vendorApi.updateProfile({ avatar_url: url });
+      qc.invalidateQueries({ queryKey: ['vendor-profile'] });
+      setAvatarSaved(true);
+      setTimeout(() => setAvatarSaved(false), 2500);
+    } catch {
+      setAvatarError('Upload failed. Please try a smaller image.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const bizMutation = useMutation({
     mutationFn: () => vendorApi.updateProfile({ business_name: bizName, business_description: bizDesc, location: bizLoc }),
@@ -919,6 +1000,51 @@ function VendorSettings() {
     <div>
       <h1 style={{ fontSize: 32 }}>Settings</h1>
       <div className="grid mt-20 dash-grid-2" style={{ gap: 20 }}>
+        {/* Profile Photo */}
+        <div className="card card-pad" style={{ gridColumn: '1 / -1' }}>
+          <h3 style={{ fontSize: 17 }}>Profile Photo</h3>
+          <p className="muted text-13 mt-4">This photo appears on your public listing and in search results.</p>
+          <div className="flex items-center gap-20 mt-16" style={{ flexWrap: 'wrap' }}>
+            {/* Avatar preview */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile"
+                  style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)', display: 'block' }} />
+              ) : (
+                <div style={{ width: 96, height: 96, borderRadius: '50%', background: 'var(--bg-3)', border: '3px solid var(--line)', display: 'grid', placeItems: 'center' }}>
+                  <Icon name="user" size={36} color="var(--muted)" />
+                </div>
+              )}
+              {avatarUploading && (
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,0,0,0.45)', display: 'grid', placeItems: 'center' }}>
+                  <span style={{ color: 'white', fontSize: 12 }}>…</span>
+                </div>
+              )}
+            </div>
+            {/* Upload controls */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <label className="btn btn-primary" style={{ cursor: avatarUploading ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="plus" size={14} color="white" />
+                {avatarUploading ? 'Uploading…' : 'Upload photo'}
+                <input type="file" accept="image/*" style={{ display: 'none' }} disabled={avatarUploading}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { e.target.value = ''; handleAvatarFile(f); } }} />
+              </label>
+              {avatarUrl && (
+                <button type="button" className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
+                  onClick={() => { setAvatarUrl(''); avatarMutation.mutate(); }}>
+                  Remove photo
+                </button>
+              )}
+              <span className="muted text-12">JPG, PNG or WebP · max 5 MB</span>
+            </div>
+            {/* Status messages */}
+            <div style={{ flex: 1 }}>
+              {avatarSaved && <p className="text-13 fw-600" style={{ color: '#059669' }}>✓ Profile photo saved</p>}
+              {avatarError && <p className="text-13" style={{ color: '#E11D48' }}>{avatarError}</p>}
+            </div>
+          </div>
+        </div>
+
         {/* Business Profile */}
         <div className="card card-pad">
           <h3 style={{ fontSize: 17 }}>Business Profile</h3>

@@ -23,6 +23,7 @@ class VendorProfileController extends Controller
             'contact_last_name'    => 'sometimes|string',
             'contact_title'        => 'nullable|string',
             'location'             => 'nullable|string',
+            'avatar_url'           => 'nullable|string|url',
         ]);
 
         $profile = $request->user()->vendorProfile ?? new VendorProfile(['user_id' => $request->user()->id]);
