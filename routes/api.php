@@ -56,6 +56,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Stripe checkout (vendor only — checked inside controller)
     Route::post('/vendor/checkout', [StripeController::class, 'createCheckout']);
+    Route::get('/vendor/billing-info', [StripeController::class, 'billingInfo']);
+    Route::post('/vendor/billing-portal', [StripeController::class, 'billingPortal']);
+    Route::post('/vendor/cancel-subscription', [StripeController::class, 'cancelSubscription']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/user', [AuthController::class, 'user']);
 

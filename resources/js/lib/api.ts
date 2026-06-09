@@ -122,6 +122,9 @@ export const reviewsApi = {
 export const vendorOnboardingApi = {
   createCheckout: (plan: '3month' | '12month') =>
     api.post('/vendor/checkout', { plan }).then((r) => r.data),
+  billingInfo: () => api.get('/vendor/billing-info').then((r) => r.data),
+  billingPortal: () => api.post('/vendor/billing-portal').then((r) => r.data),
+  cancelSubscription: () => api.post('/vendor/cancel-subscription').then((r) => r.data),
   complete: (d: {
     business_name: string;
     business_description?: string;
@@ -162,6 +165,9 @@ export const uploadApi = {
 
 // ─── Vendor
 export const vendorApi = {
+  billingInfo: () => api.get('/vendor/billing-info').then((r) => r.data),
+  billingPortal: () => api.post('/vendor/billing-portal').then((r) => r.data),
+  cancelSubscription: () => api.post('/vendor/cancel-subscription').then((r) => r.data),
   services: () => api.get('/vendor/services').then((r) => r.data),
   showService: (id: number) => api.get(`/vendor/services/${id}`).then((r) => r.data),
   createService: (d: object) => api.post('/vendor/services', d).then((r) => r.data),

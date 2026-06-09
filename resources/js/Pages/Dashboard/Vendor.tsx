@@ -856,43 +856,144 @@ function VendorMessages() {
 
 // ─── Billing
 function VendorBilling() {
+  const user = useAuthUser();
+  const { showToast } = useStore();
+  const qc = useQueryClient();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+
+  const { data: billing, isLoading: billingLoading } = useQuery({
+    queryKey: ['vendor-billing'],
+    queryFn: () => vendorApi.billingInfo(),
+    enabled: !!user,
+    staleTime: 0,
+  });
+
+  const portalMutation = useMutation({
+    mutationFn: () => vendorApi.billingPortal(),
+    onSuccess: (data) => { window.location.href = data.url; },
+    onError: () => showToast('Could not open billing portal. Please try again.', 'error'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => vendorApi.cancelSubscription(),
+    onSuccess: () => {
+      setConfirmCancel(false);
+      qc.invalidateQueries({ queryKey: ['vendor-billing'] });
+      showToast('Subscription cancelled.', 'info');
+    },
+    onError: () => showToast('Could not cancel subscription. Please try again.', 'error'),
+  });
+
+  // Derive display values — fall back to DB plan when Stripe data unavailable
+  const sub = billing?.subscription;
+  const planLabel = billing?.plan === '12month' ? 'Annual' : billing?.plan === '3month' ? '3-Month' : 'Professional';
+  const planStatus = billing?.status ?? 'active';
+  const amount = sub?.amount ?? (billing?.plan === '12month' ? 129 : 49);
+  const currency = sub?.currency ?? 'EUR';
+  const interval = sub?.interval ?? 'month';
+  const renewsAt = sub?.current_period_end
+    ? new Date(sub.current_period_end * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null;
+  const cancelAtEnd = sub?.cancel_at_period_end ?? false;
+  const isCancelled = planStatus === 'cancelled';
+  const invoices: any[] = billing?.invoices ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+
   return (
     <div>
       <h1 style={{ fontSize: 32 }}>Billing</h1>
-      <div className="card mt-20" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-700))', color: 'white', padding: 28, borderRadius: 20 }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div style={{ opacity: .8, fontSize: 13, fontWeight: 600 }}>Current Plan</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>Professional</div>
+
+      {/* Cancel confirmation modal */}
+      {confirmCancel && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ maxWidth: 400, width: '90%', padding: 28 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 10 }}>Cancel your plan?</h2>
+            <p className="muted text-14" style={{ marginBottom: 20 }}>Your subscription will be cancelled immediately and your service listings will be deactivated. This cannot be undone.</p>
+            <div className="flex gap-10">
+              <button className="btn btn-ghost" onClick={() => setConfirmCancel(false)} disabled={cancelMutation.isPending}>Keep plan</button>
+              <button className="btn" style={{ background: '#E11D48', color: 'white', borderColor: '#E11D48' }}
+                onClick={() => cancelMutation.mutate()} disabled={cancelMutation.isPending}>
+                {cancelMutation.isPending ? 'Cancelling…' : 'Yes, cancel'}
+              </button>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 36, fontWeight: 700 }}>€49</div>
-            <div style={{ opacity: .8, fontSize: 13 }}>/ month</div>
-          </div>
         </div>
-        <div className="flex gap-10 mt-20" style={{ flexWrap: 'wrap' }}>
-          {['Unlimited listings', 'Priority support', 'Analytics dashboard', 'Featured placement'].map((f) => (
-            <span key={f} style={{ background: 'rgba(255,255,255,.2)', padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600 }}>{f}</span>
-          ))}
-        </div>
-        <div className="flex gap-10 mt-20">
-          <button className="btn btn-sm" style={{ background: 'white', color: 'var(--primary)', borderRadius: 999 }}>Manage subscription</button>
-          <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.2)', color: 'white', borderRadius: 999 }}>Cancel plan</button>
-        </div>
+      )}
+
+      <div className="card mt-20" style={{ background: isCancelled ? '#64748B' : 'linear-gradient(135deg, var(--primary), var(--primary-700))', color: 'white', padding: 28, borderRadius: 20 }}>
+        {billingLoading ? (
+          <div style={{ opacity: .7, fontSize: 14 }}>Loading subscription…</div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <div style={{ opacity: .8, fontSize: 13, fontWeight: 600 }}>
+                  {isCancelled ? 'Cancelled' : cancelAtEnd ? 'Cancels at period end' : 'Current Plan'}
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{planLabel}</div>
+                {renewsAt && !isCancelled && (
+                  <div style={{ opacity: .75, fontSize: 12, marginTop: 4 }}>
+                    {cancelAtEnd ? `Access until ${renewsAt}` : `Renews ${renewsAt}`}
+                  </div>
+                )}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 36, fontWeight: 700 }}>{currency === 'EUR' ? '€' : currency}{amount}</div>
+                <div style={{ opacity: .8, fontSize: 13 }}>/ {interval}</div>
+              </div>
+            </div>
+            {!isCancelled && (
+              <div className="flex gap-10 mt-20" style={{ flexWrap: 'wrap' }}>
+                {['Unlimited listings', 'Priority support', 'Analytics dashboard', 'Featured placement'].map((f) => (
+                  <span key={f} style={{ background: 'rgba(255,255,255,.2)', padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600 }}>{f}</span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-10 mt-20">
+              {!isCancelled && (
+                <>
+                  <button className="btn btn-sm" style={{ background: 'white', color: 'var(--primary)', borderRadius: 999 }}
+                    onClick={() => portalMutation.mutate()} disabled={portalMutation.isPending}>
+                    {portalMutation.isPending ? 'Opening…' : 'Manage subscription'}
+                  </button>
+                  {!cancelAtEnd && (
+                    <button className="btn btn-sm" style={{ background: 'rgba(255,255,255,.2)', color: 'white', borderRadius: 999 }}
+                      onClick={() => setConfirmCancel(true)}>
+                      Cancel plan
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
       </div>
+
       <div className="card mt-20" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', fontWeight: 700 }}>Recent invoices</div>
         <div className="tbl-wrap">
         <table className="tbl">
           <thead><tr><th>Invoice</th><th className="hide-mobile">Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            {['Apr 2026', 'Mar 2026', 'Feb 2026'].map((m) => (
-              <tr key={m}>
-                <td className="fw-600">WB-{Math.random().toString(36).slice(2, 8).toUpperCase()}</td>
-                <td className="muted hide-mobile">{m}</td>
-                <td>€49.00</td>
-                <td><span className="chip chip-green">Paid</span></td>
-                <td><button className="btn btn-ghost btn-sm"><Icon name="download" size={12} /></button></td>
+            {billingLoading && (
+              <tr><td colSpan={5} className="muted text-13" style={{ padding: '16px 18px' }}>Loading invoices…</td></tr>
+            )}
+            {!billingLoading && invoices.length === 0 && (
+              <tr><td colSpan={5} className="muted text-13" style={{ padding: '16px 18px' }}>No invoices yet.</td></tr>
+            )}
+            {invoices.map((inv) => (
+              <tr key={inv.id}>
+                <td className="fw-600">{inv.number ?? inv.id}</td>
+                <td className="muted hide-mobile">
+                  {new Date(inv.date * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </td>
+                <td>{inv.currency === 'EUR' ? '€' : inv.currency}{Number(inv.amount).toFixed(2)}</td>
+                <td><span className={`chip ${inv.status === 'paid' ? 'chip-green' : 'chip-amber'}`} style={{ textTransform: 'capitalize' }}>{inv.status}</span></td>
+                <td>
+                  {inv.pdf
+                    ? <a href={inv.pdf} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm"><Icon name="download" size={12} /></a>
+                    : <button className="btn btn-ghost btn-sm" disabled><Icon name="download" size={12} /></button>
+                  }
+                </td>
               </tr>
             ))}
           </tbody>
