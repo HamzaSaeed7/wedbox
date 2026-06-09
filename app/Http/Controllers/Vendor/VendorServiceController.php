@@ -61,6 +61,7 @@ class VendorServiceController extends Controller
             'hotel'         => $service->load('accommodation.rooms', 'accommodation.facilities'),
             'bar'           => $service->load('bar.menus.items'),
             'makeup'        => $service->load('makeup'),
+            'hair'          => $service->load('hair'),
             default         => null,
         };
     }
@@ -94,6 +95,7 @@ class VendorServiceController extends Controller
             'hotel'         => $this->saveHotel($service->id, $d),
             'bar'           => $this->saveBar($service->id, $d),
             'makeup'        => $this->saveMakeup($service->id, $d),
+            'hair'          => $this->saveHair($service->id, $d),
             default         => null,
         };
 
@@ -367,6 +369,33 @@ class VendorServiceController extends Controller
         }, (array)($d['packages'] ?? []));
 
         DB::table('service_makeups')->updateOrInsert(['service_id' => $sid], [
+            'pricing_mode'           => $mode,
+            'packages'               => json_encode($packages),
+            'price_bridal'           => (float)($d['price_bridal'] ?? 0),
+            'price_after_wedding'    => (float)($d['price_after_wedding'] ?? 0),
+            'price_party'            => (float)($d['price_party'] ?? 0),
+            'price_trial_1'          => (float)($d['price_trial_1'] ?? 0),
+            'price_trial_2'          => (float)($d['price_trial_2'] ?? 0),
+            'available_date_trial_1' => $d['available_date_trial_1'] ?? null,
+            'available_date_trial_2' => $d['available_date_trial_2'] ?? null,
+            'updated_at' => now(), 'created_at' => now(),
+        ]);
+    }
+
+    private function saveHair(int $sid, array $d): void
+    {
+        $mode = in_array($d['pricing_mode'] ?? '', ['packages', 'regular']) ? $d['pricing_mode'] : 'regular';
+
+        $packages = array_map(function (array $p) {
+            unset($p['_uploading']);
+            $p['images']   = array_values(array_filter((array)($p['images'] ?? [])));
+            $p['features'] = array_values(array_filter((array)($p['features'] ?? [])));
+            $p['price']    = (float)($p['price'] ?? 0);
+            $p['tier']     = $p['tier'] ?? null;
+            return $p;
+        }, (array)($d['packages'] ?? []));
+
+        DB::table('service_hairs')->updateOrInsert(['service_id' => $sid], [
             'pricing_mode'           => $mode,
             'packages'               => json_encode($packages),
             'price_bridal'           => (float)($d['price_bridal'] ?? 0),

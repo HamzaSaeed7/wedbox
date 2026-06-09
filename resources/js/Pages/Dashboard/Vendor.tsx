@@ -292,6 +292,7 @@ function VendorService() {
       qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
       showToast('Service unpublished and set to draft.', 'info');
     },
+    onError: () => showToast('Failed to unpublish. Please try again.', 'error'),
   });
 
   const svcStatus = apiSvc?.status ?? 'draft';

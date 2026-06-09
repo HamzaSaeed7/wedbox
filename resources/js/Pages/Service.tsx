@@ -141,6 +141,30 @@ function normalizeBar(b: any) {
   return { menus: (b.menus ?? []).map((m: any, i: number) => ({ id: String(m.id ?? i), name: m.name, price: Number(m.price ?? 0), items: (m.items ?? []).map((it: any) => it.name ?? it) })) };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeHair(h: any) {
+  if (!h) return undefined;
+  if (h.pricing_mode === 'packages' || (h.packages !== undefined && Array.isArray(h.packages) && h.packages.length > 0 && h.packages[0]?.name !== undefined)) {
+    const pkgs = (h.packages ?? []).map((p: any, i: number) => ({
+      id: p.id ?? `hpkg-${i}`,
+      name: p.name ?? '',
+      price: Number(p.price ?? 0),
+      blurb: '',
+      tier: p.tier ?? null,
+      features: Array.isArray(p.features) ? p.features : [],
+      images: Array.isArray(p.images) ? p.images : [],
+    }));
+    return { packages: pkgs };
+  }
+  const pkgs: any[] = [];
+  if (h.price_bridal != null && Number(h.price_bridal) > 0) pkgs.push({ id: 'hp1', name: 'Bridal Hair', price: Number(h.price_bridal), blurb: 'Stunning bridal updo or style for your wedding day', tier: null, features: [], images: [] });
+  if (h.price_after_wedding != null && Number(h.price_after_wedding) > 0) pkgs.push({ id: 'hp2', name: 'After-Wedding Hair', price: Number(h.price_after_wedding), blurb: 'Refreshed look for post-wedding events', tier: null, features: [], images: [] });
+  if (h.price_party != null && Number(h.price_party) > 0) pkgs.push({ id: 'hp3', name: "Hen's Party Hair", price: Number(h.price_party), blurb: 'Glamorous styles for you and your party', tier: null, features: [], images: [] });
+  if (h.price_trial_1 != null && Number(h.price_trial_1) > 0) pkgs.push({ id: 'hp4', name: 'Trial 1', price: Number(h.price_trial_1), blurb: 'First practice session to perfect your style', tier: null, features: [], images: [] });
+  if (h.price_trial_2 != null && Number(h.price_trial_2) > 0) pkgs.push({ id: 'hp5', name: 'Trial 2', price: Number(h.price_trial_2), blurb: 'Second refinement session before the big day', tier: null, features: [], images: [] });
+  return { packages: pkgs };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeMakeup(m: any) {
   if (!m) return undefined;
   // Packages mode — normalize each package to include tier, features, images
@@ -182,7 +206,7 @@ function normalizeService(s: any): Service {
     bridesmaid: normalizeBridesmaid(s.bridesmaid_dress ?? s.bridesmaid), flowerGirl: normalizeFlowerGirl(s.flower_girl_dress ?? s.flowerGirl),
     yacht: normalizeYacht(s.yacht_hire ?? s.yacht), bachelor: normalizeBachelor(s.bachelor),
     bachelorette: normalizeBachelorette(s.bachelorette), hotel: normalizeHotel(s.accommodation ?? s.hotel),
-    bar: normalizeBar(s.bar), makeup: normalizeMakeup(s.makeup),
+    bar: normalizeBar(s.bar), makeup: normalizeMakeup(s.makeup), hair: normalizeHair(s.hair),
   };
 }
 

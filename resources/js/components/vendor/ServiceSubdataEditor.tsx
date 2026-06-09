@@ -705,6 +705,126 @@ function MakeupForm({ data, onChange }: { data: any; onChange: (d: any) => void 
   );
 }
 
+// ─── 18. Hair (identical structure to Makeup) ─────────────────────────────────
+function HairVendorForm({ data, onChange }: { data: any; onChange: (d: any) => void }) {
+  const d = data ?? {};
+  const mode: 'packages' | 'regular' = d.pricing_mode ?? 'regular';
+  const setMode = (m: 'packages' | 'regular') => onChange({ ...d, pricing_mode: m });
+  const pkgs: any[] = d.packages ?? [];
+  const setPkgs = (p: any[]) => onChange({ ...d, packages: p });
+
+  return (
+    <div>
+      <div className="flex items-center gap-12 mt-4" style={{ flexWrap: 'wrap' }}>
+        <span className="fw-600 text-14">Pricing mode</span>
+        <div style={{ display: 'flex', border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
+          {(['regular', 'packages'] as const).map((m) => (
+            <button key={m} type="button" onClick={() => setMode(m)}
+              style={{
+                padding: '7px 20px', fontSize: 13, fontWeight: mode === m ? 700 : 400,
+                background: mode === m ? 'var(--primary)' : 'transparent',
+                color: mode === m ? 'white' : 'var(--ink)',
+                border: 0, cursor: 'pointer', textTransform: 'capitalize', transition: 'background .15s',
+              }}>
+              {m === 'regular' ? 'Regular' : 'Packages'}
+            </button>
+          ))}
+        </div>
+        <span className="muted text-12">
+          {mode === 'packages'
+            ? 'Customers see tiered packages on your service page.'
+            : 'Customers see individual prices for each service.'}
+        </span>
+      </div>
+
+      {mode === 'regular' && (
+        <>
+          <Row cols={3}>
+            <Field label="Bridal hair (€)"><CurrencyInput value={d.price_bridal ?? ''} onChange={(e) => onChange({ ...d, price_bridal: +e.target.value })} /></Field>
+            <Field label="After-wedding hair (€)"><CurrencyInput value={d.price_after_wedding ?? ''} onChange={(e) => onChange({ ...d, price_after_wedding: +e.target.value })} /></Field>
+            <Field label="Party hair (€)"><CurrencyInput value={d.price_party ?? ''} onChange={(e) => onChange({ ...d, price_party: +e.target.value })} /></Field>
+          </Row>
+          <SectionTitle title="Trial sessions" />
+          <Row cols={2}>
+            <Field label="Trial 1 price (€)"><CurrencyInput value={d.price_trial_1 ?? ''} onChange={(e) => onChange({ ...d, price_trial_1: +e.target.value })} /></Field>
+            <Field label="Trial 2 price (€)"><CurrencyInput value={d.price_trial_2 ?? ''} onChange={(e) => onChange({ ...d, price_trial_2: +e.target.value })} /></Field>
+          </Row>
+        </>
+      )}
+
+      {mode === 'packages' && (
+        <>
+          <SectionTitle title="Packages" sub="Each package is a tiered offering (e.g. Basic, Luxe, Airbrush). Up to 4 photos per package." />
+          {pkgs.map((p, i) => {
+            const pkgImgs: string[] = Array.isArray(p.images) ? p.images : [];
+            const canAddImg = pkgImgs.length < 4 && !p._uploading;
+            return (
+              <div key={i} className="card card-pad mt-8" style={{ background: 'var(--bg-2)' }}>
+                <div className="flex gap-8 items-center">
+                  <select className="select" value={p.tier ?? ''} onChange={(e) => setPkgs(pkgs.map((x, j) => j === i ? { ...x, tier: e.target.value || null } : x))} style={{ width: 100 }}>
+                    <option value="">No tier</option>
+                    <option value="bronze">🥉 Bronze</option>
+                    <option value="silver">🥈 Silver</option>
+                    <option value="gold">🥇 Gold</option>
+                  </select>
+                  <input className="input" value={p.name ?? ''} onChange={(e) => setPkgs(pkgs.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Package name" style={{ flex: 2 }} />
+                  <CurrencyInput value={p.price ?? 0} onChange={(e) => setPkgs(pkgs.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€" containerStyle={{ width: 100 }} />
+                  <RemoveBtn onClick={() => setPkgs(pkgs.filter((_, j) => j !== i))} />
+                </div>
+                <div className="mt-10">
+                  <div className="field-label mb-6">Photos <span className="muted fw-400">({pkgImgs.length}/4)</span></div>
+                  <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
+                    {pkgImgs.map((url, ii) => (
+                      <div key={ii} style={{ position: 'relative', width: 72, height: 72, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+                        <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button type="button"
+                          onClick={() => setPkgs(pkgs.map((x, j) => j === i ? { ...x, images: pkgImgs.filter((_, k) => k !== ii) } : x))}
+                          style={{ position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: 999, background: 'rgba(0,0,0,0.55)', border: 0, color: 'white', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+                          <Icon name="close" size={9} color="white" />
+                        </button>
+                      </div>
+                    ))}
+                    {canAddImg && (
+                      <label style={{ width: 72, height: 72, borderRadius: 10, border: '2px dashed var(--line)', display: 'grid', placeItems: 'center', cursor: 'pointer', color: 'var(--muted)', flexShrink: 0 }}>
+                        <Icon name="plus" size={18} />
+                        <input type="file" accept="image/*" style={{ display: 'none' }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            e.target.value = '';
+                            const withFlag = pkgs.map((x: any, j: number) => j === i ? { ...x, _uploading: true } : x); // eslint-disable-line @typescript-eslint/no-explicit-any
+                            setPkgs(withFlag);
+                            try {
+                              const url = await uploadApi.serviceImage(file);
+                              setPkgs(withFlag.map((x: any, j: number) => j === i ? { ...x, images: [...(Array.isArray(x.images) ? x.images : []), url], _uploading: false } : x)); // eslint-disable-line @typescript-eslint/no-explicit-any
+                            } catch {
+                              setPkgs(withFlag.map((x: any, j: number) => j === i ? { ...x, _uploading: false } : x)); // eslint-disable-line @typescript-eslint/no-explicit-any
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
+                    {p._uploading && (
+                      <div style={{ width: 72, height: 72, borderRadius: 10, border: '1px solid var(--line)', display: 'grid', placeItems: 'center', background: 'var(--bg-3)', flexShrink: 0 }}>
+                        <span className="muted text-11">…</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-10">
+                  <div className="field-label mb-4">Features included (press Enter)</div>
+                  <TagInput tags={p.features ?? []} onChange={(f) => setPkgs(pkgs.map((x, j) => j === i ? { ...x, features: f } : x))} placeholder="e.g. Blowdry, Updo, Extensions" />
+                </div>
+              </div>
+            );
+          })}
+          <AddBtn label="Add package" onClick={() => setPkgs([...pkgs, { name: '', price: 0, tier: null, features: [], images: [] }])} />
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 export interface ServiceSubdataEditorProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -734,6 +854,7 @@ function extractSubdata(service: any): any {
     case 'hotel':        return service.accommodation ?? null;
     case 'bar':          return service.bar ?? null;
     case 'makeup':       return service.makeup ?? null;
+    case 'hair':         return service.hair ?? null;
     default:             return null;
   }
 }
@@ -763,7 +884,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         payload = { ...payload, packages: payload.packages.map(({ _uploading: _, ...p }: any) => p) }; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     }
-    if (slug === 'makeup') {
+    if (slug === 'makeup' || slug === 'hair') {
       if (Array.isArray(payload.packages)) {
         payload = { ...payload, packages: payload.packages.map(({ _uploading: _, ...p }: any) => p) }; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
@@ -779,7 +900,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
     'bride-dress': 'Bride Dress', 'groom-suite': 'Groom Suite', 'best-man': 'Best Man Suit',
     'bridesmaid': 'Bridesmaids', 'flower-girl': 'Flower Girl', 'yacht': 'Yacht Hire',
     'bachelor': 'Bachelor Party', 'bachelorette': 'Bachelorette Party',
-    'hotel': 'Hotel / Accommodation', 'bar': 'Bar Service', 'makeup': 'Makeup & Hair',
+    'hotel': 'Hotel / Accommodation', 'bar': 'Bar Service', 'makeup': 'Make-up', 'hair': 'Hair Styling',
   };
 
   return (
@@ -812,6 +933,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         {slug === 'hotel'        && <HotelForm        data={formData} onChange={setFormData} />}
         {slug === 'bar'          && <BarForm          data={formData} onChange={setFormData} />}
         {slug === 'makeup'       && <MakeupForm       data={formData} onChange={setFormData} />}
+        {slug === 'hair'         && <HairVendorForm   data={formData} onChange={setFormData} />}
       </div>
     </div>
   );

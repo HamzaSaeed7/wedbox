@@ -59,4 +59,5 @@ class Service extends Model
     public function accommodation(){ return $this->hasOne(ServiceAccommodation::class); }
     public function bar()        { return $this->hasOne(ServiceBar::class); }
     public function makeup()     { return $this->hasOne(ServiceMakeup::class); }
+    public function hair()       { return $this->hasOne(ServiceHair::class); }
 }

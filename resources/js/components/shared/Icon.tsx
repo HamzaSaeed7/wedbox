@@ -59,6 +59,7 @@ const PATHS: Record<string, React.ReactNode> = {
   cocktail: <><path d="M4 4h16l-8 9z"/><path d="M12 13v7"/><path d="M8 21h8"/></>,
   hotel: <><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-7h6v7"/><path d="M6 11h.01M6 14h.01M18 11h.01M18 14h.01"/></>,
   makeup: <><path d="M6 4h12v6H6z"/><path d="M9 10v10h6V10"/><path d="M11 14h2"/></>,
+  hair: <><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M20 4 8.5 15.5"/><path d="M14.5 14.5 20 20"/><path d="M8.5 8.5 12 12"/></>,
   card: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></>,
   hiker: <><circle cx="13" cy="4" r="1.5"/><path d="M8 21l3-7 3 2 4-1"/><path d="m11 9 3 2 4-2"/></>,
   spa: <><path d="M12 3c0 4 3 6 6 8-3 1-6 4-6 8"/><path d="M12 19c0-4-3-7-6-8 3-2 6-4 6-8"/></>,

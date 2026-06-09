@@ -852,37 +852,64 @@ export function MakeupForm({ service, onChange }: FormProps) {
 
 // ─── 18. Hair
 export function HairForm({ service, onChange }: FormProps) {
-  const h = (service as any).hair as { price?: number; styles?: string[] } | undefined;
-  const price = h?.price ?? 0;
-  const styles: string[] = h?.styles?.length ? h.styles : ['Blowdry', 'Updo', 'Braids', 'Extensions', 'Colour'];
-  const [style, setStyle] = useState(styles[0] ?? '');
-  const [people, setPeople] = useState(1);
+  const hc = service.hair as MakeupConfig;
+  const [selected, setSelected] = useState<Record<string, { on: boolean; date: string; time: string }>>({});
   const [note, setNote] = useState('');
-  const total = price * people;
-  useEffect(() => onChange({
-    total,
-    summary: `${style} · ${people} ${people === 1 ? 'person' : 'people'}`,
-    payload: { style, people, note },
-    items: [
-      { label: 'Style', value: style },
-      { label: 'People', value: String(people) },
-    ],
-  }), [total, style, people, note]);
+  const total = useMemo(() => hc.packages.reduce((s, p) => s + (selected[p.id]?.on ? p.price : 0), 0), [selected]);
+  const summary = hc.packages.filter((p) => selected[p.id]?.on).map((p) => p.name).join(' + ') || 'No packages';
+  useEffect(() => onChange({ total, summary, payload: { selected, note } }), [total, selected, note]);
   return (
-    <div className="flex" style={{ flexDirection: 'column', gap: 22 }}>
-      {price > 0 && <PriceLine items={[['Price per person', `€${price}`]]} />}
-      <div>
-        <Label required>Style</Label>
-        <div className="mt-8">
-          <TogglePair value={style} onChange={setStyle} options={styles.map((s) => ({ value: s, label: s }))} />
-        </div>
-      </div>
-      <div>
-        <Label required>Number of People</Label>
-        <div className="flex items-center gap-16 mt-8">
-          <Stepper value={people} onChange={setPeople} min={1} max={20} />
-          <span className="muted text-13">Min 1 · Max 20</span>
-        </div>
+    <div className="flex" style={{ flexDirection: 'column', gap: 14 }}>
+      <Label required>Select your packages</Label>
+      <div className="flex" style={{ flexDirection: 'column', gap: 10 }}>
+        {hc.packages.map((p) => {
+          const s = selected[p.id] || { on: false, date: '2026-06-15', time: '10:00' };
+          const imgs: string[] = Array.isArray(p.images) ? p.images : [];
+          const feats: string[] = Array.isArray(p.features) ? p.features : [];
+          return (
+            <div key={p.id}
+              onClick={() => setSelected({ ...selected, [p.id]: { ...s, on: !s.on } })}
+              style={{ cursor: 'pointer', border: `1px solid ${s.on ? 'var(--primary)' : 'transparent'}`,
+                background: s.on ? 'var(--primary-50)' : '#eaf8f8', borderRadius: 14, padding: 16 }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-8">
+                  {p.tier && (
+                    <span className={`chip ${p.tier === 'bronze' ? 'chip-amber' : p.tier === 'silver' ? 'chip-soft' : 'chip-blue'}`}
+                      style={{ textTransform: 'capitalize' }}>
+                      {p.tier}
+                    </span>
+                  )}
+                  <span className="fw-700">{p.name}</span>
+                </div>
+                <span className="fw-700" style={{ color: 'var(--primary)' }}>€{Number(p.price).toLocaleString()}</span>
+              </div>
+              {feats.length > 0 && (
+                <div className="flex gap-8 mt-12" style={{ flexWrap: 'wrap' }}>
+                  {feats.map((ft) => (
+                    <span key={ft} className="chip" style={{ background: 'white', fontSize: 11 }}>{ft}</span>
+                  ))}
+                </div>
+              )}
+              {imgs.length > 0 && (
+                <div className="flex gap-8 mt-10" style={{ flexWrap: 'wrap' }}>
+                  {imgs.map((url, ii) => (
+                    <img key={ii} src={url} alt=""
+                      style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+                  ))}
+                </div>
+              )}
+              {s.on && (
+                <div className="flex gap-8 mt-12" onClick={(e) => e.stopPropagation()}>
+                  <input className="input" type="date" value={s.date}
+                    onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, date: e.target.value } })} />
+                  <input className="input" type="time" value={s.time}
+                    onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, time: e.target.value } })}
+                    style={{ width: 110 }} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       <FieldNote note={note} onChange={setNote} />
     </div>

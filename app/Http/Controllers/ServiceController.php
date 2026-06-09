@@ -76,6 +76,7 @@ class ServiceController extends Controller
             'hotel'         => $service->load('accommodation.rooms', 'accommodation.facilities'),
             'bar'           => $service->load('bar.menus.items'),
             'makeup'        => $service->load('makeup'),
+            'hair'          => $service->load('hair'),
             default         => null,
         };
     }

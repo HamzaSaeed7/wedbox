@@ -234,6 +234,8 @@ export interface MakeupConfig {
   packages: MakeupPackage[];
 }
 
+export type HairConfig = MakeupConfig;
+
 export interface Service {
   id: number;
   slug: string;
@@ -264,6 +266,7 @@ export interface Service {
   hotel?: HotelConfig;
   bar?: BarConfig;
   makeup?: MakeupConfig;
+  hair?: HairConfig;
 }
 
 export interface Order {
