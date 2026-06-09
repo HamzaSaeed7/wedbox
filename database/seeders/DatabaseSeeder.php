@@ -79,6 +79,46 @@ class DatabaseSeeder extends Seeder
             'updated_at' => $now,
         ]);
 
+        // Second admin account
+        $adminId2 = DB::table('users')->insertGetId([
+            'name'                       => 'Admin',
+            'email'                      => 'admin@wedbox.io',
+            'email_verified_at'          => $now,
+            'password'                   => Hash::make('abcd1234'),
+            'role'                       => 'admin',
+            'vendor_subscription_status' => null,
+            'vendor_plan'                => null,
+            'created_at'                 => $now,
+            'updated_at'                 => $now,
+        ]);
+        DB::table('profiles')->insert([
+            'user_id'    => $adminId2,
+            'first_name' => 'Admin',
+            'last_name'  => 'WedBox',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        // Customer account
+        $customerId = DB::table('users')->insertGetId([
+            'name'                       => 'Customer',
+            'email'                      => 'customer@wedbox.io',
+            'email_verified_at'          => $now,
+            'password'                   => Hash::make('abcd1234'),
+            'role'                       => 'customer',
+            'vendor_subscription_status' => null,
+            'vendor_plan'                => null,
+            'created_at'                 => $now,
+            'updated_at'                 => $now,
+        ]);
+        DB::table('profiles')->insert([
+            'user_id'    => $customerId,
+            'first_name' => 'Customer',
+            'last_name'  => 'WedBox',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
         // ── 4. Vendor definitions ──────────────────────────────────────────────
         $vendors = [
             [
