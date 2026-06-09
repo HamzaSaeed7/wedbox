@@ -62,8 +62,8 @@ jobs:
             echo "==> Installing PHP dependencies..."
             composer install --no-dev --optimize-autoloader --no-interaction
 
-            echo "==> Running migrations..."
-            php artisan migrate --force || echo "Migrations skipped (check DB config)"
+            echo "==> Running fresh migrations with seed..."
+            php artisan migrate:fresh --seed --force
 
             echo "==> Clearing & caching config..."
             php artisan optimize:clear
