@@ -67,6 +67,128 @@ class StripeController extends Controller
     }
 
     /**
+     * Return the vendor's current subscription and recent invoices.
+     * GET /api/vendor/billing-info
+     */
+    public function billingInfo(Request $request)
+    {
+        $user = $request->user();
+
+        $info = [
+            'plan'   => $user->vendor_plan,
+            'status' => $user->vendor_subscription_status,
+            'subscription' => null,
+            'invoices'     => [],
+        ];
+
+        if (!$user->stripe_customer_id) {
+            return response()->json($info);
+        }
+
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            $subs = \Stripe\Subscription::all([
+                'customer' => $user->stripe_customer_id,
+                'limit'    => 1,
+                'expand'   => ['data.items.data.price'],
+            ]);
+
+            if (!empty($subs->data)) {
+                $sub = $subs->data[0];
+                $price = $sub->items->data[0]->price ?? null;
+                $info['subscription'] = [
+                    'id'             => $sub->id,
+                    'status'         => $sub->status,
+                    'current_period_end' => $sub->current_period_end,
+                    'cancel_at_period_end' => $sub->cancel_at_period_end,
+                    'amount'         => $price ? $price->unit_amount / 100 : null,
+                    'currency'       => $price ? strtoupper($price->currency) : 'EUR',
+                    'interval'       => $price?->recurring?->interval ?? null,
+                ];
+
+                // Sync DB status if Stripe shows the subscription is no longer active
+                if ($sub->status === 'canceled' && $user->vendor_subscription_status !== 'cancelled') {
+                    $user->update(['vendor_subscription_status' => 'cancelled']);
+                    $info['status'] = 'cancelled';
+                }
+            }
+
+            $invoices = \Stripe\Invoice::all([
+                'customer' => $user->stripe_customer_id,
+                'limit'    => 5,
+            ]);
+
+            $info['invoices'] = array_map(fn($inv) => [
+                'id'     => $inv->id,
+                'number' => $inv->number,
+                'date'   => $inv->created,
+                'amount' => $inv->amount_paid / 100,
+                'currency' => strtoupper($inv->currency),
+                'status' => $inv->status,
+                'pdf'    => $inv->invoice_pdf,
+            ], $invoices->data);
+
+        } catch (\Exception $e) {
+            // Stripe unavailable — return what we have from DB
+        }
+
+        return response()->json($info);
+    }
+
+    /**
+     * Create a Stripe billing portal session so the vendor can manage their subscription.
+     * POST /api/vendor/billing-portal
+     */
+    public function billingPortal(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->stripe_customer_id) {
+            return response()->json(['message' => 'No billing account found.'], 422);
+        }
+
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        $session = \Stripe\BillingPortal\Session::create([
+            'customer'   => $user->stripe_customer_id,
+            'return_url' => config('app.url') . '/dashboard/vendor?sub=billing',
+        ]);
+
+        return response()->json(['url' => $session->url]);
+    }
+
+    /**
+     * Cancel the vendor's active Stripe subscription immediately.
+     * POST /api/vendor/cancel-subscription
+     */
+    public function cancelSubscription(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->stripe_customer_id) {
+            return response()->json(['message' => 'No billing account found.'], 422);
+        }
+
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        // Find the active subscription for this customer
+        $subscriptions = \Stripe\Subscription::all([
+            'customer' => $user->stripe_customer_id,
+            'status'   => 'active',
+            'limit'    => 1,
+        ]);
+
+        if ($subscriptions->data) {
+            $subscriptions->data[0]->cancel();
+        }
+
+        $user->update(['vendor_subscription_status' => 'cancelled']);
+
+        return response()->json(['message' => 'Subscription cancelled.']);
+    }
+
+    /**
      * Handle Stripe webhooks.
      * POST /stripe/webhook  (unprotected — verified via signature)
      */

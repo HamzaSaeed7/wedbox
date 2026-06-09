@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Feedback;
+use App\Models\Order;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -81,6 +84,90 @@ class AdminController extends Controller
         }
         $user->delete();
         return response()->json(null, 204);
+    }
+
+    public function vendors(Request $request)
+    {
+        $query = User::with('vendorProfile.category')
+            ->where('role', 'vendor')
+            ->leftJoin(DB::raw('(SELECT vendor_id, COUNT(*) as total_orders, COALESCE(SUM(price), 0) as total_earning FROM orders GROUP BY vendor_id) as order_stats'), 'users.id', '=', 'order_stats.vendor_id')
+            ->select('users.*', DB::raw('COALESCE(order_stats.total_orders, 0) as total_orders'), DB::raw('COALESCE(order_stats.total_earning, 0) as total_earning'));
+
+        if ($request->search) {
+            $search = '%' . $request->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('users.email', 'like', $search)
+                  ->orWhereHas('vendorProfile', fn ($v) => $v->where('business_name', 'like', $search));
+            });
+        }
+
+        $vendors = $query->latest('users.created_at')->paginate(15);
+
+        $vendors->getCollection()->transform(function ($user) {
+            $profile = $user->vendorProfile;
+            $status = $user->banned_at
+                ? 'Banned'
+                : (($profile && $profile->onboarding_completed) ? 'Approved' : 'Onboarding');
+
+            return [
+                'id'             => $user->id,
+                'email'          => $user->email,
+                'avatar_url'     => $profile?->avatar_url,
+                'business_name'  => $profile?->business_name ?? '—',
+                'category'       => $profile?->category?->name ?? '—',
+                'total_orders'   => (int) $user->total_orders,
+                'total_earning'  => (float) $user->total_earning,
+                'status'         => $status,
+            ];
+        });
+
+        return response()->json($vendors);
+    }
+
+    public function orders(Request $request)
+    {
+        $query = Order::with('user', 'vendor', 'service')->latest();
+
+        if ($request->search) {
+            $search = '%' . $request->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user',   fn ($u) => $u->where('email', 'like', $search))
+                  ->orWhereHas('vendor', fn ($v) => $v->where('email', 'like', $search));
+            });
+        }
+
+        $orders = $query->paginate(15);
+
+        $orders->getCollection()->transform(fn ($order) => [
+            'id'            => $order->id,
+            'customer_email'=> $order->user?->email ?? '—',
+            'vendor_email'  => $order->vendor?->email ?? '—',
+            'service'       => $order->order_type,
+            'price'         => (float) $order->price,
+            'received_date' => $order->created_at?->format('M d, Y'),
+            'deliver_date'  => $order->deliver_date?->format('M d, Y'),
+            'status'        => $order->status,
+        ]);
+
+        return response()->json($orders);
+    }
+
+    public function adminFeedback(Request $request)
+    {
+        $feedbacks = Feedback::with('user')
+            ->latest()
+            ->paginate(20);
+
+        $feedbacks->getCollection()->transform(fn ($fb) => [
+            'id'            => $fb->id,
+            'feedback_text' => $fb->feedback_text,
+            'user_email'    => $fb->user?->email ?? 'Guest',
+            'user_role'     => $fb->user?->role ?? '—',
+            'date'          => $fb->created_at->format('M d, Y'),
+            'experience'    => $fb->experience,
+        ]);
+
+        return response()->json($feedbacks);
     }
 
     public function invite(Request $request)

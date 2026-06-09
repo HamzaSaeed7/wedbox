@@ -122,6 +122,9 @@ export const reviewsApi = {
 export const vendorOnboardingApi = {
   createCheckout: (plan: '3month' | '12month') =>
     api.post('/vendor/checkout', { plan }).then((r) => r.data),
+  billingInfo: () => api.get('/vendor/billing-info').then((r) => r.data),
+  billingPortal: () => api.post('/vendor/billing-portal').then((r) => r.data),
+  cancelSubscription: () => api.post('/vendor/cancel-subscription').then((r) => r.data),
   complete: (d: {
     business_name: string;
     business_description?: string;
@@ -162,6 +165,9 @@ export const uploadApi = {
 
 // ─── Vendor
 export const vendorApi = {
+  billingInfo: () => api.get('/vendor/billing-info').then((r) => r.data),
+  billingPortal: () => api.post('/vendor/billing-portal').then((r) => r.data),
+  cancelSubscription: () => api.post('/vendor/cancel-subscription').then((r) => r.data),
   services: () => api.get('/vendor/services').then((r) => r.data),
   showService: (id: number) => api.get(`/vendor/services/${id}`).then((r) => r.data),
   createService: (d: object) => api.post('/vendor/services', d).then((r) => r.data),
@@ -193,4 +199,13 @@ export const adminApi = {
   createPost: (d: object) => api.post('/admin/blog', d).then((r) => r.data),
   updatePost: (id: number, d: object) => api.put(`/admin/blog/${id}`, d).then((r) => r.data),
   deletePost: (id: number) => api.delete(`/admin/blog/${id}`),
+  vendors: (params?: object) => api.get('/admin/vendors', { params }).then((r) => r.data),
+  orders: (params?: object) => api.get('/admin/orders', { params }).then((r) => r.data),
+  adminFeedback: (params?: object) => api.get('/admin/feedback', { params }).then((r) => r.data),
+};
+
+// ─── Feedback
+export const feedbackApi = {
+  submit: (d: { feedback_text: string; experience: 'happy' | 'sad' | 'neutral' }) =>
+    api.post('/feedback', d).then((r) => r.data),
 };
