@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Icon from '../../components/shared/Icon';
 import Logo from '../../components/shared/Logo';
 import { useStore, useAuthUser } from '../../store';
 import { CATEGORIES } from '../../lib/data';
-import { adminApi } from '../../lib/api';
+import { adminApi, profileApi, uploadApi } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 
 // ─── Stat card
@@ -27,9 +27,14 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 function AdminSidebar({ active }: { active: string }) {
   const { logout } = useStore();
   const items = [
-    { id: 'users',    href: '/dashboard/admin',          label: 'Users',    icon: 'user' },
-    { id: 'services', href: '/dashboard/admin/services', label: 'Services', icon: 'services' },
-    { id: 'blog',     href: '/dashboard/admin/blog',     label: 'Blog',     icon: 'blog' },
+    { id: 'dashboard', href: '/dashboard/admin',           label: 'Dashboard', icon: 'grid' },
+    { id: 'services',  href: '/dashboard/admin/services',  label: 'Services',  icon: 'services' },
+    { id: 'vendors',   href: '/dashboard/admin/vendors',   label: 'Vendors',   icon: 'user' },
+    { id: 'blogs',     href: '/dashboard/admin/blogs',     label: 'Blogs',     icon: 'blog' },
+    { id: 'users',     href: '/dashboard/admin/users',     label: 'Users',     icon: 'bookings' },
+    { id: 'orders',    href: '/dashboard/admin/orders',    label: 'Orders',    icon: 'cart' },
+    { id: 'feedback',  href: '/dashboard/admin/feedback',  label: 'Feedback',  icon: 'star' },
+    { id: 'settings',  href: '/dashboard/admin/settings',  label: 'Settings',  icon: 'settings' },
   ];
   return (
     <aside className="dash-side" style={{ background: 'var(--primary)' }}>
@@ -874,6 +879,460 @@ function AdminBlog() {
   );
 }
 
+// ─── Dashboard overview
+function AdminOverview() {
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Dashboard</h1>
+      <p className="muted text-14 mt-8">Welcome to the WedBox admin panel. Use the sidebar to manage vendors, services, orders, and more.</p>
+    </div>
+  );
+}
+
+// ─── Vendors
+function AdminVendors() {
+  const user = useAuthUser();
+  const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  const [page, setPage] = useState(1);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedQ(q); setPage(1); }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const { data: apiResult, isLoading } = useQuery({
+    queryKey: ['admin-vendors', debouncedQ, page],
+    queryFn: () => adminApi.vendors({ ...(debouncedQ && { search: debouncedQ }), page }),
+    enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => adminApi.deleteUser(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-vendors'] }); setConfirmId(null); },
+  });
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+
+  const list: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const total: number = apiResult?.total ?? 0;
+  const lastPage: number = apiResult?.last_page ?? 1;
+  const confirmVendor = confirmId != null ? list.find((v: any) => v.id === confirmId) : null; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const statusChip = (s: string) => {
+    if (s === 'Approved')   return { background: '#E6F7F0', color: '#059669' };
+    if (s === 'Onboarding') return { background: '#FFF7E6', color: '#D97706' };
+    return { background: '#FFF0F0', color: '#E11D48' };
+  };
+
+  const pageNumbers = (() => {
+    if (lastPage <= 7) return Array.from({ length: lastPage }, (_, i) => i + 1);
+    if (page <= 4) return [1, 2, 3, 4, 5, -1, lastPage];
+    if (page >= lastPage - 3) return [1, -1, lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1, lastPage];
+    return [1, -1, page - 1, page, page + 1, -2, lastPage];
+  })();
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h1 style={{ fontSize: 32 }}>Vendors</h1>
+        <div style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
+          <input type="text" placeholder="Search vendors…" value={q} onChange={(e) => setQ(e.target.value)}
+            style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+        </div>
+      </div>
+
+      <div className="card mt-20" style={{ overflow: 'hidden' }}>
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Business Name</th>
+                <th className="hide-mobile">Service</th>
+                <th className="hide-mobile">Total Orders</th>
+                <th className="hide-tablet">Total Earning</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? [1,2,3,4,5].map((i) => (
+                <tr key={i}>{[160,120,80,50,60,70,0].map((w, j) => (
+                  <td key={j}>{w > 0 && <div style={{ height: 14, borderRadius: 6, width: w, background: 'var(--bg-3)' }} />}</td>
+                ))}</tr>
+              )) : list.length === 0 ? (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No vendors found.</td></tr>
+              ) : list.map((v: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                <tr key={v.id}>
+                  <td>
+                    <div className="flex items-center gap-10">
+                      <div style={{ width: 32, height: 32, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0, overflow: 'hidden' }}>
+                        {v.avatar_url ? <img src={v.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : v.email[0]?.toUpperCase()}
+                      </div>
+                      <span className="text-13">{v.email}</span>
+                    </div>
+                  </td>
+                  <td className="fw-600">{v.business_name}</td>
+                  <td className="hide-mobile"><span className="chip chip-soft" style={{ fontSize: 11 }}>{v.category}</span></td>
+                  <td className="hide-mobile muted text-13">{v.total_orders} orders</td>
+                  <td className="hide-tablet fw-600">€{Number(v.total_earning).toLocaleString()}</td>
+                  <td><span className="chip" style={{ ...statusChip(v.status), fontSize: 11 }}>{v.status}</span></td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Delete" onClick={() => setConfirmId(v.id)}>
+                      <Icon name="trash" size={12} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
+          <span className="muted text-13">Showing {list.length} of {total} vendors</span>
+          {lastPage > 1 && (
+            <div className="flex gap-4">
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+              {pageNumbers.map((n, i) => n < 0
+                ? <span key={n + '_' + i} style={{ padding: '0 4px', color: 'var(--muted)', alignSelf: 'center' }}>…</span>
+                : <button key={n} className="btn btn-sm"
+                    style={n === page ? { background: 'var(--primary)', color: '#fff', border: 'none', minWidth: 32 } : { background: 'transparent', border: '1px solid var(--border)', minWidth: 32 }}
+                    onClick={() => setPage(n)}>{n}</button>
+              )}
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.min(lastPage, p + 1))} disabled={page === lastPage}>Next ›</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {confirmId != null && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ width: 420, padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Delete vendor?</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14 }}>Permanently delete <strong>{confirmVendor?.business_name ?? confirmVendor?.email ?? 'this vendor'}</strong> and all their data? <span style={{ color: '#E11D48', fontWeight: 600 }}>This cannot be undone.</span></p>
+            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setConfirmId(null)} disabled={deleteMutation.isPending}>Cancel</button>
+              <button className="btn btn-primary" style={{ background: '#E11D48', borderColor: '#E11D48' }}
+                onClick={() => deleteMutation.mutate(confirmId!)} disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Orders
+function AdminOrders() {
+  const user = useAuthUser();
+  const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedQ(q); setPage(1); }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const { data: apiResult, isLoading } = useQuery({
+    queryKey: ['admin-orders', debouncedQ, page],
+    queryFn: () => adminApi.orders({ ...(debouncedQ && { search: debouncedQ }), page }),
+    enabled: !!user,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
+
+  const list: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const total: number = apiResult?.total ?? 0;
+  const lastPage: number = apiResult?.last_page ?? 1;
+
+  const statusChip = (s: string) => {
+    if (s === 'approved') return { background: '#E6F7F0', color: '#059669' };
+    if (s === 'rejected') return { background: '#FFF0F0', color: '#E11D48' };
+    return { background: '#FFF7E6', color: '#D97706' };
+  };
+
+  const catLabel = (slug: string) => CATEGORIES.find((c) => c.slug === slug)?.name ?? slug ?? '—';
+
+  const pageNumbers = (() => {
+    if (lastPage <= 7) return Array.from({ length: lastPage }, (_, i) => i + 1);
+    if (page <= 4) return [1, 2, 3, 4, 5, -1, lastPage];
+    if (page >= lastPage - 3) return [1, -1, lastPage - 4, lastPage - 3, lastPage - 2, lastPage - 1, lastPage];
+    return [1, -1, page - 1, page, page + 1, -2, lastPage];
+  })();
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h1 style={{ fontSize: 32 }}>Orders</h1>
+        <div className="flex items-center gap-10">
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
+            <input type="text" placeholder="Search by email…" value={q} onChange={(e) => setQ(e.target.value)}
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+          </div>
+          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="download" size={14} /> Export Filters
+          </button>
+        </div>
+      </div>
+
+      <div className="card mt-20" style={{ overflow: 'hidden' }}>
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Placed by</th>
+                <th className="hide-mobile">Vendor</th>
+                <th className="hide-mobile">Service</th>
+                <th>Price</th>
+                <th className="hide-tablet">Received Date</th>
+                <th className="hide-tablet">Deliver Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? [1,2,3,4,5].map((i) => (
+                <tr key={i}>{[160,140,80,60,90,90,70].map((w, j) => (
+                  <td key={j}><div style={{ height: 14, borderRadius: 6, width: w, background: 'var(--bg-3)' }} /></td>
+                ))}</tr>
+              )) : list.length === 0 ? (
+                <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>
+                  {debouncedQ ? `No orders match "${debouncedQ}".` : 'No orders yet.'}
+                </td></tr>
+              ) : list.map((o: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                <tr key={o.id}>
+                  <td className="text-13">{o.customer_email}</td>
+                  <td className="muted text-13 hide-mobile">{o.vendor_email}</td>
+                  <td className="hide-mobile"><span className="chip chip-soft" style={{ fontSize: 11 }}>{catLabel(o.service)}</span></td>
+                  <td className="fw-700">€{Number(o.price).toLocaleString()}</td>
+                  <td className="muted text-13 hide-tablet">{o.received_date}</td>
+                  <td className="muted text-13 hide-tablet">{o.deliver_date ?? '—'}</td>
+                  <td><span className="chip" style={{ ...statusChip(o.status), fontSize: 11, textTransform: 'capitalize' }}>{o.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between" style={{ padding: '12px 18px', borderTop: '1px solid var(--border)' }}>
+          <span className="muted text-13">Showing {list.length} of {total} orders</span>
+          {lastPage > 1 && (
+            <div className="flex gap-4">
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+              {pageNumbers.map((n, i) => n < 0
+                ? <span key={n + '_' + i} style={{ padding: '0 4px', color: 'var(--muted)', alignSelf: 'center' }}>…</span>
+                : <button key={n} className="btn btn-sm"
+                    style={n === page ? { background: 'var(--primary)', color: '#fff', border: 'none', minWidth: 32 } : { background: 'transparent', border: '1px solid var(--border)', minWidth: 32 }}
+                    onClick={() => setPage(n)}>{n}</button>
+              )}
+              <button className="btn btn-ghost btn-sm" onClick={() => setPage((p) => Math.min(lastPage, p + 1))} disabled={page === lastPage}>Next ›</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Feedback
+function AdminFeedback() {
+  const user = useAuthUser();
+  const { data: apiResult, isLoading } = useQuery({
+    queryKey: ['admin-feedback'],
+    queryFn: () => adminApi.adminFeedback(),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
+  const list: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const expChip = (e: string) => {
+    if (e === 'happy') return { background: '#E6F7F0', color: '#059669' };
+    if (e === 'sad')   return { background: '#FFF7E6', color: '#D97706' };
+    return { background: 'var(--bg-3)', color: 'var(--ink-2)' };
+  };
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Feedbacks</h1>
+      <div className="card mt-20" style={{ overflow: 'hidden' }}>
+        <div className="tbl-wrap">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Feedback</th>
+                <th>User</th>
+                <th className="hide-mobile">User Role</th>
+                <th className="hide-mobile">Date</th>
+                <th>Experience</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? [1,2,3,4].map((i) => (
+                <tr key={i}>{[200,160,70,90,60].map((w, j) => (
+                  <td key={j}><div style={{ height: 14, borderRadius: 6, width: w, background: 'var(--bg-3)' }} /></td>
+                ))}</tr>
+              )) : list.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No feedbacks yet.</td></tr>
+              ) : list.map((fb: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+                <tr key={fb.id}>
+                  <td style={{ maxWidth: 300 }}>{fb.feedback_text}</td>
+                  <td className="text-13">{fb.user_email}</td>
+                  <td className="hide-mobile"><span className="chip" style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', fontSize: 11, textTransform: 'capitalize' }}>{fb.user_role}</span></td>
+                  <td className="muted text-13 hide-mobile">{fb.date}</td>
+                  <td><span className="chip" style={{ ...expChip(fb.experience), fontSize: 11, textTransform: 'capitalize' }}>{fb.experience}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Settings
+function AdminSettings() {
+  const user = useAuthUser();
+  const qc = useQueryClient();
+  const { showToast } = useStore();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['admin-profile'],
+    queryFn: () => profileApi.get(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
+  const [email, setEmail]         = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      const parts = (profile.name ?? '').split(' ');
+      setFirstName(parts[0] ?? '');
+      setLastName(parts.slice(1).join(' ') ?? '');
+      setEmail(profile.email ?? '');
+      setAvatarUrl(profile.avatar_url ?? profile.profile?.avatar_url ?? '');
+    }
+  }, [profile]);
+
+  const [curPwd, setCurPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confPwd, setConfPwd] = useState('');
+
+  const accountMutation = useMutation({
+    mutationFn: () => profileApi.update({ name: [firstName, lastName].filter(Boolean).join(' '), email }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-profile'] }); showToast('Account updated.', 'success'); },
+    onError: () => showToast('Failed to update account.', 'error'),
+  });
+
+  const passwordMutation = useMutation({
+    mutationFn: () => profileApi.updatePassword({ current_password: curPwd, password: newPwd, password_confirmation: confPwd }),
+    onSuccess: () => { setCurPwd(''); setNewPwd(''); setConfPwd(''); showToast('Password updated.', 'success'); },
+    onError: () => showToast('Failed to update password.', 'error'),
+  });
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const url = await uploadApi.avatar(file);
+      setAvatarUrl(url);
+      await profileApi.update({ avatar_url: url });
+      qc.invalidateQueries({ queryKey: ['admin-profile'] });
+      showToast('Profile picture updated.', 'success');
+    } catch {
+      showToast('Failed to upload image.', 'error');
+    } finally {
+      setAvatarUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 14px', borderRadius: 24, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, outline: 'none', boxSizing: 'border-box' };
+  const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 };
+
+  if (isLoading) return <div className="muted text-13 mt-20">Loading…</div>;
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 32 }}>Account Settings</h1>
+
+      <div className="flex items-center gap-16 mt-20">
+        <button onClick={() => fileRef.current?.click()} disabled={avatarUploading}
+          style={{ width: 88, height: 88, borderRadius: 999, border: '2px dashed var(--primary)', background: 'var(--primary-50)', display: 'grid', placeItems: 'center', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}>
+          {avatarUrl
+            ? <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : <span style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 600, textAlign: 'center', padding: 8, lineHeight: 1.3 }}>
+                {avatarUploading ? 'Uploading…' : 'Click to upload an image'}
+              </span>
+          }
+        </button>
+        <span className="text-13 muted">Upload your profile picture</span>
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+      </div>
+
+      <div className="flex gap-20 mt-24" style={{ flexWrap: 'wrap' }}>
+        <div className="card card-pad" style={{ flex: 1, minWidth: 280 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Email</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}><Icon name="mail" size={14} color="var(--muted)" /></span>
+                <input style={{ ...inputStyle, paddingLeft: 38 }} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>First Name</label>
+              <input style={inputStyle} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Last Name</label>
+              <input style={inputStyle} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </div>
+          </div>
+          <button className="btn btn-primary mt-20" style={{ borderRadius: 24, paddingLeft: 28, paddingRight: 28 }}
+            onClick={() => accountMutation.mutate()} disabled={accountMutation.isPending}>
+            {accountMutation.isPending ? 'Updating…' : 'Update account'}
+          </button>
+        </div>
+
+        <div className="card card-pad" style={{ flex: 1, minWidth: 280 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Current password</label>
+              <input style={inputStyle} type="password" placeholder="Current password" value={curPwd} onChange={(e) => setCurPwd(e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>New password</label>
+              <input style={inputStyle} type="password" placeholder="New password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>Confirm password</label>
+              <input style={inputStyle} type="password" placeholder="Confirm password" value={confPwd} onChange={(e) => setConfPwd(e.target.value)} />
+            </div>
+          </div>
+          <button className="btn btn-primary mt-20" style={{ borderRadius: 24, paddingLeft: 28, paddingRight: 28 }}
+            onClick={() => passwordMutation.mutate()} disabled={passwordMutation.isPending || !curPwd || !newPwd || newPwd !== confPwd}>
+            {passwordMutation.isPending ? 'Updating…' : 'Update password'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface AdminProps {
   sub?: string;
 }
@@ -881,8 +1340,8 @@ interface AdminProps {
 // ─── Main dashboard shell
 export default function AdminDashboard({ sub: subProp }: AdminProps) {
   const pageProps = usePage().props as AdminProps;
-  const sub = subProp ?? pageProps.sub ?? 'users';
-  const active = sub || 'users';
+  const sub = subProp ?? pageProps.sub ?? 'dashboard';
+  const active = sub || 'dashboard';
   const user = useAuthUser();
 
   useEffect(() => {
@@ -900,9 +1359,14 @@ export default function AdminDashboard({ sub: subProp }: AdminProps) {
     <div className="dash-shell">
       <AdminSidebar active={active} />
       <main className="dash-main">
-        {(active === 'users')    && <AdminUsers />}
+        {active === 'dashboard'  && <AdminOverview />}
+        {active === 'users'      && <AdminUsers />}
         {active === 'services'   && <AdminServices />}
-        {active === 'blog'       && <AdminBlog />}
+        {active === 'vendors'    && <AdminVendors />}
+        {(active === 'blogs' || active === 'blog') && <AdminBlog />}
+        {active === 'orders'     && <AdminOrders />}
+        {active === 'feedback'   && <AdminFeedback />}
+        {active === 'settings'   && <AdminSettings />}
       </main>
     </div>
   );

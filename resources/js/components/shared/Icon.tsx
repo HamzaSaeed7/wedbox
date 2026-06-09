@@ -72,6 +72,7 @@ const PATHS: Record<string, React.ReactNode> = {
   clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
   package: <><path d="m3 8 9-5 9 5-9 5z"/><path d="M3 8v8l9 5 9-5V8"/></>,
   diamond: <><path d="m6 4 6-2 6 2 4 5-10 13L2 9Z"/><path d="M2 9h20"/><path d="m12 22 3-13"/><path d="m12 22-3-13"/></>,
+  mail: <><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></>,
 };
 
 export default function Icon({ name, size = 18, stroke = 1.6, color = 'currentColor', fill = 'none' }: IconProps) {

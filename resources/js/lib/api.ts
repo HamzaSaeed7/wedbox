@@ -199,4 +199,13 @@ export const adminApi = {
   createPost: (d: object) => api.post('/admin/blog', d).then((r) => r.data),
   updatePost: (id: number, d: object) => api.put(`/admin/blog/${id}`, d).then((r) => r.data),
   deletePost: (id: number) => api.delete(`/admin/blog/${id}`),
+  vendors: (params?: object) => api.get('/admin/vendors', { params }).then((r) => r.data),
+  orders: (params?: object) => api.get('/admin/orders', { params }).then((r) => r.data),
+  adminFeedback: (params?: object) => api.get('/admin/feedback', { params }).then((r) => r.data),
+};
+
+// ─── Feedback
+export const feedbackApi = {
+  submit: (d: { feedback_text: string; experience: 'happy' | 'sad' | 'neutral' }) =>
+    api.post('/feedback', d).then((r) => r.data),
 };

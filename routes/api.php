@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FileUploadController;
@@ -84,6 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
 
     Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::post('/feedback', [FeedbackController::class, 'store']);
 
     // Vendor
     Route::middleware('vendor')->prefix('vendor')->group(function () {
@@ -119,5 +121,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/blog', [BlogController::class, 'store']);
         Route::put('/blog/{blogPost}', [BlogController::class, 'update']);
         Route::delete('/blog/{blogPost}', [BlogController::class, 'destroy']);
+        Route::get('/vendors',  [AdminController::class, 'vendors']);
+        Route::get('/orders',   [AdminController::class, 'orders']);
+        Route::get('/feedback', [AdminController::class, 'adminFeedback']);
     });
 });
