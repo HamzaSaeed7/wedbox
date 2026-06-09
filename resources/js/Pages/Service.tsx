@@ -566,8 +566,8 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
       venue: 'venue', catering: 'catering', florist: 'florist', 'car-hire': 'carHire',
       photography: 'photography', music: 'music', 'bride-dress': 'brideDress',
       'groom-suite': 'groomSuite', 'best-man': 'bestMan', bridesmaid: 'bridesmaid',
-      'flower-girl': 'flowerGirl', yacht: 'yacht', bachelor: 'bachelor',
-      bachelorette: 'bachelorette', hotel: 'hotel', bar: 'bar', makeup: 'makeup',
+      'flower-girl': 'flowerGirl', 'yacht': 'yacht', bachelor: 'bachelor',
+      bachelorette: 'bachelorette', hotel: 'hotel', bar: 'bar', 'makeup': 'makeup',
     };
     const subKey = SUB_DATA_KEYS[service.slug];
     const hasSubData = !subKey || service[subKey] != null;

@@ -21,19 +21,19 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Catering',          'slug' => 'catering',         'description' => 'Food and beverage catering services.',      'order' => 2],
             ['name' => 'Florist',           'slug' => 'florist',          'description' => 'Floral arrangements and decorations.',       'order' => 3],
             ['name' => 'Car Hire',          'slug' => 'car-hire',         'description' => 'Wedding car hire and chauffeur services.',   'order' => 4],
-            ['name' => 'Photography',       'slug' => 'photographer',     'description' => 'Wedding photography and videography.',       'order' => 5],
+            ['name' => 'Photography',       'slug' => 'photography',      'description' => 'Wedding photography and videography.',       'order' => 5],
             ['name' => 'Music',             'slug' => 'music',            'description' => 'Live music and DJ entertainment.',           'order' => 6],
             ['name' => 'Bride Dress',       'slug' => 'bride-dress',      'description' => 'Bridal gowns and dresses.',                  'order' => 7],
             ['name' => 'Groom Suite',       'slug' => 'groom-suite',      'description' => 'Groom suits and formalwear.',               'order' => 8],
             ['name' => 'Best Man Suit',     'slug' => 'best-man',         'description' => 'Best man suits and accessories.',           'order' => 9],
             ['name' => 'Bridesmaid',        'slug' => 'bridesmaid',       'description' => 'Bridesmaid dresses and styling.',           'order' => 10],
-            ['name' => 'Flower Girl Dress', 'slug' => 'flower-girl-dress','description' => 'Flower girl dresses for little ones.',      'order' => 11],
-            ['name' => 'Yacht Hire',        'slug' => 'yacht-hire',       'description' => 'Luxury yacht hire for weddings.',           'order' => 12],
+            ['name' => 'Flower Girl Dress', 'slug' => 'flower-girl',      'description' => 'Flower girl dresses for little ones.',      'order' => 11],
+            ['name' => 'Yacht Hire',        'slug' => 'yacht',            'description' => 'Luxury yacht hire for weddings.',           'order' => 12],
             ['name' => 'Bachelor',          'slug' => 'bachelor',         'description' => 'Bachelor party planning and events.',       'order' => 13],
             ['name' => 'Bachelorette',      'slug' => 'bachelorette',     'description' => 'Bachelorette party planning and events.',   'order' => 14],
             ['name' => 'Hotel',             'slug' => 'hotel',            'description' => 'Wedding accommodation and hotel packages.',  'order' => 15],
             ['name' => 'Bar',               'slug' => 'bar',              'description' => 'Bar and cocktail services for weddings.',   'order' => 16],
-            ['name' => 'Make Up',           'slug' => 'make-up',          'description' => 'Bridal makeup and beauty services.',        'order' => 17],
+            ['name' => 'Make Up',           'slug' => 'makeup',           'description' => 'Bridal makeup and beauty services.',        'order' => 17],
             ['name' => 'Hair',              'slug' => 'hair',             'description' => 'Bridal hair styling and up-dos.',           'order' => 18],
         ];
 
@@ -163,7 +163,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'tag'         => 'photo',
-                'cat'         => 'photographer',
+                'cat'         => 'photography',
+                'img'         => 'photographer',
                 'business'    => 'Moments By Andreas',
                 'first'       => 'Andreas',
                 'last'        => 'Georgiou',
@@ -223,7 +224,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'tag'         => 'flowergirl',
-                'cat'         => 'flower-girl-dress',
+                'cat'         => 'flower-girl',
+                'img'         => 'flower-girl-dress',
                 'business'    => 'Little Princess Dresses',
                 'first'       => 'Irene',
                 'last'        => 'Michaelidou',
@@ -233,7 +235,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'tag'         => 'yacht',
-                'cat'         => 'yacht-hire',
+                'cat'         => 'yacht',
+                'img'         => 'yacht-hire',
                 'business'    => 'Azure Yacht Charter',
                 'first'       => 'Giorgos',
                 'last'        => 'Christodoulou',
@@ -283,7 +286,8 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'tag'         => 'makeup',
-                'cat'         => 'make-up',
+                'cat'         => 'makeup',
+                'img'         => 'make-up',
                 'business'    => 'Glow Bridal Beauty',
                 'first'       => 'Natasha',
                 'last'        => 'Hadjicosta',
@@ -359,9 +363,10 @@ class DatabaseSeeder extends Seeder
 
     private function createService(array $v, int $userId, int $catId, Carbon $now): void
     {
-        $cat   = $v['cat'];
-        $img1  = self::S3 . "/services/{$cat}/image1.jpg";
-        $img2  = self::S3 . "/services/{$cat}/image2.jpg";
+        $cat      = $v['cat'];
+        $imgFolder = $v['img'] ?? $cat;           // S3 folder may differ from category slug
+        $img1  = self::S3 . "/services/{$imgFolder}/image1.jpg";
+        $img2  = self::S3 . "/services/{$imgFolder}/image2.jpg";
 
         $serviceId = DB::table('services')->insertGetId([
             'vendor_id'     => $userId,
@@ -380,50 +385,50 @@ class DatabaseSeeder extends Seeder
         ]);
 
         match ($cat) {
-            'venue'             => $this->seedVenue($serviceId, $now),
-            'catering'          => $this->seedCatering($serviceId, $now),
-            'florist'           => $this->seedFlorist($serviceId, $now),
-            'car-hire'          => $this->seedCarHire($serviceId, $now),
-            'photographer'      => $this->seedPhotography($serviceId, $now),
-            'music'             => $this->seedMusic($serviceId, $now),
-            'bride-dress'       => $this->seedBrideDress($serviceId, $now),
-            'groom-suite'       => $this->seedGroomSuite($serviceId, $now),
-            'best-man'          => $this->seedBestManSuit($serviceId, $now),
-            'bridesmaid'        => $this->seedBridesmaid($serviceId, $now),
-            'flower-girl-dress' => $this->seedFlowerGirlDress($serviceId, $now),
-            'yacht-hire'        => $this->seedYachtHire($serviceId, $now),
-            'bachelor'          => $this->seedBachelor($serviceId, $now),
-            'bachelorette'      => $this->seedBachelorette($serviceId, $now),
-            'hotel'             => $this->seedHotel($serviceId, $now),
-            'bar'               => $this->seedBar($serviceId, $now),
-            'make-up'           => $this->seedMakeup($serviceId, $now),
-            'hair'              => $this->seedHair($serviceId, $now),
-            default             => null,
+            'venue'        => $this->seedVenue($serviceId, $now),
+            'catering'     => $this->seedCatering($serviceId, $now),
+            'florist'      => $this->seedFlorist($serviceId, $now),
+            'car-hire'     => $this->seedCarHire($serviceId, $now),
+            'photography'  => $this->seedPhotography($serviceId, $now),
+            'music'        => $this->seedMusic($serviceId, $now),
+            'bride-dress'  => $this->seedBrideDress($serviceId, $now),
+            'groom-suite'  => $this->seedGroomSuite($serviceId, $now),
+            'best-man'     => $this->seedBestManSuit($serviceId, $now),
+            'bridesmaid'   => $this->seedBridesmaid($serviceId, $now),
+            'flower-girl'  => $this->seedFlowerGirlDress($serviceId, $now),
+            'yacht'        => $this->seedYachtHire($serviceId, $now),
+            'bachelor'     => $this->seedBachelor($serviceId, $now),
+            'bachelorette' => $this->seedBachelorette($serviceId, $now),
+            'hotel'        => $this->seedHotel($serviceId, $now),
+            'bar'          => $this->seedBar($serviceId, $now),
+            'makeup'       => $this->seedMakeup($serviceId, $now),
+            'hair'         => $this->seedHair($serviceId, $now),
+            default        => null,
         };
     }
 
     private function basePrice(string $cat): float
     {
         return match ($cat) {
-            'venue'             => 2500.00,
-            'catering'          => 45.00,
-            'florist'           => 350.00,
-            'car-hire'          => 200.00,
-            'photographer'      => 800.00,
-            'music'             => 500.00,
-            'bride-dress'       => 600.00,
-            'groom-suite'       => 300.00,
-            'best-man'          => 200.00,
-            'bridesmaid'        => 150.00,
-            'flower-girl-dress' => 80.00,
-            'yacht-hire'        => 1200.00,
-            'bachelor'          => 150.00,
-            'bachelorette'      => 120.00,
-            'hotel'             => 180.00,
-            'bar'               => 400.00,
-            'make-up'           => 250.00,
-            'hair'              => 200.00,
-            default             => 100.00,
+            'venue'        => 2500.00,
+            'catering'     => 45.00,
+            'florist'      => 350.00,
+            'car-hire'     => 200.00,
+            'photography'  => 800.00,
+            'music'        => 500.00,
+            'bride-dress'  => 600.00,
+            'groom-suite'  => 300.00,
+            'best-man'     => 200.00,
+            'bridesmaid'   => 150.00,
+            'flower-girl'  => 80.00,
+            'yacht'        => 1200.00,
+            'bachelor'     => 150.00,
+            'bachelorette' => 120.00,
+            'hotel'        => 180.00,
+            'bar'          => 400.00,
+            'makeup'       => 250.00,
+            'hair'         => 200.00,
+            default        => 100.00,
         };
     }
 
@@ -693,7 +698,7 @@ class DatabaseSeeder extends Seeder
         DB::table('service_flower_girl_dresses')->insert([
             'service_id' => $serviceId,
             'price'      => 80.00,
-            'age_groups' => json_encode(['2-3','4-5','6-7','8-9','10-11','12-14']),
+            'age_groups' => json_encode(['1Y', '2-3Y', '4-5Y', '6-7Y', '8-9Y', '10Y', '12Y']),
             'created_at' => $now,
             'updated_at' => $now,
         ]);
