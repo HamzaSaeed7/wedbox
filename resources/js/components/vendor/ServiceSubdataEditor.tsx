@@ -440,17 +440,67 @@ function BridesmaidForm({ data, onChange }: { data: any; onChange: (d: any) => v
 }
 
 // ─── 11. Flower Girl ─────────────────────────────────────────────────────────
+const FLOWER_GIRL_SIZES = ['1Y', '2-3Y', '4-5Y', '6-7Y', '8-9Y', '10Y', '12Y'];
+
 function FlowerGirlForm({ data, onChange }: { data: any; onChange: (d: any) => void }) {
   const d = data ?? {};
+  const selected: string[] = d.age_groups ?? [];
+  const remaining = FLOWER_GIRL_SIZES.filter((s) => !selected.includes(s));
+  const [pick, setPick] = useState('');
+
+  const addSize = () => {
+    if (pick && !selected.includes(pick)) {
+      onChange({ ...d, age_groups: [...selected, pick] });
+      setPick('');
+    }
+  };
+  const removeSize = (s: string) => onChange({ ...d, age_groups: selected.filter((x) => x !== s) });
+
   return (
     <div>
-      <Row cols={2}>
-        <Field label="Price per dress (€)"><CurrencyInput value={d.price ?? ''} onChange={(e) => onChange({ ...d, price: +e.target.value })} /></Field>
-      </Row>
-      <div className="mt-12">
-        <Field label="Age groups (press Enter)">
-          <TagInput tags={d.age_groups ?? []} onChange={(t) => onChange({ ...d, age_groups: t })} placeholder="e.g. 4–5 yrs" />
-        </Field>
+      <div>
+        <div className="field-label mb-8">Add product price</div>
+        <CurrencyInput value={d.price ?? ''} onChange={(e) => onChange({ ...d, price: +e.target.value })} placeholder="80" />
+      </div>
+
+      <div className="mt-20">
+        <div className="field-label mb-10">Select dress sizes</div>
+
+        {/* Selected size chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: selected.length ? 14 : 0 }}>
+          {selected.map((s) => (
+            <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', border: '1px solid var(--line)', borderRadius: 999, fontSize: 14, fontWeight: 500, background: 'white', position: 'relative' }}>
+              {/* Red delete dot */}
+              <span style={{ position: 'absolute', top: -4, left: -4, width: 14, height: 14, borderRadius: 999, background: '#E11D48', display: 'grid', placeItems: 'center', cursor: 'pointer' }}
+                onClick={() => removeSize(s)}>
+                <Icon name="close" size={7} color="white" />
+              </span>
+              {s}
+            </span>
+          ))}
+        </div>
+
+        {/* Dropdown + Add */}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <select
+            className="select"
+            value={pick}
+            onChange={(e) => setPick(e.target.value)}
+            style={{ minWidth: 180 }}
+          >
+            <option value="">Choose size</option>
+            {remaining.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={addSize}
+            disabled={!pick}
+            style={{ minWidth: 60 }}
+          >
+            Add
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -847,13 +897,13 @@ function extractSubdata(service: any): any {
     case 'groom-suite':  return service.groom_suite ?? service.groomSuite ?? null;
     case 'best-man':     return service.best_man_suit ?? service.bestManSuit ?? null;
     case 'bridesmaid':   return service.bridesmaid_dress ?? service.bridesmaidDress ?? null;
-    case 'flower-girl':  return service.flower_girl_dress ?? service.flowerGirlDress ?? null;
-    case 'yacht':        return service.yacht_hire ?? service.yachtHire ?? null;
+    case 'flower-girl':  return service.flower_girl_dress ?? service.flowerGirlDress ?? null;  // DB: flower-girl
+    case 'yacht':        return service.yacht_hire ?? service.yachtHire ?? null;               // DB: yacht
     case 'bachelor':     return service.bachelor ?? null;
     case 'bachelorette': return service.bachelorette ?? null;
     case 'hotel':        return service.accommodation ?? null;
     case 'bar':          return service.bar ?? null;
-    case 'makeup':       return service.makeup ?? null;
+    case 'makeup':       return service.makeup ?? null;                                         // DB: makeup
     case 'hair':         return service.hair ?? null;
     default:             return null;
   }
@@ -898,7 +948,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
     'venue': 'Venue', 'catering': 'Catering', 'florist': 'Florist',
     'car-hire': 'Car Hire', 'photography': 'Photography', 'music': 'Music',
     'bride-dress': 'Bride Dress', 'groom-suite': 'Groom Suite', 'best-man': 'Best Man Suit',
-    'bridesmaid': 'Bridesmaids', 'flower-girl': 'Flower Girl', 'yacht': 'Yacht Hire',
+    'bridesmaid': 'Bridesmaids', 'flower-girl': 'Flower Girl Dress', 'yacht': 'Yacht Hire',
     'bachelor': 'Bachelor Party', 'bachelorette': 'Bachelorette Party',
     'hotel': 'Hotel / Accommodation', 'bar': 'Bar Service', 'makeup': 'Make-up', 'hair': 'Hair Styling',
   };
