@@ -354,7 +354,21 @@ class VendorServiceController extends Controller
 
     private function saveMakeup(int $sid, array $d): void
     {
+        $mode = in_array($d['pricing_mode'] ?? '', ['packages', 'regular']) ? $d['pricing_mode'] : 'regular';
+
+        // Strip any UI-only transient fields from package objects
+        $packages = array_map(function (array $p) {
+            unset($p['_uploading']);
+            $p['images']   = array_values(array_filter((array)($p['images'] ?? [])));
+            $p['features'] = array_values(array_filter((array)($p['features'] ?? [])));
+            $p['price']    = (float)($p['price'] ?? 0);
+            $p['tier']     = $p['tier'] ?? null;
+            return $p;
+        }, (array)($d['packages'] ?? []));
+
         DB::table('service_makeups')->updateOrInsert(['service_id' => $sid], [
+            'pricing_mode'           => $mode,
+            'packages'               => json_encode($packages),
             'price_bridal'           => (float)($d['price_bridal'] ?? 0),
             'price_after_wedding'    => (float)($d['price_after_wedding'] ?? 0),
             'price_party'            => (float)($d['price_party'] ?? 0),

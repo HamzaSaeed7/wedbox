@@ -143,13 +143,26 @@ function normalizeBar(b: any) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeMakeup(m: any) {
   if (!m) return undefined;
-  if (m.packages !== undefined) return m;
-  const pkgs = [];
-  if (m.price_bridal != null) pkgs.push({ id: 'mp1', name: 'Wedding Day Bridal Make-up', price: Number(m.price_bridal), blurb: 'Full glam look for your special day' });
-  if (m.price_after_wedding != null) pkgs.push({ id: 'mp2', name: 'Photo-shoot After the Wedding', price: Number(m.price_after_wedding), blurb: 'Touch-up & fresh look for post-wedding shoot' });
-  if (m.price_party != null) pkgs.push({ id: 'mp3', name: "Hen's Party Make-Up", price: Number(m.price_party), blurb: 'Glam looks for you and your party' });
-  if (m.price_trial_1 != null) pkgs.push({ id: 'mp4', name: 'Trial 1', price: Number(m.price_trial_1), blurb: 'First practice session to perfect your look' });
-  if (m.price_trial_2 != null) pkgs.push({ id: 'mp5', name: 'Trial 2', price: Number(m.price_trial_2), blurb: 'Second refinement session before the big day' });
+  // Packages mode — normalize each package to include tier, features, images
+  if (m.pricing_mode === 'packages' || (m.packages !== undefined && Array.isArray(m.packages) && m.packages.length > 0 && m.packages[0]?.name !== undefined)) {
+    const pkgs = (m.packages ?? []).map((p: any, i: number) => ({
+      id: p.id ?? `pkg-${i}`,
+      name: p.name ?? '',
+      price: Number(p.price ?? 0),
+      blurb: '',
+      tier: p.tier ?? null,
+      features: Array.isArray(p.features) ? p.features : [],
+      images: Array.isArray(p.images) ? p.images : [],
+    }));
+    return { packages: pkgs };
+  }
+  // Regular mode — build synthetic packages from flat price fields
+  const pkgs: any[] = [];
+  if (m.price_bridal != null && Number(m.price_bridal) > 0) pkgs.push({ id: 'mp1', name: 'Wedding Day Bridal Make-up', price: Number(m.price_bridal), blurb: 'Full glam look for your special day', tier: null, features: [], images: [] });
+  if (m.price_after_wedding != null && Number(m.price_after_wedding) > 0) pkgs.push({ id: 'mp2', name: 'Photo-shoot After the Wedding', price: Number(m.price_after_wedding), blurb: 'Touch-up & fresh look for post-wedding shoot', tier: null, features: [], images: [] });
+  if (m.price_party != null && Number(m.price_party) > 0) pkgs.push({ id: 'mp3', name: "Hen's Party Make-Up", price: Number(m.price_party), blurb: 'Glam looks for you and your party', tier: null, features: [], images: [] });
+  if (m.price_trial_1 != null && Number(m.price_trial_1) > 0) pkgs.push({ id: 'mp4', name: 'Trial 1', price: Number(m.price_trial_1), blurb: 'First practice session to perfect your look', tier: null, features: [], images: [] });
+  if (m.price_trial_2 != null && Number(m.price_trial_2) > 0) pkgs.push({ id: 'mp5', name: 'Trial 2', price: Number(m.price_trial_2), blurb: 'Second refinement session before the big day', tier: null, features: [], images: [] });
   return { packages: pkgs };
 }
 

@@ -44,8 +44,9 @@ export interface FloristPackage {
   name: string;
   price: number;
   type: 'fresh' | 'fake';
-  tier?: 'bronze' | 'silver' | 'gold';
+  tier?: 'bronze' | 'silver' | 'gold' | null;
   features: string[];
+  images: string[];
   images?: string[];
 }
 
@@ -224,6 +225,9 @@ export interface MakeupPackage {
   name: string;
   price: number;
   blurb: string;
+  tier?: string | null;
+  features: string[];
+  images: string[];
 }
 
 export interface MakeupConfig {

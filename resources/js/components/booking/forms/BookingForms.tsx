@@ -110,7 +110,7 @@ export function CateringForm({ service, onChange }: FormProps) {
 export function FloristForm({ service, onChange, initialPayload: ip }: FormProps) {
   const f = service.florist as FloristConfig;
   const [type, setType] = useState((ip?.type as string) ?? 'fresh');
-  const [pkg, setPkg] = useState((ip?.pkg as string) ?? f.packages[0]?.id ?? '');
+  const [pkg, setPkg] = useState((ip?.pkg as string) ?? '');
   const [colors, setColors] = useState<string[]>((ip?.colors as string[]) ?? [f.colors[0], f.colors[1]].filter(Boolean));
   const [designs, setDesigns] = useState<string[]>((ip?.designs as string[]) ?? [f.designs[0]?.id].filter(Boolean));
   const [addons, setAddons] = useState<Record<string, number>>((ip?.addons as Record<string, number>) ?? {});
@@ -163,9 +163,9 @@ export function FloristForm({ service, onChange, initialPayload: ip }: FormProps
         <Label required>Select a package</Label>
         <div className="flex" style={{ flexDirection: 'column', gap: 10, marginTop: 8 }}>
           {f.packages.map((p) => (
-            <div key={p.id} onClick={() => setPkg(p.id)} style={{ cursor: 'pointer',
-              border: `1px solid ${pkg === p.id ? 'var(--primary)' : 'var(--line)'}`,
-              background: pkg === p.id ? 'var(--primary-50)' : 'white', borderRadius: 14, padding: 16 }}>
+            <div key={p.id} onClick={() => setPkg(pkg === p.id ? '' : p.id)} style={{ cursor: 'pointer',
+              border: `1px solid ${pkg === p.id ? 'var(--primary)' : 'transparent'}`,
+              background: pkg === p.id ? 'var(--primary-50)' : '#eaf8f8', borderRadius: 14, padding: 16 }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-8">
                   {p.tier && (
@@ -177,9 +177,18 @@ export function FloristForm({ service, onChange, initialPayload: ip }: FormProps
                 </div>
                 <span className="fw-700">€{p.price.toLocaleString()}</span>
               </div>
-              <div className="flex gap-8 mt-12" style={{ flexWrap: 'wrap' }}>
-                {p.features.map((ft) => <span key={ft} className="chip" style={{ background: 'white', fontSize: 11 }}>{ft}</span>)}
-              </div>
+              {p.features.length > 0 && (
+                <div className="flex gap-8 mt-12" style={{ flexWrap: 'wrap' }}>
+                  {p.features.map((ft) => <span key={ft} className="chip" style={{ background: 'white', fontSize: 11 }}>{ft}</span>)}
+                </div>
+              )}
+              {p.images?.length > 0 && (
+                <div className="flex gap-8 mt-10" style={{ flexWrap: 'wrap' }}>
+                  {p.images.map((url, ii) => (
+                    <img key={ii} src={url} alt="" style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -785,24 +794,51 @@ export function MakeupForm({ service, onChange }: FormProps) {
       <div className="flex" style={{ flexDirection: 'column', gap: 10 }}>
         {mk.packages.map((p) => {
           const s = selected[p.id] || { on: false, date: '2026-06-15', time: '10:00' };
+          const imgs: string[] = Array.isArray(p.images) ? p.images : [];
+          const feats: string[] = Array.isArray(p.features) ? p.features : [];
           return (
-            <div key={p.id} style={{ padding: 16,
-              border: `1px solid ${s.on ? 'var(--primary)' : 'var(--line)'}`,
-              background: s.on ? 'var(--primary-50)' : 'white', borderRadius: 14 }}>
-              <label className="flex items-center gap-12" style={{ cursor: 'pointer' }}>
-                <input type="checkbox" checked={s.on}
-                  onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, on: e.target.checked } })}
-                  style={{ accentColor: 'var(--primary)', width: 18, height: 18 }} />
-                <div style={{ flex: 1 }}>
-                  <div className="fw-700 text-14">{p.name}</div>
-                  <div className="muted text-12 mt-4">{p.blurb}</div>
+            <div key={p.id}
+              onClick={() => setSelected({ ...selected, [p.id]: { ...s, on: !s.on } })}
+              style={{ cursor: 'pointer', border: `1px solid ${s.on ? 'var(--primary)' : 'transparent'}`,
+                background: s.on ? 'var(--primary-50)' : '#eaf8f8', borderRadius: 14, padding: 16 }}>
+              {/* Header — tier + name on left, price on right */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-8">
+                  {p.tier && (
+                    <span className={`chip ${p.tier === 'bronze' ? 'chip-amber' : p.tier === 'silver' ? 'chip-soft' : 'chip-blue'}`}
+                      style={{ textTransform: 'capitalize' }}>
+                      {p.tier}
+                    </span>
+                  )}
+                  <span className="fw-700">{p.name}</span>
                 </div>
-                <span className="fw-700">€{p.price}</span>
-              </label>
+                <span className="fw-700" style={{ color: 'var(--primary)' }}>€{Number(p.price).toLocaleString()}</span>
+              </div>
+              {/* Feature chips */}
+              {feats.length > 0 && (
+                <div className="flex gap-8 mt-12" style={{ flexWrap: 'wrap' }}>
+                  {feats.map((ft) => (
+                    <span key={ft} className="chip" style={{ background: 'white', fontSize: 11 }}>{ft}</span>
+                  ))}
+                </div>
+              )}
+              {/* Package photos */}
+              {imgs.length > 0 && (
+                <div className="flex gap-8 mt-10" style={{ flexWrap: 'wrap' }}>
+                  {imgs.map((url, ii) => (
+                    <img key={ii} src={url} alt=""
+                      style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+                  ))}
+                </div>
+              )}
+              {/* Date/time when selected */}
               {s.on && (
-                <div className="flex gap-8 mt-12" style={{ paddingLeft: 30 }}>
-                  <input className="input" type="date" value={s.date} onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, date: e.target.value } })} />
-                  <input className="input" type="time" value={s.time} onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, time: e.target.value } })} style={{ width: 110 }} />
+                <div className="flex gap-8 mt-12" onClick={(e) => e.stopPropagation()}>
+                  <input className="input" type="date" value={s.date}
+                    onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, date: e.target.value } })} />
+                  <input className="input" type="time" value={s.time}
+                    onChange={(e) => setSelected({ ...selected, [p.id]: { ...s, time: e.target.value } })}
+                    style={{ width: 110 }} />
                 </div>
               )}
             </div>

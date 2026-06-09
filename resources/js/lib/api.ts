@@ -151,6 +151,13 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r: { data: { url: string } }) => r.data.url);
   },
+  avatar: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post('/upload/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r: { data: { url: string } }) => r.data.url);
+  },
 };
 
 // ─── Vendor
