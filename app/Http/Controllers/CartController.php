@@ -171,9 +171,7 @@ class CartController extends Controller
                               'address'          => $d['address']   ?? null,
                               'selected_menus'   => $d['menus']     ?? []],
             'makeup'      => ['selected_packages' => $d['selected'] ?? []],
-            'hair'        => ['style'             => $d['style']   ?? null,
-                              'people'            => $d['people']  ?? 1,
-                              'note'              => $d['note']    ?? null],
+            'hair'        => ['selected_packages' => $d['selected'] ?? []],
             default       => $d,
         };
 

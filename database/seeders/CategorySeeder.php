@@ -27,7 +27,8 @@ class CategorySeeder extends Seeder
             ['slug' => 'hotel',        'name' => 'Hotels',           'description' => 'Hotel blocks and accommodation for wedding guests.',             'order' => 15],
             ['slug' => 'bar',          'name' => 'Bar',              'description' => 'Mobile bars and drinks packages.',                              'order' => 16],
             ['slug' => 'makeup',       'name' => 'Make-up',          'description' => 'Bridal hair and makeup artists.',                               'order' => 17],
-            ['slug' => 'stationery',   'name' => 'Stationery',       'description' => 'Wedding invitations, menus, and stationery.',                   'order' => 18],
+            ['slug' => 'hair',         'name' => 'Hair',             'description' => 'Bridal hair styling, updo, and blowdry services.',                'order' => 18],
+            ['slug' => 'stationery',   'name' => 'Stationery',       'description' => 'Wedding invitations, menus, and stationery.',                   'order' => 19],
         ];
 
         foreach ($categories as $cat) {

@@ -79,7 +79,7 @@ function Badge({ n, primary }: { n: number; primary?: boolean }) {
 
 const NAV_LINKS = [
   { to: '/search',  label: 'Discover' },
-  { to: '/blog',    label: 'Stories'  },
+  { to: '/blog',    label: 'Blogs'    },
   { to: '/about',   label: 'About'    },
   { to: '/contact', label: 'Contact'  },
 ];
