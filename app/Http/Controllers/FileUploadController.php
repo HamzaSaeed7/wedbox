@@ -22,7 +22,7 @@ class FileUploadController extends Controller
         $extension = $file->getClientOriginalExtension();
         $filename  = 'avatars/' . Str::uuid() . '.' . $extension;
 
-        Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()), 'public');
+        Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()));
 
         return response()->json(['url' => Storage::disk('s3')->url($filename)]);
     }
@@ -41,7 +41,7 @@ class FileUploadController extends Controller
         $extension = $file->getClientOriginalExtension();
         $filename  = 'services/' . Str::uuid() . '.' . $extension;
 
-        Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()), 'public');
+        Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()));
 
         return response()->json(['url' => Storage::disk('s3')->url($filename)]);
     }
