@@ -34,9 +34,12 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
+          if [ -z "$DEPLOY_PATH" ]; then
+            echo "ERROR: DEPLOY_PATH secret is not set. Aborting to prevent syncing to server root."
+            exit 1
+          fi
           sudo apt-get install -y sshpass rsync
           rsync -az --delete \
-            --chmod=D755,F644 \
             -e "sshpass -p \"$SSH_PASS\" ssh -p \"$SSH_PORT\" -o StrictHostKeyChecking=no" \
             --exclude='.git' \
             --exclude='.github' \
