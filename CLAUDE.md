@@ -94,7 +94,7 @@ The `/dashboard/vendor` web route enforces this gate server-side too (not just o
 
 ### Database
 
-SQLite (`database/database.sqlite`). Notable schema decisions:
+MySQL (`DB_CONNECTION=mysql`, default database `wedbox`). Notable schema decisions:
 - `users.vendor_subscription_status` — `null` | `'pending'` | `'active'` | `'cancelled'`
 - `users.vendor_plan` — `null` | `'3month'` | `'12month'`
 - `vendor_profiles.onboarding_completed` — boolean; profile row is created during onboarding, not at registration
