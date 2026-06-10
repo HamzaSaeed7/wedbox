@@ -51,7 +51,16 @@ class ServiceController extends Controller
     {
         $service->load('category', 'vendor.vendorProfile', 'reviews.user.profile');
         $this->loadSubData($service);
-        return response()->json($service);
+
+        $userHasOrdered = false;
+        if ($user = auth()->user()) {
+            $userHasOrdered = \App\Models\Order::where('user_id', $user->id)
+                ->where('service_id', $service->id)
+                ->where('status', 'approved')
+                ->exists();
+        }
+
+        return response()->json(array_merge($service->toArray(), ['user_has_ordered' => $userHasOrdered]));
     }
 
     private function loadSubData(Service $service): void
@@ -67,10 +76,10 @@ class ServiceController extends Controller
             'music'         => $service->load('music'),
             'bride-dress'   => $service->load('brideDress.extras'),
             'groom-suite'   => $service->load('groomSuite'),
-            'best-man-suit' => $service->load('bestManSuit'),
-            'bridesmaids'   => $service->load('bridesmaidDress'),
-            'flower-girl'   => $service->load('flowerGirlDress'),
-            'yacht-hire'    => $service->load('yachtHire.hours'),
+            'best-man'   => $service->load('bestManSuit'),
+            'bridesmaid' => $service->load('bridesmaidDress'),
+            'flower-girl' => $service->load('flowerGirlDress'),
+            'yacht'      => $service->load('yachtHire.hours'),
             'bachelor'      => $service->load('bachelor'),
             'bachelorette'  => $service->load('bachelorette'),
             'hotel'         => $service->load('accommodation.rooms', 'accommodation.facilities'),

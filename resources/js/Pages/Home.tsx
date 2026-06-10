@@ -7,6 +7,7 @@ import { CATEGORIES, IMG } from '../lib/data';
 import { servicesApi, publicApi } from '../lib/api';
 import type { Service } from '../lib/types';
 import PublicLayout from '../Layouts/PublicLayout';
+import smartphoneMockup from '../../Images/smartphone-mockup-floating.png';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeService(s: any): Service {
@@ -32,15 +33,15 @@ function HeroSplit() {
     <section style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       <video autoPlay loop muted playsInline
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}>
-        <source src="https://8c118e0f01a61a55f5375c044c9f76f6.cdn.bubble.io/f1724916581286x843128111313759000/new_Barefoot_Splash_3840x2161.mp4" type="video/mp4" />
+        <source src="https://wedbox-app-production-bucket.s3.ap-south-1.amazonaws.com/videos/hero-wedding.mp4" type="video/mp4" />
       </video>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(193,118,0,.30), rgba(0,41,83,.30))' }} />
       <div style={{ position: 'relative', textAlign: 'center', padding: '80px 24px 100px', maxWidth: 760, width: '100%' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: 700, letterSpacing: '.1em', marginBottom: 24 }}>
           ALL IN ONE PACKAGES
         </div>
-        <h1 style={{ color: 'white', fontSize: 'clamp(36px, 7vw, 80px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0 }}>
-          Plan a wedding<br />you'll actually<br />enjoy.
+        <h1 style={{ color: 'white', fontSize: 'clamp(28px, 5.5vw, 64px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0 }}>
+          Plan your wedding in one click.
         </h1>
         <p style={{ color: 'rgba(255,255,255,.82)', fontSize: 17, marginTop: 24, lineHeight: 1.6 }}>
           Cyprus's best venues, vendors and packages — in one place, with the total upfront.
@@ -66,9 +67,9 @@ function CategoriesStrip() {
         {CATEGORIES.slice(0, 9).map((c) => (
           <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)}
             style={{ background: 'white', border: '1px solid var(--line)', borderRadius: 16, padding: '18px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'all .15s ease' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = c.color; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#4DC9C9'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--line)'; (e.currentTarget as HTMLButtonElement).style.transform = 'none'; }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: c.color + '18', color: c.color, display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(77,201,201,.094)', color: '#4DC9C9', display: 'grid', placeItems: 'center' }}>
               <Icon name={c.icon} size={22} />
             </div>
             <span style={{ fontSize: 12, fontWeight: 600, textAlign: 'center' }}>{c.name}</span>
@@ -275,18 +276,8 @@ function AppCTA() {
             </a>
           </div>
         </div>
-        <div className="hide-mobile" style={{ position: 'relative', minHeight: 360, overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', right: '40%', bottom: -10, width: 220, height: 460, borderRadius: 38, padding: 8, background: 'var(--ink)', transform: 'rotate(-8deg)', boxShadow: '0 30px 80px rgba(15,30,30,.18)', zIndex: 1 }}>
-            <div style={{ width: '100%', height: '100%', borderRadius: 30, overflow: 'hidden', background: 'linear-gradient(180deg, #4DC9C9 0%, #2EB1B1 100%)', padding: 24, color: 'white' }}>
-              <div style={{ fontSize: 11, opacity: .85, fontWeight: 600 }}>Destination Weddings</div>
-              <div style={{ fontSize: 18, fontWeight: 700, marginTop: 4 }}>Made Right.</div>
-            </div>
-          </div>
-          <div style={{ position: 'absolute', right: '8%', bottom: -10, width: 220, height: 460, borderRadius: 38, padding: 8, background: 'var(--ink)', transform: 'rotate(6deg)', boxShadow: '0 30px 80px rgba(15,30,30,.18)', zIndex: 2 }}>
-            <div style={{ width: '100%', height: '100%', borderRadius: 30, overflow: 'hidden' }}>
-              <img src={IMG('1519741497674-611481863552', 400, 800)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-          </div>
+        <div className="hide-mobile" style={{ position: 'relative', background: '#fafbfb', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
+          <img src={smartphoneMockup} alt="" style={{ width: '90%', maxWidth: 480, height: 'auto', display: 'block' }} />
         </div>
       </div>
     </section>

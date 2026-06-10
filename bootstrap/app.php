@@ -6,6 +6,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withProviders([
+        \App\Providers\DatabaseHealthProvider::class,
+    ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -29,4 +32,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, Request $request) {
+            if (str_contains($e->getMessage(), 'refused') || str_contains($e->getMessage(), 'timed out') || str_contains($e->getMessage(), 'No connection')) {
+                if ($request->is('api/*')) {
+                    return response()->json(['error' => 'Database unavailable'], 503);
+                }
+            }
+        });
     })->create();
