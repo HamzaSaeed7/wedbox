@@ -35,7 +35,7 @@ function HeroSplit() {
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}>
         <source src="https://wedbox-app-production-bucket.s3.ap-south-1.amazonaws.com/videos/hero-wedding.mp4" type="video/mp4" />
       </video>
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(193,118,0,.30), rgba(0,41,83,.30))' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)' }} />
       <div style={{ position: 'relative', textAlign: 'center', padding: '80px 24px 100px', maxWidth: 760, width: '100%' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: 700, letterSpacing: '.1em', marginBottom: 24 }}>
           ALL IN ONE PACKAGES
@@ -129,16 +129,16 @@ function FeaturedServices() {
 
 function HowItWorks() {
   const steps = [
-    { n: '01', title: 'Discover & shortlist', body: 'Filter by city, style and budget. Save favorites to a private board.' },
-    { n: '02', title: 'Lock vendors in one cart', body: 'Reserve everything in a single place — venue, photographer, florist, the lot.' },
-    { n: '03', title: 'Pay one transparent total', body: 'See the total cost upfront. Pay securely and we coordinate the rest.' },
+    { n: '01', title: 'Discover & Filter', body: 'Browse top Cyprus wedding professionals. Filter instantly by city, style, and availability to find the perfect match for your date.' },
+    { n: '02', title: 'Build Your Perfect Day', body: 'Select your favorite venue, photographer, florist, and more. Choose from their ready-to-book packages and add-ons to design your unforgettable day.' },
+    { n: '03', title: 'Book Instantly for Free', body: 'Lock in your wedding date with one click. No credit cards required here — your booking goes straight to the vendors, and you pay them directly later.' },
   ];
   return (
     <section className="container-wide" style={{ padding: '64px 28px', background: 'var(--bg-2)', borderRadius: 32 }}>
       <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--primary-700)', marginBottom: 12 }}>How WedBox Works</div>
-        <h2>Three steps to a planned wedding</h2>
-        <p className="mt-12" style={{ fontSize: 16, color: 'var(--muted)' }}>No spreadsheets. No 14 different vendors' inboxes. Just one place to plan.</p>
+        <h2>Three steps to your dream wedding</h2>
+        <p className="mt-12" style={{ fontSize: 16, color: 'var(--muted)' }}>No endless phone calls. No deposit fees on our platform. Just one place to secure your entire wedding team.</p>
       </div>
       <div className="grid r-grid-3 mt-32" style={{ gap: 20 }}>
         {steps.map((s) => (
