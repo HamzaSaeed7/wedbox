@@ -27,10 +27,9 @@ function normalizeVenue(v: any) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeCatering(c: any) {
   if (!c) return undefined;
-  if (Array.isArray(c.cuisines) && c.cuisines[0]?.menus !== undefined) return c;
   const raw = c.cuisines ?? [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { cuisines: raw.map((cu: any, ci: number) => ({ name: cu.cuisine_name ?? cu.name ?? `Cuisine ${ci + 1}`, menus: (cu.menus ?? []).map((m: any) => ({ name: m.name, max: Number(m.max_choices ?? m.max ?? 1), price: Number(m.price ?? 0), items: (m.items ?? []).map((it: any) => it.name ?? it) })) })) };
+  return { cuisines: raw.map((cu: any, ci: number) => ({ name: cu.cuisine_name ?? cu.name ?? `Cuisine ${ci + 1}`, menus: (cu.menus ?? []).map((m: any) => ({ name: m.name, max: Number(m.max_choices ?? m.max ?? 1), price: Number(m.price ?? 0), items: (m.items ?? []).map((it: any) => typeof it === 'string' ? it : (it.name ?? '')) })) })) };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeFlorist(f: any) {
@@ -405,7 +404,7 @@ function StarPicker({ value, onChange }: { value: number; onChange: (n: number) 
   );
 }
 
-function ReviewsBlock({ service, rawReviews = [] }: { service: Service; rawReviews?: unknown[] }) {
+function ReviewsBlock({ service, rawReviews = [], userHasOrdered = false }: { service: Service; rawReviews?: unknown[]; userHasOrdered?: boolean }) {
   const user = useAuthUser();
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -437,8 +436,11 @@ function ReviewsBlock({ service, rawReviews = [] }: { service: Service; rawRevie
     <div>
       <div className="flex items-center justify-between">
         <h3 style={{ fontSize: 20 }}>Reviews</h3>
-        {user && !submitted && (
+        {user && userHasOrdered && !submitted && (
           <button className="btn btn-soft btn-sm" onClick={() => setShowForm((v) => !v)}>{showForm ? 'Cancel' : 'Write a review'}</button>
+        )}
+        {user && !userHasOrdered && !submitted && (
+          <span className="muted text-13">Reserve this service to leave a review</span>
         )}
         {!user && <span className="muted text-13">Sign in to leave a review</span>}
         {submitted && <span className="text-13" style={{ color: '#059669' }}>✓ Review submitted!</span>}
@@ -573,6 +575,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
     const hasSubData = !subKey || service[subKey] != null;
     // Extract reviews array from raw API response (normalized service only keeps the count)
     const rawReviews: unknown[] = Array.isArray((apiData as any)?.reviews) ? (apiData as any).reviews : [];
+    const userHasOrdered: boolean = (apiData as any)?.user_has_ordered ?? false;
 
     return (
       <div className="container-wide fade-up" style={{ padding: '24px 28px 64px' }}>
@@ -613,7 +616,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
               : <p className="muted text-14" style={{ padding: '12px 0' }}>Booking details are being set up by the vendor — check back soon.</p>
             }
             <hr className="divider mt-32 mb-24" />
-            <ReviewsBlock service={service} rawReviews={rawReviews} />
+            <ReviewsBlock service={service} rawReviews={rawReviews} userHasOrdered={userHasOrdered} />
           </div>
           <aside>
             <BookingPanel cat={cat} formState={formState} date={date} setDate={setDate}

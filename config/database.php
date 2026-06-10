@@ -48,7 +48,10 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                Mysql::ATTR_SSL_CA           => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_TIMEOUT            => 3,
+                1003                         => 3,    // PDO::MYSQL_ATTR_CONNECT_TIMEOUT
+                PDO::MYSQL_ATTR_SERVER_PUBLIC_KEY => 'C:\\ProgramData\\MySQL\\MySQL Server 8.4\\Data\\public_key.pem',
             ]) : [],
         ],
 

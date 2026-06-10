@@ -888,7 +888,20 @@ function extractSubdata(service: any): any {
   const slug = service?.category?.slug ?? '';
   switch (slug) {
     case 'venue':        return service.venue ?? null;
-    case 'catering':     return service.catering ?? null;
+    case 'catering': {
+      const cat = service.catering ?? null;
+      if (!cat) return null;
+      return {
+        ...cat,
+        cuisines: (cat.cuisines ?? []).map((c: any) => ({
+          ...c,
+          menus: (c.menus ?? []).map((m: any) => ({
+            ...m,
+            items: (m.items ?? []).map((it: any) => typeof it === 'string' ? it : (it.name ?? '')),
+          })),
+        })),
+      };
+    }
     case 'florist':      return service.florist ?? null;
     case 'car-hire':     return service.car_hire ?? service.carHire ?? null;
     case 'photography':  return service.photography ?? null;

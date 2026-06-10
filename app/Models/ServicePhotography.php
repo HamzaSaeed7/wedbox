@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ServicePhotography extends Model
 {
+    protected $table = 'service_photography';
     protected $fillable = ['service_id'];
 
     public function service() { return $this->belongsTo(Service::class); }

@@ -12,7 +12,7 @@ interface LogoProps {
 }
 
 export default function Logo({ white = false, light = false, compact = false }: LogoProps) {
-  const height = compact ? 32 : 42;
+  const height = compact ? 36 : 52;
   const src = white ? logo2Src : light ? logo3Src : logoSrc;
   return (
     <img
