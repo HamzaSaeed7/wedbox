@@ -15,6 +15,58 @@ class DatabaseSeeder extends Seeder
     {
         $now = Carbon::now();
 
+        // ── 0. Blog posts ─────────────────────────────────────────────────────
+        DB::table('blog_posts')->insert([
+            [
+                'slug'              => 'how-to-plan-your-cyprus-wedding',
+                'title'             => 'How to Plan Your Dream Cyprus Wedding',
+                'cover_image_url'   => 'https://picsum.photos/seed/wedding1/1200/600',
+                'body'              => '<p>Cyprus is one of the most romantic wedding destinations in the Mediterranean. From sun-drenched coastlines to ancient stone churches, the island offers a breathtaking backdrop for your big day.</p><p>Start by choosing your venue early — popular locations in Limassol and Paphos book up to 18 months in advance. Next, lock in your photographer and catering, as these are the hardest suppliers to secure in peak season (May–October).</p><p>Don\'t forget to factor in the legal requirements for a civil ceremony in Cyprus. You\'ll need to give notice at least 15 days before your wedding date at the local municipality.</p><h2>Top Tips</h2><ul><li>Book your venue at least a year ahead</li><li>Visit Cyprus in the off-season to scout locations</li><li>Use a local wedding planner to navigate suppliers</li><li>Budget an extra 15% for unexpected costs</li></ul>',
+                'read_time_minutes' => 6,
+                'published_at'      => Carbon::now()->subDays(10),
+                'author'            => 'WedBox Team',
+                'category'          => 'Planning',
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ],
+            [
+                'slug'              => 'top-wedding-venues-in-limassol',
+                'title'             => 'Top 5 Wedding Venues in Limassol',
+                'cover_image_url'   => 'https://picsum.photos/seed/limassol/1200/600',
+                'body'              => '<p>Limassol is Cyprus\'s cosmopolitan hub and home to some of the island\'s most stunning wedding venues. Whether you dream of an intimate garden ceremony or a grand ballroom celebration, Limassol has it all.</p><p>From clifftop vineyards overlooking the sea to restored historic mansions in the old town, each venue offers something unique. Many offer all-inclusive packages that cover catering, décor, and accommodation for your guests.</p><h2>What to Look For</h2><p>When choosing a venue, consider capacity, parking, overnight accommodation for guests, and proximity to the airport. Limassol\'s venues are typically 45 minutes from Larnaca Airport — ideal for international guests.</p>',
+                'read_time_minutes' => 4,
+                'published_at'      => Carbon::now()->subDays(25),
+                'author'            => 'Sophia Andreou',
+                'category'          => 'Venues',
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ],
+            [
+                'slug'              => 'bridal-hair-and-makeup-trends-2025',
+                'title'             => 'Bridal Hair & Makeup Trends for 2025',
+                'cover_image_url'   => 'https://picsum.photos/seed/bridalmakeup/1200/600',
+                'body'              => '<p>2025 is all about effortless elegance. Brides are moving away from heavy contouring and opting for fresh, dewy skin with a natural glow. Think luminous base, softly defined brows, and a subtle lip.</p><p>For hair, romantic loose waves and undone updos are dominating the bridal scene. Floral hair accessories — both fresh and dried — add a uniquely Cypriot touch to any bridal look.</p><h2>Trending Styles</h2><ul><li>Glossy, glass-skin foundation</li><li>Soft smoky eye in warm tones</li><li>Tousled low buns with face-framing tendrils</li><li>Fresh flower crowns for garden ceremonies</li></ul><p>Book your trial at least 6–8 weeks before the wedding to finalise your look and ensure your makeup lasts throughout the day in Cyprus\'s summer heat.</p>',
+                'read_time_minutes' => 5,
+                'published_at'      => Carbon::now()->subDays(42),
+                'author'            => 'Natasha Hadjicosta',
+                'category'          => 'Beauty',
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ],
+            [
+                'slug'              => 'mediterranean-wedding-catering-guide',
+                'title'             => 'A Guide to Mediterranean Wedding Catering',
+                'cover_image_url'   => 'https://picsum.photos/seed/weddingfood/1200/600',
+                'body'              => '<p>Food is at the heart of every Cypriot celebration. A traditional Cypriot meze — a spread of dozens of small dishes — is a wonderful way to immerse your guests in local culture while keeping everyone satisfied.</p><p>For more formal affairs, modern caterers in Cyprus blend Mediterranean flavours with international fine-dining techniques. Expect dishes like slow-roasted lamb kleftiko, seared sea bass with lemon caper butter, and decadent halloumi starters.</p><h2>Planning Your Menu</h2><p>Work with your caterer at least 3 months in advance to finalise menus. Always request a tasting session. Communicate dietary requirements early — vegan, gluten-free, and nut-free options should be standard for any reputable caterer.</p><p>Don\'t forget the wedding cake! Many couples opt for a multi-tiered cake incorporating local flavours like carob, rose water, or Commandaria wine.</p>',
+                'read_time_minutes' => 7,
+                'published_at'      => Carbon::now()->subDays(60),
+                'author'            => 'Stavros Kyriakou',
+                'category'          => 'Catering',
+                'created_at'        => $now,
+                'updated_at'        => $now,
+            ],
+        ]);
+
         // ── 1. Categories ─────────────────────────────────────────────────────
         $categories = [
             ['name' => 'Venue',             'slug' => 'venue',            'description' => 'Wedding venues and event spaces.',         'order' => 1],

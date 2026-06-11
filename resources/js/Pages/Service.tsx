@@ -290,9 +290,20 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
       <hr />
       <div className="text-12 muted">Share this service</div>
       <div className="flex gap-8 mt-12">
-        {(['facebook', 'twitter', 'linkedin', 'whatsapp'] as const).map((s) => (
-          <button key={s} className="btn btn-sm" style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', padding: 8, borderRadius: 10 }}>
-            <Icon name={s} size={14} />
+        {([
+          { name: 'facebook' as const, url: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+          { name: 'twitter'  as const, url: (u: string, t: string) => `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
+          { name: 'linkedin' as const, url: (u: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
+          { name: 'whatsapp' as const, url: (u: string, t: string) => `https://wa.me/?text=${t}%20${u}` },
+        ]).map(({ name, url }) => (
+          <button key={name} className="btn btn-sm"
+            style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', padding: 8, borderRadius: 10 }}
+            onClick={() => {
+              const pageUrl = encodeURIComponent(window.location.href);
+              const title   = encodeURIComponent(service?.title ?? 'Check out this wedding service on WedBox');
+              window.open(url(pageUrl, title), '_blank', 'noopener,noreferrer,width=600,height=500');
+            }}>
+            <Icon name={name} size={14} />
           </button>
         ))}
       </div>
@@ -340,29 +351,31 @@ function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
       <div ref={measureRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
         {CATEGORIES.map((c) => (
           <span key={c.slug} className="chip chip-selectable qs-chip" style={{ whiteSpace: 'nowrap' }}>
-            {c.name}
+            <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
           </span>
         ))}
       </div>
 
       {/* Visible single row */}
-      <div ref={rowRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', flexWrap: 'nowrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="text-12 muted fw-600" style={{ paddingLeft: 6, paddingRight: 6, whiteSpace: 'nowrap', flexShrink: 0 }}>BROWSE:</span>
-        {CATEGORIES.slice(0, visibleCount).map((c) => {
-          const on = c.slug === currentSlug;
-          return (
-            <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
-              style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
-            </button>
-          );
-        })}
+        <div ref={rowRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', flexWrap: 'nowrap', flex: 1 }}>
+          {CATEGORIES.slice(0, visibleCount).map((c) => {
+            const on = c.slug === currentSlug;
+            return (
+              <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
+                style={{ background: on ? 'var(--primary)' : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
+              </button>
+            );
+          })}
+        </div>
         {hidden > 0 && (
           <button
             className="chip chip-selectable"
             style={{ background: 'transparent', color: 'var(--primary)', border: '1px dashed var(--primary)', whiteSpace: 'nowrap', fontWeight: 600, flexShrink: 0 }}
             onClick={() => setExpanded((e) => !e)}>
-            {`+${hidden} more`}
+            {expanded ? '↑ Less' : `+${hidden} more`}
           </button>
         )}
       </div>
@@ -374,7 +387,7 @@ function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
             const on = c.slug === currentSlug;
             return (
               <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
-                style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
+                style={{ background: on ? 'var(--primary)' : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
                 <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
               </button>
             );
