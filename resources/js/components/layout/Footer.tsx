@@ -31,11 +31,12 @@ export default function Footer() {
               WedBox Ltd is incorporated in England, Wales and Cyprus.<br />Reg. No. 12345678
             </p>
             <div className="flex gap-12" style={{ marginTop: 24 }}>
-              {(['facebook', 'instagram'] as const).map((s) => (
-                <a key={s} href="#" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center' }}>
-                  <Icon name={s} size={16} color="white" />
-                </a>
-              ))}
+              <a href="https://www.facebook.com/profile.php?id=61565211685376" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center' }}>
+                <Icon name="facebook" size={16} color="white" />
+              </a>
+              <a href="https://instagram.com/wedbox.io?igsh=MWRubm142ZmNTJuNA%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center' }}>
+                <Icon name="instagram" size={16} color="white" />
+              </a>
             </div>
           </div>
 

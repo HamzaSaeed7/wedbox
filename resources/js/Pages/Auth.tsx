@@ -67,6 +67,8 @@ export default function AuthPage() {
   const [registeredEmail, setRegisteredEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [devVerifying, setDevVerifying] = useState(false);
@@ -162,7 +164,7 @@ export default function AuthPage() {
             {/* Headline */}
             <div>
               <h2 style={{ color: 'white', fontSize: 46, fontWeight: 800, lineHeight: 1.08, margin: 0 }}>Your perfect</h2>
-              <h2 style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.08, margin: 0, fontStyle: 'italic', color: '#C9A84C' }}>Cyprus wedding</h2>
+              <h2 style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.08, margin: 0, fontStyle: 'italic', color: 'var(--primary)' }}>Cyprus wedding</h2>
               <h2 style={{ color: 'white', fontSize: 46, fontWeight: 800, lineHeight: 1.08, margin: 0 }}>starts here.</h2>
             </div>
 
@@ -181,7 +183,7 @@ export default function AuthPage() {
                   { icon: '✦', label: 'Tailored to you', desc: 'Your vision, your love story, your day' },
                 ].map((pt) => (
                   <div key={pt.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <span style={{ color: '#C9A84C', fontSize: 10, marginTop: 3, flexShrink: 0 }}>{pt.icon}</span>
+                    <span style={{ color: 'var(--primary)', fontSize: 10, marginTop: 3, flexShrink: 0 }}>{pt.icon}</span>
                     <div>
                       <span style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>{pt.label}</span>
                       <span style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', marginLeft: 6 }}>— {pt.desc}</span>
@@ -278,13 +280,23 @@ export default function AuthPage() {
                 </div>
                 <div>
                   <AuthLabel required>Password</AuthLabel>
-                  <input type="password" className="input mt-8" style={{ width: '100%' }} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <div style={{ position: 'relative' }}>
+                    <input type={showPassword ? 'text' : 'password'} className="input mt-8" style={{ width: '100%', paddingRight: 40 }} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-25%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4 }} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                      <Icon name={showPassword ? 'eye-off' : 'eye'} size={18} />
+                    </button>
+                  </div>
                 </div>
                 {mode === 'signup' && (
                   <>
                     <div>
                       <AuthLabel required>Confirm password</AuthLabel>
-                      <input type="password" className="input mt-8" style={{ width: '100%' }} required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                      <div style={{ position: 'relative' }}>
+                        <input type={showConfirm ? 'text' : 'password'} className="input mt-8" style={{ width: '100%', paddingRight: 40 }} required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                        <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-25%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4 }} aria-label={showConfirm ? 'Hide password' : 'Show password'}>
+                          <Icon name={showConfirm ? 'eye-off' : 'eye'} size={18} />
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <AuthLabel>I'm signing up as a</AuthLabel>

@@ -8,11 +8,11 @@
 /* WedBox — global styles + design tokens */
 
 :root {
-  --primary: #4DC9C9;
-  --primary-600: #2EB1B1;
-  --primary-700: #1F9494;
-  --primary-50: #EAF8F8;
-  --primary-100: #D4F1F1;
+  --primary: #79cdd0;
+  --primary-600: #5ab8bc;
+  --primary-700: #3ea2a6;
+  --primary-50: #eef8f9;
+  --primary-100: #d5eff0;
   --ink: #1A2B2B;
   --ink-2: #3A4A4A;
   --muted: #6B7A7A;

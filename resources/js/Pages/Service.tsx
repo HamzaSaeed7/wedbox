@@ -340,29 +340,31 @@ function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
       <div ref={measureRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
         {CATEGORIES.map((c) => (
           <span key={c.slug} className="chip chip-selectable qs-chip" style={{ whiteSpace: 'nowrap' }}>
-            {c.name}
+            <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
           </span>
         ))}
       </div>
 
       {/* Visible single row */}
-      <div ref={rowRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', flexWrap: 'nowrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span className="text-12 muted fw-600" style={{ paddingLeft: 6, paddingRight: 6, whiteSpace: 'nowrap', flexShrink: 0 }}>BROWSE:</span>
-        {CATEGORIES.slice(0, visibleCount).map((c) => {
-          const on = c.slug === currentSlug;
-          return (
-            <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
-              style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
-            </button>
-          );
-        })}
+        <div ref={rowRef} style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', flexWrap: 'nowrap', flex: 1 }}>
+          {CATEGORIES.slice(0, visibleCount).map((c) => {
+            const on = c.slug === currentSlug;
+            return (
+              <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
+                style={{ background: on ? 'var(--primary)' : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
+              </button>
+            );
+          })}
+        </div>
         {hidden > 0 && (
           <button
             className="chip chip-selectable"
             style={{ background: 'transparent', color: 'var(--primary)', border: '1px dashed var(--primary)', whiteSpace: 'nowrap', fontWeight: 600, flexShrink: 0 }}
             onClick={() => setExpanded((e) => !e)}>
-            {`+${hidden} more`}
+            {expanded ? '↑ Less' : `+${hidden} more`}
           </button>
         )}
       </div>
@@ -374,7 +376,7 @@ function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
             const on = c.slug === currentSlug;
             return (
               <button key={c.slug} onClick={() => router.visit(`/search?category=${c.slug}`)} className="chip chip-selectable"
-                style={{ background: on ? c.color : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? c.color : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
+                style={{ background: on ? 'var(--primary)' : 'white', color: on ? 'white' : 'var(--ink-2)', border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`, whiteSpace: 'nowrap' }}>
                 <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
               </button>
             );
