@@ -290,9 +290,20 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
       <hr />
       <div className="text-12 muted">Share this service</div>
       <div className="flex gap-8 mt-12">
-        {(['facebook', 'twitter', 'linkedin', 'whatsapp'] as const).map((s) => (
-          <button key={s} className="btn btn-sm" style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', padding: 8, borderRadius: 10 }}>
-            <Icon name={s} size={14} />
+        {([
+          { name: 'facebook' as const, url: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+          { name: 'twitter'  as const, url: (u: string, t: string) => `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
+          { name: 'linkedin' as const, url: (u: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
+          { name: 'whatsapp' as const, url: (u: string, t: string) => `https://wa.me/?text=${t}%20${u}` },
+        ]).map(({ name, url }) => (
+          <button key={name} className="btn btn-sm"
+            style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', padding: 8, borderRadius: 10 }}
+            onClick={() => {
+              const pageUrl = encodeURIComponent(window.location.href);
+              const title   = encodeURIComponent(service?.title ?? 'Check out this wedding service on WedBox');
+              window.open(url(pageUrl, title), '_blank', 'noopener,noreferrer,width=600,height=500');
+            }}>
+            <Icon name={name} size={14} />
           </button>
         ))}
       </div>
