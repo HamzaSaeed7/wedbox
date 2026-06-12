@@ -187,6 +187,7 @@ export const vendorApi = {
 
 // ─── Admin
 export const adminApi = {
+  stats: () => api.get('/admin/stats').then((r) => r.data),
   users: (params?: object) => api.get('/admin/users', { params }).then((r) => r.data),
   invite: (d: { name: string; email: string; role: string }) => api.post('/admin/users/invite', d).then((r) => r.data),
   ban: (id: number) => api.post(`/admin/users/${id}/ban`),

@@ -170,6 +170,57 @@ class AdminController extends Controller
         return response()->json($feedbacks);
     }
 
+    public function stats()
+    {
+        $totalEarning     = Order::where('status', 'approved')->sum('price');
+        $thisWeekUsers    = User::where('created_at', '>=', now()->startOfWeek())->count();
+        $completedOrders  = Order::where('status', 'approved')->count();
+        $declinedOrders   = Order::where('status', 'rejected')->count();
+        $totalVendors     = User::where('role', 'vendor')->count();
+        $totalServices    = Service::count();
+
+        $newUsers = User::with('profile')->latest()->take(5)->get()->map(fn ($u) => [
+            'id'        => $u->id,
+            'name'      => $u->profile?->first_name
+                ? trim($u->profile->first_name . ' ' . ($u->profile->last_name ?? ''))
+                : ($u->name ?? $u->email),
+            'avatar_url'=> $u->profile?->avatar_url ?? null,
+            'joined'    => $u->created_at->format('n/j/y'),
+        ]);
+
+        $pendingVendors = User::with('vendorProfile')
+            ->where('role', 'vendor')
+            ->whereHas('vendorProfile', fn ($q) => $q->where('onboarding_completed', false))
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(fn ($u) => [
+                'id'           => $u->id,
+                'business_name'=> $u->vendorProfile?->business_name ?? $u->name,
+                'avatar_url'   => $u->vendorProfile?->avatar_url ?? null,
+            ]);
+
+        $todaysOrders = Order::with('service')->whereDate('created_at', today())->latest()->take(4)->get()
+            ->map(fn ($o) => [
+                'id'            => $o->id,
+                'service_title' => $o->service?->title ?? $o->order_type,
+                'image'         => $o->service?->images[0] ?? null,
+                'date'          => $o->created_at->format('n/j/y'),
+            ]);
+
+        return response()->json([
+            'total_earning'    => (float) $totalEarning,
+            'this_week_users'  => (int)   $thisWeekUsers,
+            'completed_orders' => (int)   $completedOrders,
+            'declined_orders'  => (int)   $declinedOrders,
+            'total_vendors'    => (int)   $totalVendors,
+            'total_services'   => (int)   $totalServices,
+            'new_users'        => $newUsers,
+            'pending_vendors'  => $pendingVendors,
+            'todays_orders'    => $todaysOrders,
+        ]);
+    }
+
     public function invite(Request $request)
     {
         $request->validate([
