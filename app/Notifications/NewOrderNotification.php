@@ -38,6 +38,7 @@ class NewOrderNotification extends Notification
             ->line("**Date:** {$date}  |  **Amount:** {$amount}")
             ->action('Review & Respond', $dashboardUrl)
             ->line('Please approve or reject the booking from your vendor dashboard.')
-            ->line('Thank you for being part of WedBox!');
+            ->line('Thank you for being part of WedBox!')
+            ->salutation('Warm regards, The WedBox Team');
     }
 }
