@@ -30,6 +30,7 @@ class VerifyEmail extends Notification
             ->line('Thanks for signing up. Please click the button below to verify your email address.')
             ->action('Verify Email Address', $this->verifyUrl)
             ->line('This link will expire in 60 minutes.')
-            ->line('If you did not create an account, you can safely ignore this email.');
+            ->line('If you did not create an account, you can safely ignore this email.')
+            ->salutation('Warm regards, The WedBox Team');
     }
 }
