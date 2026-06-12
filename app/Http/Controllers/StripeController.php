@@ -39,9 +39,10 @@ class StripeController extends Controller
         $appUrl = config('app.url');
 
         $session = StripeSession::create([
-            'customer'            => $user->stripe_customer_id,
-            'mode'                => 'subscription',
-            'line_items'          => [['price' => $priceId, 'quantity' => 1]],
+            'customer'              => $user->stripe_customer_id,
+            'mode'                  => 'subscription',
+            'payment_method_types'  => ['card'],
+            'line_items'            => [['price' => $priceId, 'quantity' => 1]],
             'success_url'         => $appUrl . '/vendor/onboarding?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url'          => $appUrl . '/vendor/pricing',
             'metadata'            => [

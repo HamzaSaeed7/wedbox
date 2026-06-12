@@ -881,10 +881,132 @@ function AdminBlog() {
 
 // ─── Dashboard overview
 function AdminOverview() {
+  const user = useAuthUser();
+  const { data, isLoading } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: () => adminApi.stats(),
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  const sk = { borderRadius: 6, background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' } as const;
+
+  const statCards = [
+    { tone: 'neutral', icon: 'cart',     label: 'Total Earning',      value: data ? `€${Number(data.total_earning).toLocaleString()}` : '—' },
+    { tone: 'amber',   icon: 'bookings', label: 'This Week Users',    value: data ? String(data.this_week_users) : '—' },
+    { tone: 'green',   icon: 'check',    label: 'Completed Orders',   value: data ? String(data.completed_orders) : '—' },
+    { tone: 'rose',    icon: 'close',    label: 'Declined Orders',    value: data ? String(data.declined_orders) : '—' },
+  ];
+
+  const bg: Record<string, string> = { amber: '#FFF7E6', green: '#E6F7F0', neutral: '#F5F5F5', rose: '#FFF0F0' };
+  const fg: Record<string, string> = { amber: '#D97706', green: '#059669', neutral: '#6B7280', rose: '#E11D48' };
+
   return (
     <div>
-      <h1 style={{ fontSize: 32 }}>Dashboard</h1>
-      <p className="muted text-14 mt-8">Welcome to the WedBox admin panel. Use the sidebar to manage vendors, services, orders, and more.</p>
+      <div style={{ borderBottom: '1px solid var(--line)', paddingBottom: 16, marginBottom: 24 }}>
+        <h1 style={{ fontSize: 32 }}>Dashboard</h1>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid r-grid-4" style={{ gap: 16 }}>
+        {statCards.map((s) => (
+          <div key={s.label} className="card card-pad" style={{ background: bg[s.tone] }}>
+            <div className="flex items-center gap-12">
+              <div style={{ color: fg[s.tone] }}><Icon name={s.icon} size={32} /></div>
+              <div>
+                {isLoading
+                  ? <div style={{ ...sk, width: 60, height: 28, marginBottom: 6 }} />
+                  : <div style={{ fontSize: 28, fontWeight: 700, color: fg[s.tone] }}>{s.value}</div>}
+                <div style={{ fontSize: 13, fontWeight: 600, color: fg[s.tone] }}>{s.label}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Lower panels */}
+      <div className="grid mt-20" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+
+        {/* New Users */}
+        <div className="card card-pad">
+          <div className="flex items-center justify-between mb-16">
+            <span style={{ fontWeight: 700, fontSize: 15 }}>New Users</span>
+            <Link href="/dashboard/admin/users" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none' }}>View all</Link>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {isLoading ? [1,2,3].map((i) => (
+              <div key={i} className="flex items-center gap-10" style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                <div style={{ ...sk, width: 36, height: 36, borderRadius: 999, flexShrink: 0 }} />
+                <div style={{ ...sk, width: 120, height: 13 }} />
+              </div>
+            )) : (data?.new_users ?? []).map((u: any, i: number, arr: any[]) => (
+              <div key={u.id} className="flex items-center justify-between" style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div className="flex items-center gap-10">
+                  <div style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0, overflow: 'hidden' }}>
+                    {u.avatar_url ? <img src={u.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : u.name[0]?.toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 500 }}>{u.name}</span>
+                </div>
+                <span className="muted text-13">{u.joined}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Vendors waiting for approval */}
+        <div className="card card-pad">
+          <div className="flex items-center justify-between mb-16">
+            <span style={{ fontWeight: 700, fontSize: 15 }}>Vendors waiting for approval</span>
+            <Link href="/dashboard/admin/vendors" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none' }}>View all</Link>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {isLoading ? [1,2,3].map((i) => (
+              <div key={i} className="flex items-center gap-10" style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                <div style={{ ...sk, width: 36, height: 36, borderRadius: 999, flexShrink: 0 }} />
+                <div style={{ ...sk, width: 140, height: 13 }} />
+              </div>
+            )) : (data?.pending_vendors ?? []).length === 0 ? (
+              <p className="muted text-13" style={{ padding: '10px 0' }}>No vendors pending approval.</p>
+            ) : (data?.pending_vendors ?? []).map((v: any, i: number, arr: any[]) => (
+              <div key={v.id} className="flex items-center gap-10" style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 999, background: 'var(--bg-3)', color: 'var(--ink-2)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14, flexShrink: 0, overflow: 'hidden' }}>
+                  {v.avatar_url ? <img src={v.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : v.business_name[0]?.toUpperCase()}
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>{v.business_name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Today's Orders */}
+        <div className="card card-pad">
+          <div className="flex items-center justify-between mb-16">
+            <span style={{ fontWeight: 700, fontSize: 15 }}>Today's Order</span>
+            <Link href="/dashboard/admin/orders" style={{ fontSize: 13, color: 'var(--primary)', textDecoration: 'none' }}>View all</Link>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {isLoading ? [1,2].map((i) => (
+              <div key={i} className="flex items-center gap-10" style={{ padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                <div style={{ ...sk, width: 36, height: 36, borderRadius: 8, flexShrink: 0 }} />
+                <div style={{ ...sk, width: 100, height: 13 }} />
+              </div>
+            )) : (data?.todays_orders ?? []).length === 0 ? (
+              <p className="muted text-13" style={{ padding: '10px 0' }}>No orders today.</p>
+            ) : (data?.todays_orders ?? []).map((o: any, i: number, arr: any[]) => (
+              <div key={o.id} className="flex items-center justify-between" style={{ padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div className="flex items-center gap-10">
+                  <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg-3)', display: 'grid', placeItems: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                    {o.image ? <img src={typeof o.image === 'string' ? o.image : o.image?.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Icon name="cart" size={16} color="var(--muted)" />}
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 500, textTransform: 'capitalize' }}>{o.service_title}</span>
+                </div>
+                <span className="muted text-13">{o.date}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

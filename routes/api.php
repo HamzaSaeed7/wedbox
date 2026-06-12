@@ -109,6 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin
     Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/stats', [AdminController::class, 'stats']);
         Route::get('/users', [AdminController::class, 'users']);
         Route::post('/users/invite', [AdminController::class, 'invite']);
         Route::post('/users/{user}/ban', [AdminController::class, 'ban']);
