@@ -60,6 +60,11 @@ jobs:
             export PHP=/usr/bin/php8.3
             cd /home/1636408.cloudwaysapps.com/zmkyvwckpm/public_html
 
+            echo "==> Ensuring storage directory structure exists..."
+            mkdir -p storage/framework/{cache/data,sessions,views,testing}
+            mkdir -p storage/logs
+            mkdir -p bootstrap/cache
+
             echo "==> Installing PHP dependencies..."
             $PHP /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
