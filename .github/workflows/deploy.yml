@@ -32,7 +32,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USERNAME }}
           SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-          DEPLOY_PATH: /home/1611814.cloudwaysapps.com/vwcuxfppet/public_html
+          DEPLOY_PATH: /home/1636408.cloudwaysapps.com/zmkyvwckpm/public_html
         run: |
           sudo apt-get install -y sshpass rsync
           rsync -az --delete \
@@ -57,7 +57,7 @@ jobs:
           timeout: 300s
           script: |
             set -e
-            cd /home/1611814.cloudwaysapps.com/vwcuxfppet/public_html
+            cd /home/1636408.cloudwaysapps.com/zmkyvwckpm/public_html
 
             echo "==> Installing PHP dependencies..."
             composer install --no-dev --optimize-autoloader --no-interaction
