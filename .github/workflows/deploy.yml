@@ -57,24 +57,28 @@ jobs:
           timeout: 300s
           script: |
             set -e
+            export PHP=/usr/bin/php8.3
             cd /home/1636408.cloudwaysapps.com/zmkyvwckpm/public_html
 
             echo "==> Installing PHP dependencies..."
-            composer install --no-dev --optimize-autoloader --no-interaction
+            $PHP /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
             echo "==> Running fresh migrations with seed..."
-            php artisan migrate:fresh --seed --force
+            $PHP artisan migrate:fresh --seed --force
 
             echo "==> Clearing & caching config..."
-            php artisan optimize:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            $PHP artisan optimize:clear
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan view:cache
 
             echo "==> Fixing storage permissions..."
             chmod -R 775 storage bootstrap/cache
 
+            echo "==> Creating storage symlink..."
+            $PHP artisan storage:link || true
+
             echo "==> Restarting queue worker..."
-            php artisan queue:restart || true
+            $PHP artisan queue:restart || true
 
             echo "==> Deployment complete!"
