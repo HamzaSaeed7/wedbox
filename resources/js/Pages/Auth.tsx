@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import Icon from '../components/shared/Icon';
+import Logo from '../components/shared/Logo';
 import logoWhite from '../assets/logo-white.svg';
 import { useStore } from '../store';
 import { authApi } from '../lib/api';
@@ -258,10 +259,21 @@ export default function AuthPage() {
                 </div>
               )}
 
+              <Link href="/" style={{ display: 'flex', justifyContent: 'center', marginTop: -24, marginBottom: 24 }}>
+                <Logo />
+              </Link>
               <h2>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
               <p className="muted mt-8">{mode === 'login' ? 'Sign in to continue planning.' : 'Plan your wedding without spreadsheets.'}</p>
 
               <form onSubmit={handleSubmit} className="mt-24" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {mode === 'signup' && (
+                  <div>
+                    <AuthLabel>I'm signing up as a</AuthLabel>
+                    <div className="mt-8">
+                      <TogglePair value={role} onChange={setRole} options={[{ value: 'customer', label: 'Customer' }, { value: 'vendor', label: 'Vendor' }]} />
+                    </div>
+                  </div>
+                )}
                 {mode === 'signup' && (
                   <div className="flex gap-8">
                     <div style={{ flex: 1 }}>
@@ -296,12 +308,6 @@ export default function AuthPage() {
                         <button type="button" onClick={() => setShowConfirm(v => !v)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-25%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4 }} aria-label={showConfirm ? 'Hide password' : 'Show password'}>
                           <Icon name={showConfirm ? 'eye-off' : 'eye'} size={18} />
                         </button>
-                      </div>
-                    </div>
-                    <div>
-                      <AuthLabel>I'm signing up as a</AuthLabel>
-                      <div className="mt-8">
-                        <TogglePair value={role} onChange={setRole} options={[{ value: 'customer', label: 'Customer' }, { value: 'vendor', label: 'Vendor' }]} />
                       </div>
                     </div>
                   </>

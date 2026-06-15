@@ -44,7 +44,7 @@ function HeroSplit() {
           Plan your wedding in one click.
         </h1>
         <p style={{ color: 'rgba(255,255,255,.82)', fontSize: 17, marginTop: 24, lineHeight: 1.6 }}>
-          Cyprus's best venues, vendors and packages — in one place, with the total upfront.
+          The best venues, vendors and packages in Cyprus - all in one place, with the total cost upfront.
         </p>
         <div style={{ marginTop: 40, maxWidth: 680, marginInline: 'auto' }}>
           <SearchBar big dark />

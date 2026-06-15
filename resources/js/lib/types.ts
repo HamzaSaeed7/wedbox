@@ -117,6 +117,7 @@ export interface BrideDressExtra {
   id: string;
   name: string;
   price: number;
+  image?: string;
 }
 
 export interface BrideDressConfig {

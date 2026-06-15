@@ -36,5 +36,5 @@ export const CITIES: City[] = [
   { id: 5, name: 'Larnaca',    country: 'Cyprus', bar_price: 8 },
   { id: 6, name: 'Protaras',   country: 'Cyprus', bar_price: 8 },
   { id: 7, name: 'Paralimni',  country: 'Cyprus', bar_price: 7 },
-  { id: 8, name: 'Troodos',    country: 'Cyprus', bar_price: 7 },
+  { id: 8, name: 'Troodos Mountain', country: 'Cyprus', bar_price: 7 },
 ];

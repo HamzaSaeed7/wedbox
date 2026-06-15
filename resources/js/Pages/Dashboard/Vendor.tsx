@@ -24,6 +24,7 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 
 function VendorSidebar({ active }: { active: string }) {
   const { logout } = useStore();
+  const [open, setOpen] = useState(false);
   const items = [
     { id: '',        href: '/dashboard/vendor',          label: 'Dashboard', icon: 'home' },
     { id: 'service', href: '/dashboard/vendor/service',  label: 'Service',   icon: 'services' },
@@ -33,13 +34,18 @@ function VendorSidebar({ active }: { active: string }) {
     { id: 'settings',href: '/dashboard/vendor/settings', label: 'Settings',  icon: 'settings' },
   ];
   return (
-    <aside className="dash-side" style={{ background: 'var(--primary)' }}>
-      <div className="brand" style={{ color: 'white', justifyContent: 'center' }}>
-        <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+    <aside className={`dash-side${open ? ' open' : ''}`} style={{ background: 'var(--primary)' }}>
+      <div className="dash-side-top">
+        <div className="brand" style={{ color: 'white', justifyContent: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+        </div>
+        <button className="dash-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>
+          <Icon name={open ? 'close' : 'menu'} size={22} color="white" />
+        </button>
       </div>
       <nav className="dash-nav">
         {items.map((i) => (
-          <Link key={i.id} href={i.href}
+          <Link key={i.id} href={i.href} onClick={() => setOpen(false)}
             style={{ background: active === i.id ? 'rgba(255,255,255,.18)' : 'transparent',
               color: 'white', fontWeight: active === i.id ? 700 : 500,
               display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
@@ -48,7 +54,7 @@ function VendorSidebar({ active }: { active: string }) {
           </Link>
         ))}
       </nav>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="dash-side-foot" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
           <Icon name="home" size={18} color="white" /> Back to site
         </Link>

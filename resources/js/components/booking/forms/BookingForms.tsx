@@ -424,20 +424,27 @@ export function BrideDressForm({ service, onChange }: FormProps) {
         <Label required>Pick a size</Label>
         <div className="mt-8"><SizeChips options={b.sizes} value={size} onChange={(v) => setSize(v as string)} /></div>
       </div>
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="grid fit-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <FittingField label="Day of 1st fitting" value={fit1} onChange={setFit1} required />
         <FittingField label="Day of 2nd fitting" value={fit2} onChange={setFit2} />
       </div>
       <div>
         <Label>Add-ons</Label>
         <div className="flex gap-8 mt-8" style={{ flexWrap: 'wrap' }}>
-          {b.extras.map((e) => (
-            <button key={e.id} type="button"
-              onClick={() => setExtras((s) => s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])}
-              className={`chip chip-selectable ${extras.includes(e.id) ? 'chip-selected' : ''}`}>
-              {e.name} · €{e.price}
-            </button>
-          ))}
+          {b.extras.map((e) => {
+            const on = extras.includes(e.id);
+            return (
+              <button key={e.id} type="button"
+                onClick={() => setExtras((s) => s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])}
+                className={`chip chip-selectable ${on ? 'chip-selected' : ''}`}
+                style={e.image ? { paddingLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 8 } : undefined}>
+                {e.image && (
+                  <img src={e.image} alt="" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                )}
+                <span>{e.name} · €{e.price}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
       <FieldNote note={note} onChange={setNote} />
@@ -472,7 +479,7 @@ export function GroomSuiteForm({ service, onChange }: FormProps) {
         <SizeRow label="Bottom size" value={bottom} onChange={setBottom} options={g.bottom} />
         <SizeRow label="Shirt size"  value={shirt}  onChange={setShirt}  options={g.shirt} />
       </div>
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="grid fit-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <FittingField label="Day of 1st fitting" value={fit1} onChange={setFit1} required />
         <FittingField label="Day of 2nd fitting" value={fit2} onChange={setFit2} />
       </div>

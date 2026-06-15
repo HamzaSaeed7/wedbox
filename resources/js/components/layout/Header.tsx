@@ -87,7 +87,7 @@ const NAV_LINKS = [
 const HERO_ROUTES = new Set(['/', '/about']);
 
 export default function Header() {
-  const { cart, cartCount, favorites, setCartOpen } = useStore();
+  const { cart, cartCount, favorites, setCartOpen, logout } = useStore();
   const user = useAuthUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -163,10 +163,16 @@ export default function Header() {
             <Icon name="user" size={18} color="var(--primary)" /> Login / Sign up
           </Link>
         ) : (
-          <Link href={user.role === 'vendor' ? '/dashboard/vendor' : '/dashboard/buyer'} onClick={() => setMobileOpen(false)}
-            style={{ padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Icon name="bookings" size={18} color="var(--primary)" /> My Dashboard
-          </Link>
+          <>
+            <Link href={user.role === 'vendor' ? '/dashboard/vendor' : '/dashboard/buyer'} onClick={() => setMobileOpen(false)}
+              style={{ padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Icon name="bookings" size={18} color="var(--primary)" /> My Dashboard
+            </Link>
+            <button onClick={() => { setMobileOpen(false); logout(); }}
+              style={{ padding: '14px 16px', borderRadius: 12, fontSize: 15, fontWeight: 500, color: '#E11D48', display: 'flex', alignItems: 'center', gap: 12, width: '100%', background: 'transparent', border: 0, cursor: 'pointer', textAlign: 'left' }}>
+              <Icon name="logout" size={18} color="#E11D48" /> Sign out
+            </button>
+          </>
         )}
       </nav>
     </>

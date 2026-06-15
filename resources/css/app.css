@@ -201,6 +201,8 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
 .dash-shell { display: grid; grid-template-columns: 256px 1fr; min-height: 100vh; background: var(--bg-2); }
 .dash-side { background: white; border-right: 1px solid var(--line); padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
 .dash-side .brand { padding: 6px 12px 22px; display: flex; align-items: center; gap: 10px; }
+.dash-side-top { display: flex; align-items: center; }
+.dash-burger { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: rgba(255,255,255,.18); color: white; cursor: pointer; flex-shrink: 0; }
 .dash-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .dash-nav a { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; color: var(--ink-2); font-weight: 500; font-size: 14px; position: relative; }
 .dash-nav a:hover { background: var(--bg-3); color: var(--ink); }
@@ -271,6 +273,8 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
 .r-grid-2  { grid-template-columns: repeat(2, 1fr); }
 .r-grid-cat { grid-template-columns: repeat(9, 1fr); }
 .r-grid-detail { grid-template-columns: 1.55fr 1fr; }
+/* Allow both columns to shrink instead of imposing their min-content width (prevents overflow on mobile) */
+.r-grid-detail > * { min-width: 0; }
 .r-grid-halves { grid-template-columns: 1fr 1fr; }
 .r-grid-cart   { grid-template-columns: 1.5fr 1fr; }
 .r-grid-testimonials { grid-template-columns: 320px 1fr 1fr 1fr; }
@@ -313,12 +317,15 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
   .r-grid-destinations { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
   .mob-menu-btn { display: flex; align-items: center; justify-content: center; }
   .site-nav { display: none; }
-  .dash-shell { grid-template-columns: 1fr; }
-  .dash-side { position: static; height: auto; flex-direction: row; overflow-x: auto; padding: 10px 12px; gap: 4px; scrollbar-width: none; }
-  .dash-side::-webkit-scrollbar { display: none; }
-  .dash-side .brand { padding: 6px 12px; flex-shrink: 0; }
-  .dash-nav { flex-direction: row; flex-wrap: nowrap; }
-  .dash-nav a { white-space: nowrap; flex-shrink: 0; }
+  .dash-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .dash-side { position: sticky; top: 0; z-index: 50; height: auto; flex-direction: column; gap: 8px; padding: 10px 14px; }
+  .dash-side .brand { padding: 0; }
+  .dash-side-top { width: 100%; justify-content: space-between; }
+  .dash-burger { display: inline-flex; }
+  .dash-nav { display: none; flex-direction: column; flex: initial; width: 100%; gap: 2px; }
+  .dash-side-foot { display: none !important; flex-direction: column !important; width: 100%; gap: 8px !important; }
+  .dash-side.open .dash-nav { display: flex; }
+  .dash-side.open .dash-side-foot { display: flex !important; }
   .dash-main { padding: 24px 18px 60px; }
   .auth-shell { grid-template-columns: 1fr; }
   .auth-form { padding: 36px 22px; }
@@ -396,6 +403,14 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
 @media (max-width: 380px) {
   .dash-main      { padding: 12px 10px 40px !important; }
   .order-row-grid { grid-template-columns: 56px 1fr auto; gap: 10px; }
+}
+
+/* ---------- Booking form (service page) responsive ---------- */
+/* Let grid/flex cells shrink instead of forcing date inputs / fields to overflow */
+.booking-form, .booking-form * { min-width: 0; }
+/* Stack the two fitting-date fields onto separate lines on mobile */
+@media (max-width: 640px) {
+  .fit-grid { grid-template-columns: 1fr !important; }
 }
 
 /* ---------- Animations ---------- */

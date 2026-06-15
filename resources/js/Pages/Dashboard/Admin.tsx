@@ -26,6 +26,7 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 // ─── Sidebar
 function AdminSidebar({ active }: { active: string }) {
   const { logout } = useStore();
+  const [open, setOpen] = useState(false);
   const items = [
     { id: 'dashboard', href: '/dashboard/admin',           label: 'Dashboard', icon: 'grid' },
     { id: 'services',  href: '/dashboard/admin/services',  label: 'Services',  icon: 'services' },
@@ -37,14 +38,19 @@ function AdminSidebar({ active }: { active: string }) {
     { id: 'settings',  href: '/dashboard/admin/settings',  label: 'Settings',  icon: 'settings' },
   ];
   return (
-    <aside className="dash-side" style={{ background: 'var(--primary)' }}>
-      <div className="brand" style={{ color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
-        <span style={{ background: 'rgba(255,255,255,.22)', color: 'white', padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>ADMIN</span>
+    <aside className={`dash-side${open ? ' open' : ''}`} style={{ background: 'var(--primary)' }}>
+      <div className="dash-side-top">
+        <div className="brand" style={{ color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+          <span style={{ background: 'rgba(255,255,255,.22)', color: 'white', padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>ADMIN</span>
+        </div>
+        <button className="dash-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>
+          <Icon name={open ? 'close' : 'menu'} size={22} color="white" />
+        </button>
       </div>
       <nav className="dash-nav">
         {items.map((i) => (
-          <Link key={i.id} href={i.href}
+          <Link key={i.id} href={i.href} onClick={() => setOpen(false)}
             style={{ background: active === i.id ? 'rgba(255,255,255,.18)' : 'transparent',
               color: 'white', fontWeight: active === i.id ? 700 : 500,
               display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
@@ -53,11 +59,11 @@ function AdminSidebar({ active }: { active: string }) {
           </Link>
         ))}
       </nav>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
+      <div className="dash-side-foot" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
           <Icon name="home" size={18} color="white" /> Back to site
         </Link>
-        <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.08)', border: 0, cursor: 'pointer', width: '100%' }}>
+        <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.08)', border: 0, cursor: 'pointer', width: '100%', whiteSpace: 'nowrap' }}>
           <Icon name="logout" size={18} color="white" /> Sign out
         </button>
       </div>
@@ -620,14 +626,14 @@ function AdminServices() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 32 }}>Services</h1>
           {!isLoading && <p className="muted text-13 mt-4">{total.toLocaleString()} service{total !== 1 ? 's' : ''} total</p>}
         </div>
-        <div className="flex gap-10 items-center">
+        <div className="flex gap-10 items-center" style={{ flex: '1 1 240px', minWidth: 0, justifyContent: 'flex-end' }}>
           {/* Search */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: 280 }}>
             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <Icon name="search" size={14} color="var(--muted)" />
             </span>
@@ -636,12 +642,9 @@ function AdminServices() {
               placeholder="Search services…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }}
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: '100%', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>
-          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="download" size={14} /> Export
-          </button>
         </div>
       </div>
 
@@ -914,7 +917,7 @@ function AdminBlog() {
       </div>
 
       {apiPosts.length === 0 && !blogResult ? (
-        <div className="grid mt-20" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="grid r-grid-3 mt-20" style={{ gap: 16 }}>
           {[1,2,3].map((i) => {
             const sk = { background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' } as const;
             return (
@@ -932,7 +935,7 @@ function AdminBlog() {
       ) : apiPosts.length === 0 ? (
         <div className="card card-pad mt-20" style={{ textAlign: 'center', color: 'var(--muted)' }}>No blog posts yet. Click "New post" to create one.</div>
       ) : (
-        <div className="grid mt-20" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="grid r-grid-3 mt-20" style={{ gap: 16 }}>
           {apiPosts.map((p) => (
             <div key={p.id} className="card" style={{ overflow: 'hidden' }}>
               {p.cover && <img src={p.cover} alt={p.title} style={{ width: '100%', aspectRatio: '16/10', objectFit: 'cover' }} />}
@@ -1015,7 +1018,7 @@ function AdminOverview() {
       </div>
 
       {/* Lower panels */}
-      <div className="grid mt-20" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+      <div className="dash-grid-3 mt-20" style={{ gap: 16 }}>
 
         {/* New Users */}
         <div className="card card-pad">
@@ -1280,15 +1283,15 @@ function AdminOrders() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 32 }}>Orders</h1>
-        <div className="flex items-center gap-10">
-          <div style={{ position: 'relative' }}>
+        <div className="flex items-center gap-10" style={{ flex: '1 1 240px', minWidth: 0, justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: 280 }}>
             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
             <input type="text" placeholder="Search by email…" value={q} onChange={(e) => setQ(e.target.value)}
-              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: '100%', boxSizing: 'border-box', outline: 'none' }} />
           </div>
-          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <Icon name="download" size={14} /> Export Filters
           </button>
         </div>

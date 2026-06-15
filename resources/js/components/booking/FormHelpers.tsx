@@ -213,7 +213,7 @@ export function TogglePair({ value, onChange, options }: {
   options: { value: string; label: string }[];
 }) {
   return (
-    <div className="flex gap-8" style={{ background: 'var(--bg-3)', padding: 4, borderRadius: 999, width: 'fit-content' }}>
+    <div className="flex gap-8" style={{ background: 'var(--bg-3)', padding: 4, borderRadius: 999, width: 'fit-content', maxWidth: '100%', flexWrap: 'wrap' }}>
       {options.map((o) => (
         <button key={o.value} type="button" onClick={() => onChange(o.value)} className="btn btn-sm"
           style={{ background: value === o.value ? 'white' : 'transparent', color: 'var(--ink)',
