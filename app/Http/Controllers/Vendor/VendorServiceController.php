@@ -222,7 +222,7 @@ class VendorServiceController extends Controller
         DB::table('service_bride_dresses')->where('id', $bdid)->update(['price_rent' => (float)($d['price_rent'] ?? 0), 'price_buy' => (float)($d['price_buy'] ?? 0), 'available_sizes' => json_encode($d['available_sizes'] ?? []), 'updated_at' => now()]);
         DB::table('service_bride_dress_extras')->where('service_bride_dress_id', $bdid)->delete();
         foreach (($d['extras'] ?? []) as $e) {
-            DB::table('service_bride_dress_extras')->insert(['service_bride_dress_id' => $bdid, 'name' => is_array($e) ? ($e['name'] ?? '') : $e, 'price' => (float)(is_array($e) ? ($e['price'] ?? 0) : 0), 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('service_bride_dress_extras')->insert(['service_bride_dress_id' => $bdid, 'name' => is_array($e) ? ($e['name'] ?? '') : $e, 'price' => (float)(is_array($e) ? ($e['price'] ?? 0) : 0), 'image' => is_array($e) ? ($e['image'] ?? null) : null, 'created_at' => now(), 'updated_at' => now()]);
         }
     }
 

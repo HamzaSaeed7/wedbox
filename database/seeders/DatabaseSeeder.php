@@ -108,6 +108,7 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Paphos',    'country' => 'Cyprus', 'show_in_footer' => true,  'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Famagusta', 'country' => 'Cyprus', 'show_in_footer' => false, 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Ayia Napa', 'country' => 'Cyprus', 'show_in_footer' => false, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Troodos Mountain', 'country' => 'Cyprus', 'show_in_footer' => false, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // ── 3. Admin user ──────────────────────────────────────────────────────

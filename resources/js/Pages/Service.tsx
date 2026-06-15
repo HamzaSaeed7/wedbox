@@ -73,7 +73,7 @@ function normalizeBrideDress(b: any) {
   if (!b) return undefined;
   if (b.priceRent !== undefined) return b;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { priceRent: Number(b.price_rent ?? 0), priceBuy: Number(b.price_buy ?? 0), sizes: parseJson(b.available_sizes ?? b.sizes), extras: (b.extras ?? []).map((e: any, i: number) => ({ id: String(e.id ?? i), name: e.name, price: Number(e.price ?? 0) })) };
+  return { priceRent: Number(b.price_rent ?? 0), priceBuy: Number(b.price_buy ?? 0), sizes: parseJson(b.available_sizes ?? b.sizes), extras: (b.extras ?? []).map((e: any, i: number) => ({ id: String(e.id ?? i), name: e.name, price: Number(e.price ?? 0), image: e.image ?? '' })) };
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeSuit(s: any) {
@@ -239,17 +239,46 @@ function Gallery({ images, active, setActive }: { images: string[]; active: numb
   );
 }
 
-function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added }: {
+function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added, serviceTitle }: {
   cat: { name: string } | undefined;
   formState: FormState; date: string; setDate: (d: string) => void; onReserve: () => void;
-  minDate?: string; added?: boolean;
+  minDate?: string; added?: boolean; serviceTitle?: string;
 }) {
   const total = formState.total || 0;
+  const showToast = useStore((s) => s.showToast);
+  const copyToClipboard = async (text: string): Promise<boolean> => {
+    // navigator.clipboard is unavailable outside secure contexts (e.g. http LAN IP),
+    // so fall back to a hidden textarea + execCommand.
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch { /* fall through to legacy path */ }
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+  const copyLink = async () => {
+    const ok = await copyToClipboard(window.location.href);
+    showToast(ok ? 'Link copied to clipboard!' : 'Could not copy link.', ok ? 'success' : 'error');
+  };
   return (
     <div className="booking-panel">
       <div className="panel-title">
         <span className="chip chip-soft">{cat?.name}</span>
-        <button className="btn btn-ghost btn-sm" title="Copy link"><Icon name="copy" size={14} /></button>
+        <button className="btn btn-ghost btn-sm" title="Copy link" onClick={copyLink}><Icon name="copy" size={14} /></button>
       </div>
       <div className="mt-16">
         <div className="text-12 muted fw-600">Booking date</div>
@@ -291,16 +320,22 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
       <div className="text-12 muted">Share this service</div>
       <div className="flex gap-8 mt-12">
         {([
-          { name: 'facebook' as const, url: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
-          { name: 'twitter'  as const, url: (u: string, t: string) => `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
-          { name: 'linkedin' as const, url: (u: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
-          { name: 'whatsapp' as const, url: (u: string, t: string) => `https://wa.me/?text=${t}%20${u}` },
+          { name: 'facebook'  as const, url: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+          { name: 'twitter'   as const, url: (u: string, t: string) => `https://x.com/intent/post?url=${u}&text=${t}` },
+          { name: 'instagram' as const, url: null },
+          { name: 'whatsapp'  as const, url: (u: string, t: string) => `https://wa.me/?text=${t}%20${u}` },
         ]).map(({ name, url }) => (
-          <button key={name} className="btn btn-sm"
+          <button key={name} className="btn btn-sm" title={name === 'instagram' ? 'Copy link for Instagram' : `Share on ${name}`}
             style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', padding: 8, borderRadius: 10 }}
             onClick={() => {
+              if (!url) {
+                // Instagram has no web share intent — copy the link instead
+                copyToClipboard(window.location.href).then((ok) =>
+                  showToast(ok ? 'Link copied — paste it on Instagram!' : 'Could not copy link.', ok ? 'success' : 'error'));
+                return;
+              }
               const pageUrl = encodeURIComponent(window.location.href);
-              const title   = encodeURIComponent(service?.title ?? 'Check out this wedding service on WedBox');
+              const title   = encodeURIComponent(serviceTitle ?? 'Check out this wedding service on WedBox');
               window.open(url(pageUrl, title), '_blank', 'noopener,noreferrer,width=600,height=500');
             }}>
             <Icon name={name} size={14} />
@@ -346,9 +381,11 @@ function CategoryQuickSwitch({ currentSlug }: { currentSlug: string }) {
   const hidden = CATEGORIES.length - visibleCount;
 
   return (
-    <div className="card" style={{ padding: '10px 12px', background: 'var(--bg-2)', border: 0, overflow: 'hidden' }}>
-      {/* Invisible ghost row used only for measurement — never wraps */}
-      <div ref={measureRef} style={{ position: 'absolute', visibility: 'hidden', pointerEvents: 'none', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
+    <div className="card" style={{ position: 'relative', padding: '10px 12px', background: 'var(--bg-2)', border: 0, overflow: 'hidden' }}>
+      {/* Invisible ghost row used only for measurement — never wraps.
+          Parent must be position:relative so this absolute row is clipped by overflow:hidden
+          instead of expanding the page width on narrow viewports. */}
+      <div ref={measureRef} style={{ position: 'absolute', top: 0, left: 0, visibility: 'hidden', pointerEvents: 'none', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
         {CATEGORIES.map((c) => (
           <span key={c.slug} className="chip chip-selectable qs-chip" style={{ whiteSpace: 'nowrap' }}>
             <Icon name={c.icon || 'diamond'} size={12} /> {c.name}
@@ -625,7 +662,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
             <hr className="divider mt-24 mb-24" />
             <h3 style={{ fontSize: 20, marginBottom: 16 }}>Customize your booking</h3>
             {FormComponent && hasSubData
-              ? <FormErrorBoundary><FormComponent service={service} onChange={setFormState} initialPayload={initialPayload} /></FormErrorBoundary>
+              ? <div className="booking-form"><FormErrorBoundary><FormComponent service={service} onChange={setFormState} initialPayload={initialPayload} /></FormErrorBoundary></div>
               : <p className="muted text-14" style={{ padding: '12px 0' }}>Booking details are being set up by the vendor — check back soon.</p>
             }
             <hr className="divider mt-32 mb-24" />
@@ -633,7 +670,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
           </div>
           <aside>
             <BookingPanel cat={cat} formState={formState} date={date} setDate={setDate}
-              minDate={tomorrow} added={addedToCart}
+              minDate={tomorrow} added={addedToCart} serviceTitle={service?.title}
               onReserve={async () => {
                 if (user && apiData && !isError) {
                   try {

@@ -57,6 +57,7 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 
 function CustomerSidebar({ active }: { active: string }) {
   const { logout } = useStore();
+  const [open, setOpen] = useState(false);
   const items = [
     { id: '',          to: '/dashboard/buyer',           label: 'Dashboard',  icon: 'home' },
     { id: 'messages',  to: '/dashboard/buyer/messages',  label: 'Messages',   icon: 'msg',      badge: 0 },
@@ -64,20 +65,25 @@ function CustomerSidebar({ active }: { active: string }) {
     { id: 'account',   to: '/dashboard/buyer/account',   label: 'My Account', icon: 'settings' },
   ];
   return (
-    <aside className="dash-side" style={{ background: 'var(--primary)' }}>
-      <div className="brand" style={{ color: 'white', justifyContent: 'center' }}>
-        <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+    <aside className={`dash-side${open ? ' open' : ''}`} style={{ background: 'var(--primary)' }}>
+      <div className="dash-side-top">
+        <div className="brand" style={{ color: 'white', justifyContent: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+        </div>
+        <button className="dash-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>
+          <Icon name={open ? 'close' : 'menu'} size={22} color="white" />
+        </button>
       </div>
       <nav className="dash-nav">
         {items.map((i) => (
-          <Link key={i.id} href={i.to}
+          <Link key={i.id} href={i.to} onClick={() => setOpen(false)}
             style={{ background: active === i.id ? 'rgba(255,255,255,.18)' : 'transparent', color: 'white', fontWeight: active === i.id ? 700 : 500, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, fontSize: 14, textDecoration: 'none' }}>
             <Icon name={i.icon} size={18} color="white" /> {i.label}
             {i.badge ? <span style={{ marginLeft: 'auto', background: '#E11D48', color: 'white', borderRadius: 999, fontSize: 11, fontWeight: 700, minWidth: 18, height: 18, display: 'grid', placeItems: 'center', padding: '0 5px' }}>{i.badge}</span> : null}
           </Link>
         ))}
       </nav>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="dash-side-foot" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
           <Icon name="home" size={18} color="white" /> Back to site
         </Link>

@@ -310,8 +310,8 @@ function CarHireForm({ data, onChange }: { data: any; onChange: (d: any) => void
       ))}
       <AddBtn label="Add duration" onClick={() => onChange({ ...d, hours: [...hours, { label: '', price: 0 }] })} />
 
-      <SectionTitle title="Available vehicles" sub="One per line — press Enter to add." />
-      <TagInput tags={carNames} onChange={(t) => onChange({ ...d, addons: t.map((n) => ({ name: n })) })} placeholder="e.g. Rolls-Royce Silver Shadow" />
+      <SectionTitle title="Add-ons" sub="One per line — press Enter to add." />
+      <TagInput tags={carNames} onChange={(t) => onChange({ ...d, addons: t.map((n) => ({ name: n })) })} placeholder="e.g. Champagne service" />
     </div>
   );
 }
@@ -386,15 +386,38 @@ function BrideDressForm({ data, onChange }: { data: any; onChange: (d: any) => v
           <TagInput tags={sizes} onChange={(t) => onChange({ ...d, available_sizes: t })} placeholder="e.g. XS, S, M, L…" />
         </Field>
       </div>
-      <SectionTitle title="Extras / accessories" />
+      <SectionTitle title="Extras / accessories" sub="Each extra can show a photo on the booking page." />
       {extras.map((e2, i) => (
         <div key={i} className="flex gap-8 mt-8 items-center">
+          {/* Image upload / preview */}
+          <label style={{ position: 'relative', width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: '2px dashed var(--line)', display: 'grid', placeItems: 'center', cursor: e2._uploading ? 'wait' : 'pointer', flexShrink: 0, background: 'var(--bg-3)' }}>
+            {e2.image
+              ? <img src={e2.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : e2._uploading
+                ? <span className="text-10 muted">…</span>
+                : <Icon name="plus" size={16} color="var(--muted)" />
+            }
+            <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!!e2._uploading}
+              onChange={async (ev) => {
+                const file = ev.target.files?.[0];
+                if (!file) return;
+                ev.target.value = '';
+                onChange({ ...d, extras: extras.map((x, j) => j === i ? { ...x, _uploading: true } : x) });
+                try {
+                  const url = await uploadApi.serviceImage(file);
+                  onChange({ ...d, extras: extras.map((x, j) => j === i ? { ...x, image: url, _uploading: false } : x) });
+                } catch {
+                  onChange({ ...d, extras: extras.map((x, j) => j === i ? { ...x, _uploading: false } : x) });
+                }
+              }}
+            />
+          </label>
           <input className="input" value={e2.name ?? ''} onChange={(ev) => onChange({ ...d, extras: extras.map((x, j) => j === i ? { ...x, name: ev.target.value } : x) })} placeholder="Extra name (e.g. Veil)" style={{ flex: 2 }} />
           <CurrencyInput value={e2.price ?? 0} onChange={(ev) => onChange({ ...d, extras: extras.map((x, j) => j === i ? { ...x, price: +ev.target.value } : x) })} placeholder="€" containerStyle={{ width: 100 }} />
           <RemoveBtn onClick={() => onChange({ ...d, extras: extras.filter((_, j) => j !== i) })} />
         </div>
       ))}
-      <AddBtn label="Add extra" onClick={() => onChange({ ...d, extras: [...extras, { name: '', price: 0 }] })} />
+      <AddBtn label="Add extra" onClick={() => onChange({ ...d, extras: [...extras, { name: '', price: 0, image: '' }] })} />
     </div>
   );
 }
@@ -950,6 +973,11 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
     if (slug === 'makeup' || slug === 'hair') {
       if (Array.isArray(payload.packages)) {
         payload = { ...payload, packages: payload.packages.map(({ _uploading: _, ...p }: any) => p) }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+    }
+    if (slug === 'bride-dress') {
+      if (Array.isArray(payload.extras)) {
+        payload = { ...payload, extras: payload.extras.map(({ _uploading: _, ...e }: any) => e) }; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     }
     await onSave(payload);

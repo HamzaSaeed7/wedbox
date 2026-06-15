@@ -26,6 +26,7 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 // ─── Sidebar
 function AdminSidebar({ active }: { active: string }) {
   const { logout } = useStore();
+  const [open, setOpen] = useState(false);
   const items = [
     { id: 'dashboard', href: '/dashboard/admin',           label: 'Dashboard', icon: 'grid' },
     { id: 'services',  href: '/dashboard/admin/services',  label: 'Services',  icon: 'services' },
@@ -37,14 +38,19 @@ function AdminSidebar({ active }: { active: string }) {
     { id: 'settings',  href: '/dashboard/admin/settings',  label: 'Settings',  icon: 'settings' },
   ];
   return (
-    <aside className="dash-side" style={{ background: 'var(--primary)' }}>
-      <div className="brand" style={{ color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
-        <span style={{ background: 'rgba(255,255,255,.22)', color: 'white', padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>ADMIN</span>
+    <aside className={`dash-side${open ? ' open' : ''}`} style={{ background: 'var(--primary)' }}>
+      <div className="dash-side-top">
+        <div className="brand" style={{ color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Link href="/" style={{ textDecoration: 'none' }}><Logo light compact /></Link>
+          <span style={{ background: 'rgba(255,255,255,.22)', color: 'white', padding: '2px 8px', borderRadius: 999, fontSize: 11, fontWeight: 700 }}>ADMIN</span>
+        </div>
+        <button className="dash-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}>
+          <Icon name={open ? 'close' : 'menu'} size={22} color="white" />
+        </button>
       </div>
       <nav className="dash-nav">
         {items.map((i) => (
-          <Link key={i.id} href={i.href}
+          <Link key={i.id} href={i.href} onClick={() => setOpen(false)}
             style={{ background: active === i.id ? 'rgba(255,255,255,.18)' : 'transparent',
               color: 'white', fontWeight: active === i.id ? 700 : 500,
               display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
@@ -53,11 +59,11 @@ function AdminSidebar({ active }: { active: string }) {
           </Link>
         ))}
       </nav>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
+      <div className="dash-side-foot" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
           <Icon name="home" size={18} color="white" /> Back to site
         </Link>
-        <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.08)', border: 0, cursor: 'pointer', width: '100%' }}>
+        <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.08)', border: 0, cursor: 'pointer', width: '100%', whiteSpace: 'nowrap' }}>
           <Icon name="logout" size={18} color="white" /> Sign out
         </button>
       </div>
@@ -87,6 +93,7 @@ function AdminUsers() {
   const [page, setPage] = useState(1);
   const qc = useQueryClient();
   const user = useAuthUser();
+  const showToast = useStore((s) => s.showToast);
 
   // Debounce search
   const [debouncedQ, setDebouncedQ] = useState('');
@@ -108,9 +115,36 @@ function AdminUsers() {
     placeholderData: (prev) => prev,
   });
 
-  const banMutation   = useMutation({ mutationFn: (id: number) => adminApi.ban(id),   onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmBanId(null); } });
-  const unbanMutation = useMutation({ mutationFn: (id: number) => adminApi.unban(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmUnbanId(null); } });
-  const deleteMutation = useMutation({ mutationFn: (id: number) => adminApi.deleteUser(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmDeleteId(null); } });
+  const banMutation   = useMutation({ mutationFn: (id: number) => adminApi.ban(id),   onSuccess: (_d, id) => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmBanId(null); setEditUser((u: any) => u && u.id === id ? { ...u, banned_at: new Date().toISOString() } : u); } });
+  const unbanMutation = useMutation({ mutationFn: (id: number) => adminApi.unban(id), onSuccess: (_d, id) => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmUnbanId(null); setEditUser((u: any) => u && u.id === id ? { ...u, banned_at: null } : u); } });
+  const deleteMutation = useMutation({ mutationFn: (id: number) => adminApi.deleteUser(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setConfirmDeleteId(null); setEditUser(null); } });
+  const verifyEmailMutation = useMutation({
+    mutationFn: (id: number) => adminApi.verifyEmail(id),
+    onSuccess: (res, id) => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      setEditUser((u: any) => u && u.id === id ? { ...u, email_verified_at: res.email_verified_at } : u);
+      showToast('Email verified.', 'success');
+    },
+    onError: () => showToast('Failed to verify email.', 'error'),
+  });
+  const activatePlanMutation = useMutation({
+    mutationFn: ({ id, plan }: { id: number; plan: string }) => adminApi.activatePlan(id, plan),
+    onSuccess: (res, { id }) => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      setEditUser((u: any) => u && u.id === id ? { ...u, vendor_plan: res.vendor_plan, vendor_subscription_status: res.vendor_subscription_status } : u);
+      showToast('Plan activated.', 'success');
+    },
+    onError: () => showToast('Failed to activate plan.', 'error'),
+  });
+  const changeRoleMutation = useMutation({
+    mutationFn: ({ id, role }: { id: number; role: string }) => adminApi.changeRole(id, role),
+    onSuccess: (res, { id }) => {
+      qc.invalidateQueries({ queryKey: ['admin-users'] });
+      setEditUser((u: any) => u && u.id === id ? { ...u, role: res.role } : u);
+      showToast('Role updated.', 'success');
+    },
+    onError: () => showToast('Failed to change role. You cannot change your own role.', 'error'),
+  });
   const inviteMutation = useMutation({
     mutationFn: (d: { name: string; email: string; role: string }) => adminApi.invite(d),
     onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setInviteResult(res); },
@@ -142,8 +176,10 @@ function AdminUsers() {
   const confirmUnbanUser  = confirmUnbanId  != null ? list.find((u: any) => u.id === confirmUnbanId)  : null;
   const confirmDeleteUser = confirmDeleteId != null ? list.find((u: any) => u.id === confirmDeleteId) : null;
 
-  // View modal
-  const [viewUser, setViewUser] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  // Edit modal
+  const [editUser, setEditUser] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [planChoice, setPlanChoice] = useState('3month');
+  const [roleChoice, setRoleChoice] = useState('');
 
   // Invite modal
   const [showInvite, setShowInvite] = useState(false);
@@ -252,23 +288,9 @@ function AdminUsers() {
                   </td>
                   <td className="tbl-actions" style={{ textAlign: 'right' }}>
                     <div className="flex gap-6" style={{ justifyContent: 'flex-end' }}>
-                      {!isBanned ? (
-                        <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Ban"
-                          onClick={() => setConfirmBanId(u.id)}>
-                          <Icon name="close" size={12} /><span className="hide-mobile" style={{ marginLeft: 4 }}>Ban</span>
-                        </button>
-                      ) : (
-                        <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none', fontSize: 12 }} title="Unban"
-                          onClick={() => setConfirmUnbanId(u.id)}>
-                          <Icon name="check" size={12} /><span className="hide-mobile" style={{ marginLeft: 4 }}>Unban</span>
-                        </button>
-                      )}
-                      <button className="btn btn-ghost btn-sm" title="View" onClick={() => setViewUser(u)}>
-                        <Icon name="eye" size={12} /><span className="hide-mobile" style={{ marginLeft: 4 }}>View</span>
-                      </button>
-                      <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Delete"
-                        onClick={() => setConfirmDeleteId(u.id)}>
-                        <Icon name="trash" size={12} />
+                      <button className="btn btn-ghost btn-sm" title="Edit user"
+                        onClick={() => { setEditUser(u); setPlanChoice(u.vendor_plan ?? '3month'); setRoleChoice(u.role); }}>
+                        <Icon name="pencil" size={14} /><span className="hide-mobile" style={{ marginLeft: 4 }}>Edit</span>
                       </button>
                     </div>
                   </td>
@@ -361,15 +383,19 @@ function AdminUsers() {
         </div>
       )}
 
-      {/* ── View user modal ── */}
-      {viewUser != null && (() => {
-        const u = viewUser;
+      {/* ── Edit user modal ── */}
+      {editUser != null && (() => {
+        const u = editUser;
         const isBanned = !!u.banned_at;
+        const isVerified = !!u.email_verified_at;
+        const isSelf = u.id === user?.id;
         const name = u.profile?.first_name ? `${u.profile.first_name} ${u.profile.last_name ?? ''}`.trim() : (u.name ?? u.email ?? '?');
+        const selectStyle: React.CSSProperties = { padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', flex: 1 };
+        const sectionLabel: React.CSSProperties = { fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.4, color: 'var(--muted)', marginBottom: 8 };
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={() => setViewUser(null)}>
-            <div className="card" style={{ width: 460, padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+            onClick={() => setEditUser(null)}>
+            <div className="card" style={{ width: 480, maxHeight: '90vh', overflowY: 'auto', padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}
               onClick={(e) => e.stopPropagation()}>
               {/* Header */}
               <div className="flex items-center gap-14">
@@ -380,8 +406,9 @@ function AdminUsers() {
                   <div style={{ fontWeight: 700, fontSize: 17 }}>{name}</div>
                   <div className="muted text-13">{u.email}</div>
                 </div>
-                <button className="btn btn-ghost btn-sm" onClick={() => setViewUser(null)} style={{ fontSize: 18, lineHeight: 1 }}>×</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setEditUser(null)} style={{ fontSize: 18, lineHeight: 1 }}>×</button>
               </div>
+
               {/* Details grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 20px' }}>
                 {[
@@ -389,10 +416,6 @@ function AdminUsers() {
                   ['Status',  <span className="chip" style={!isBanned ? { background: '#E6F7F0', color: '#059669', fontSize: 11 } : { background: '#FFF0F0', color: '#E11D48', fontSize: 11 }}>{isBanned ? 'Banned' : 'Active'}</span>],
                   ['Joined',  <span className="text-13">{formatDate(u.created_at)}</span>],
                   ['User ID', <span className="muted text-13">#{u.id}</span>],
-                  ...(u.role === 'vendor' ? [
-                    ['Subscription', <span className="text-13">{u.vendor_subscription_status ?? 'none'}</span>],
-                    ['Plan',         <span className="text-13">{u.vendor_plan ?? '—'}</span>],
-                  ] : []),
                 ].map(([label, val], i) => (
                   <div key={i}>
                     <div className="muted text-12" style={{ marginBottom: 3 }}>{label as string}</div>
@@ -400,18 +423,85 @@ function AdminUsers() {
                   </div>
                 ))}
               </div>
-              {/* Actions */}
+
+              {/* Email verification */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                <div style={sectionLabel}>Email verification</div>
+                <div className="flex items-center justify-between gap-10">
+                  <span className="chip" style={isVerified
+                    ? { background: '#E6F7F0', color: '#059669', fontSize: 11 }
+                    : { background: '#FFF7E6', color: '#D97706', fontSize: 11 }}>
+                    {isVerified ? 'Verified' : 'Not verified'}
+                  </span>
+                  {!isVerified && (
+                    <button className="btn btn-primary btn-sm"
+                      onClick={() => verifyEmailMutation.mutate(u.id)}
+                      disabled={verifyEmailMutation.isPending}>
+                      {verifyEmailMutation.isPending ? 'Verifying…' : 'Verify email'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Plan activation (vendors only) */}
+              {u.role === 'vendor' && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                  <div style={sectionLabel}>Subscription plan</div>
+                  <div className="flex items-center gap-10" style={{ marginBottom: 10 }}>
+                    <span className="muted text-13">Current:</span>
+                    <span className="chip" style={u.vendor_subscription_status === 'active'
+                      ? { background: '#E6F7F0', color: '#059669', fontSize: 11 }
+                      : { background: 'var(--bg-3)', color: 'var(--ink-2)', fontSize: 11 }}>
+                      {u.vendor_subscription_status ?? 'none'}{u.vendor_plan ? ` · ${u.vendor_plan}` : ''}
+                    </span>
+                  </div>
+                  <div className="flex gap-10">
+                    <select style={selectStyle} value={planChoice} onChange={(e) => setPlanChoice(e.target.value)}>
+                      <option value="3month">3-Month Plan</option>
+                      <option value="12month">12-Month Plan</option>
+                    </select>
+                    <button className="btn btn-primary btn-sm"
+                      onClick={() => activatePlanMutation.mutate({ id: u.id, plan: planChoice })}
+                      disabled={activatePlanMutation.isPending || (u.vendor_subscription_status === 'active' && u.vendor_plan === planChoice)}>
+                      {activatePlanMutation.isPending ? 'Activating…' : 'Activate'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Role */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                <div style={sectionLabel}>Role</div>
+                {isSelf ? (
+                  <p className="muted text-13">You cannot change your own role.</p>
+                ) : (
+                  <div className="flex gap-10">
+                    <select style={selectStyle} value={roleChoice} onChange={(e) => setRoleChoice(e.target.value)}>
+                      <option value="customer">Customer</option>
+                      <option value="vendor">Vendor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <button className="btn btn-primary btn-sm"
+                      onClick={() => changeRoleMutation.mutate({ id: u.id, role: roleChoice })}
+                      disabled={changeRoleMutation.isPending || roleChoice === u.role}>
+                      {changeRoleMutation.isPending ? 'Saving…' : 'Save role'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Danger zone */}
               <div className="flex gap-10" style={{ justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: 16 }}>
                 {!isBanned ? (
                   <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
-                    onClick={() => { setViewUser(null); setConfirmBanId(u.id); }}>Ban user</button>
+                    onClick={() => setConfirmBanId(u.id)}>Ban user</button>
                 ) : (
                   <button className="btn btn-sm" style={{ background: '#E11D48', color: '#fff', border: 'none' }}
-                    onClick={() => { setViewUser(null); setConfirmUnbanId(u.id); }}>Unban user</button>
+                    onClick={() => setConfirmUnbanId(u.id)}>Unban user</button>
                 )}
                 <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }}
-                  onClick={() => { setViewUser(null); setConfirmDeleteId(u.id); }}>Delete</button>
-                <button className="btn btn-ghost" onClick={() => setViewUser(null)}>Close</button>
+                  onClick={() => setConfirmDeleteId(u.id)}>Delete</button>
+                <button className="btn btn-ghost" onClick={() => setEditUser(null)}>Close</button>
               </div>
             </div>
           </div>
@@ -536,14 +626,14 @@ function AdminServices() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 32 }}>Services</h1>
           {!isLoading && <p className="muted text-13 mt-4">{total.toLocaleString()} service{total !== 1 ? 's' : ''} total</p>}
         </div>
-        <div className="flex gap-10 items-center">
+        <div className="flex gap-10 items-center" style={{ flex: '1 1 240px', minWidth: 0, justifyContent: 'flex-end' }}>
           {/* Search */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: 280 }}>
             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <Icon name="search" size={14} color="var(--muted)" />
             </span>
@@ -552,12 +642,9 @@ function AdminServices() {
               placeholder="Search services…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }}
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: '100%', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>
-          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Icon name="download" size={14} /> Export
-          </button>
         </div>
       </div>
 
@@ -566,7 +653,7 @@ function AdminServices() {
         <table className="tbl">
           <thead>
             <tr>
-              <th className="hide-mobile"></th>
+              <th className="hide-mobile hide-desktop-sm"></th>
               <th>Service</th>
               <th className="hide-mobile">Vendor</th>
               <th className="hide-mobile">Category</th>
@@ -582,7 +669,7 @@ function AdminServices() {
             {isLoading ? (
               [1,2,3,4,5].map((i) => (
                 <tr key={i}>
-                  <td className="hide-mobile"><div style={{ ...sk, width: 56, height: 40, borderRadius: 8 }} /></td>
+                  <td className="hide-mobile hide-desktop-sm"><div style={{ ...sk, width: 56, height: 40, borderRadius: 8 }} /></td>
                   <td><div style={{ ...sk, width: 140 }} /></td>
                   <td className="hide-mobile"><div style={{ ...sk, width: 100 }} /></td>
                   <td className="hide-mobile"><div style={{ ...sk, width: 80 }} /></td>
@@ -608,7 +695,13 @@ function AdminServices() {
               const status = s.status ?? 'active';
               return (
                 <tr key={s.id}>
-                  <td className="hide-mobile">{img && <img src={img} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover' }} />}</td>
+                  <td className="hide-mobile hide-desktop-sm" style={{ width: 72, minWidth: 72 }}>
+                    {img && (
+                      <div style={{ width: 56, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+                        <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      </div>
+                    )}
+                  </td>
                   <td className="fw-600">{s.title}</td>
                   <td className="muted text-13 hide-mobile">{vendorName}</td>
                   <td className="hide-mobile"><span className="chip chip-soft" style={{ fontSize: 11 }}>{catName}</span></td>
@@ -824,7 +917,7 @@ function AdminBlog() {
       </div>
 
       {apiPosts.length === 0 && !blogResult ? (
-        <div className="grid mt-20" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="grid r-grid-3 mt-20" style={{ gap: 16 }}>
           {[1,2,3].map((i) => {
             const sk = { background: 'linear-gradient(90deg,var(--bg-3) 25%,var(--bg-2) 50%,var(--bg-3) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' } as const;
             return (
@@ -842,7 +935,7 @@ function AdminBlog() {
       ) : apiPosts.length === 0 ? (
         <div className="card card-pad mt-20" style={{ textAlign: 'center', color: 'var(--muted)' }}>No blog posts yet. Click "New post" to create one.</div>
       ) : (
-        <div className="grid mt-20" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        <div className="grid r-grid-3 mt-20" style={{ gap: 16 }}>
           {apiPosts.map((p) => (
             <div key={p.id} className="card" style={{ overflow: 'hidden' }}>
               {p.cover && <img src={p.cover} alt={p.title} style={{ width: '100%', aspectRatio: '16/10', objectFit: 'cover' }} />}
@@ -925,7 +1018,7 @@ function AdminOverview() {
       </div>
 
       {/* Lower panels */}
-      <div className="grid mt-20" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+      <div className="dash-grid-3 mt-20" style={{ gap: 16 }}>
 
         {/* New Users */}
         <div className="card card-pad">
@@ -1190,15 +1283,15 @@ function AdminOrders() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 32 }}>Orders</h1>
-        <div className="flex items-center gap-10">
-          <div style={{ position: 'relative' }}>
+        <div className="flex items-center gap-10" style={{ flex: '1 1 240px', minWidth: 0, justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 0, maxWidth: 280 }}>
             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
             <input type="text" placeholder="Search by email…" value={q} onChange={(e) => setQ(e.target.value)}
-              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: '100%', boxSizing: 'border-box', outline: 'none' }} />
           </div>
-          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <Icon name="download" size={14} /> Export Filters
           </button>
         </div>
