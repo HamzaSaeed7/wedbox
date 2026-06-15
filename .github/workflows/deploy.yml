@@ -68,8 +68,8 @@ jobs:
             echo "==> Installing PHP dependencies..."
             $PHP /usr/local/bin/composer install --no-dev --optimize-autoloader --no-interaction
 
-            echo "==> Running fresh migrations with seed..."
-            $PHP artisan migrate:fresh --seed --force
+            echo "==> Running migrations..."
+            $PHP artisan migrate --force
 
             echo "==> Clearing & caching config..."
             $PHP artisan optimize:clear
