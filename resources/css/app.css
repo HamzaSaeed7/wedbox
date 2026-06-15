@@ -295,6 +295,10 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
 }
 
 /* ---------- Responsive ---------- */
+@media (max-width: 1440px) {
+  .hide-desktop-sm { display: none !important; }
+}
+
 @media (max-width: 900px) {
   h1 { font-size: 40px; } h2 { font-size: 28px; }
   .section { padding: 56px 0; }

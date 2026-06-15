@@ -289,17 +289,14 @@ export function CarHireForm({ service, onChange }: FormProps) {
       </div>
       <div>
         <Label>Add-ons</Label>
-        <div className="grid mt-8" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          {c.addons.map((a) => {
-            const on = addons.includes(a.id);
-            return (
-              <div key={a.id} onClick={() => setAddons((s) => s.includes(a.id) ? s.filter((x) => x !== a.id) : [...s, a.id])}
-                style={{ cursor: 'pointer', border: `2px solid ${on ? 'var(--primary)' : 'var(--line)'}`, borderRadius: 14, overflow: 'hidden', background: 'white' }}>
-                <img src={a.image} alt={a.name} style={{ width: '100%', height: 90, objectFit: 'cover' }} />
-                <div style={{ padding: '8px 10px' }}><div className="text-12 fw-600">{a.name}</div></div>
-              </div>
-            );
-          })}
+        <div className="flex gap-8 mt-8" style={{ flexWrap: 'wrap' }}>
+          {c.addons.map((a) => (
+            <button key={a.id} type="button"
+              onClick={() => setAddons((s) => s.includes(a.id) ? s.filter((x) => x !== a.id) : [...s, a.id])}
+              className={`chip chip-selectable ${addons.includes(a.id) ? 'chip-selected' : ''}`}>
+              {a.name}
+            </button>
+          ))}
         </div>
       </div>
       <FieldNote note={note} onChange={setNote} />
@@ -408,13 +405,13 @@ export function MusicForm({ service, onChange }: FormProps) {
 export function BrideDressForm({ service, onChange }: FormProps) {
   const b = service.brideDress as BrideDressConfig;
   const [type, setType] = useState('rent');
-  const [sizes, setSizes] = useState(['M']);
+  const [size, setSize] = useState('M');
   const [fit1, setFit1] = useState({ date: '2026-06-15', time: '14:00' });
   const [fit2, setFit2] = useState({ date: '2026-07-20', time: '14:00' });
   const [extras, setExtras] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const total = (type === 'rent' ? b.priceRent : b.priceBuy) + extras.reduce((s, id) => s + (b.extras.find((e) => e.id === id)?.price || 0), 0);
-  useEffect(() => onChange({ total, summary: `${type === 'rent' ? 'Rent' : 'Buy'} · sizes ${sizes.join(', ')}`, payload: { type, sizes, fit1, fit2, extras, note } }), [total, type, sizes, fit1, fit2, extras, note]);
+  useEffect(() => onChange({ total, summary: `${type === 'rent' ? 'Rent' : 'Buy'} · size ${size}`, payload: { type, sizes: [size], fit1, fit2, extras, note } }), [total, type, size, fit1, fit2, extras, note]);
   return (
     <div className="flex" style={{ flexDirection: 'column', gap: 22 }}>
       <div>
@@ -424,8 +421,8 @@ export function BrideDressForm({ service, onChange }: FormProps) {
         </div>
       </div>
       <div>
-        <Label required>Pick at least one size</Label>
-        <div className="mt-8"><SizeChips options={b.sizes} multi value={sizes} onChange={(v) => setSizes(v as string[])} /></div>
+        <Label required>Pick a size</Label>
+        <div className="mt-8"><SizeChips options={b.sizes} value={size} onChange={(v) => setSize(v as string)} /></div>
       </div>
       <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <FittingField label="Day of 1st fitting" value={fit1} onChange={setFit1} required />

@@ -239,17 +239,23 @@ function Gallery({ images, active, setActive }: { images: string[]; active: numb
   );
 }
 
-function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added }: {
+function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added, serviceTitle }: {
   cat: { name: string } | undefined;
   formState: FormState; date: string; setDate: (d: string) => void; onReserve: () => void;
-  minDate?: string; added?: boolean;
+  minDate?: string; added?: boolean; serviceTitle?: string;
 }) {
   const total = formState.total || 0;
+  const showToast = useStore((s) => s.showToast);
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => showToast('Link copied to clipboard!'))
+      .catch(() => showToast('Could not copy link.', 'error'));
+  };
   return (
     <div className="booking-panel">
       <div className="panel-title">
         <span className="chip chip-soft">{cat?.name}</span>
-        <button className="btn btn-ghost btn-sm" title="Copy link"><Icon name="copy" size={14} /></button>
+        <button className="btn btn-ghost btn-sm" title="Copy link" onClick={copyLink}><Icon name="copy" size={14} /></button>
       </div>
       <div className="mt-16">
         <div className="text-12 muted fw-600">Booking date</div>
@@ -291,16 +297,23 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
       <div className="text-12 muted">Share this service</div>
       <div className="flex gap-8 mt-12">
         {([
-          { name: 'facebook' as const, url: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
-          { name: 'twitter'  as const, url: (u: string, t: string) => `https://twitter.com/intent/tweet?url=${u}&text=${t}` },
-          { name: 'linkedin' as const, url: (u: string) => `https://www.linkedin.com/sharing/share-offsite/?url=${u}` },
-          { name: 'whatsapp' as const, url: (u: string, t: string) => `https://wa.me/?text=${t}%20${u}` },
+          { name: 'facebook'  as const, url: (u: string) => `https://www.facebook.com/sharer/sharer.php?u=${u}` },
+          { name: 'twitter'   as const, url: (u: string, t: string) => `https://x.com/intent/post?url=${u}&text=${t}` },
+          { name: 'instagram' as const, url: null },
+          { name: 'whatsapp'  as const, url: (u: string, t: string) => `https://wa.me/?text=${t}%20${u}` },
         ]).map(({ name, url }) => (
-          <button key={name} className="btn btn-sm"
+          <button key={name} className="btn btn-sm" title={name === 'instagram' ? 'Copy link for Instagram' : `Share on ${name}`}
             style={{ background: 'var(--bg-3)', color: 'var(--ink-2)', padding: 8, borderRadius: 10 }}
             onClick={() => {
+              if (!url) {
+                // Instagram has no web share intent — copy the link instead
+                navigator.clipboard.writeText(window.location.href)
+                  .then(() => showToast('Link copied — paste it on Instagram!'))
+                  .catch(() => showToast('Could not copy link.', 'error'));
+                return;
+              }
               const pageUrl = encodeURIComponent(window.location.href);
-              const title   = encodeURIComponent(service?.title ?? 'Check out this wedding service on WedBox');
+              const title   = encodeURIComponent(serviceTitle ?? 'Check out this wedding service on WedBox');
               window.open(url(pageUrl, title), '_blank', 'noopener,noreferrer,width=600,height=500');
             }}>
             <Icon name={name} size={14} />
@@ -633,7 +646,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
           </div>
           <aside>
             <BookingPanel cat={cat} formState={formState} date={date} setDate={setDate}
-              minDate={tomorrow} added={addedToCart}
+              minDate={tomorrow} added={addedToCart} serviceTitle={service?.title}
               onReserve={async () => {
                 if (user && apiData && !isError) {
                   try {

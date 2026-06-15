@@ -310,8 +310,8 @@ function CarHireForm({ data, onChange }: { data: any; onChange: (d: any) => void
       ))}
       <AddBtn label="Add duration" onClick={() => onChange({ ...d, hours: [...hours, { label: '', price: 0 }] })} />
 
-      <SectionTitle title="Available vehicles" sub="One per line — press Enter to add." />
-      <TagInput tags={carNames} onChange={(t) => onChange({ ...d, addons: t.map((n) => ({ name: n })) })} placeholder="e.g. Rolls-Royce Silver Shadow" />
+      <SectionTitle title="Add-ons" sub="One per line — press Enter to add." />
+      <TagInput tags={carNames} onChange={(t) => onChange({ ...d, addons: t.map((n) => ({ name: n })) })} placeholder="e.g. Champagne service" />
     </div>
   );
 }

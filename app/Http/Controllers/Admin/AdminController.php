@@ -45,6 +45,48 @@ class AdminController extends Controller
         return response()->json(['message' => 'User unbanned.']);
     }
 
+    public function verifyEmail(User $user)
+    {
+        if (!$user->email_verified_at) {
+            $user->email_verified_at = now();
+            $user->save();
+        }
+        return response()->json(['message' => 'Email verified.', 'email_verified_at' => $user->email_verified_at]);
+    }
+
+    public function activatePlan(Request $request, User $user)
+    {
+        $request->validate(['plan' => 'required|in:3month,12month']);
+
+        if ($user->role !== 'vendor') {
+            return response()->json(['message' => 'Plans can only be activated for vendors.'], 422);
+        }
+
+        $user->update([
+            'vendor_plan'                => $request->plan,
+            'vendor_subscription_status' => 'active',
+        ]);
+
+        return response()->json([
+            'message' => 'Plan activated.',
+            'vendor_plan' => $user->vendor_plan,
+            'vendor_subscription_status' => $user->vendor_subscription_status,
+        ]);
+    }
+
+    public function changeRole(Request $request, User $user)
+    {
+        $request->validate(['role' => 'required|in:customer,vendor,admin']);
+
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot change your own role.'], 403);
+        }
+
+        $user->update(['role' => $request->role]);
+
+        return response()->json(['message' => 'Role updated.', 'role' => $user->role]);
+    }
+
     public function services(Request $request)
     {
         $query = Service::with('category', 'vendor.vendorProfile')->latest();

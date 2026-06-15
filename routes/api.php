@@ -114,6 +114,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/invite', [AdminController::class, 'invite']);
         Route::post('/users/{user}/ban', [AdminController::class, 'ban']);
         Route::post('/users/{user}/unban', [AdminController::class, 'unban']);
+        Route::post('/users/{user}/verify-email', [AdminController::class, 'verifyEmail']);
+        Route::post('/users/{user}/activate-plan', [AdminController::class, 'activatePlan']);
+        Route::patch('/users/{user}/role', [AdminController::class, 'changeRole']);
         Route::delete('/users/{user}', [AdminController::class, 'deleteUser']);
         Route::get('/services', [AdminController::class, 'services']);
         Route::delete('/services/{service}', [AdminController::class, 'deleteService']);
