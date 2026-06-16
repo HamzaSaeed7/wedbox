@@ -190,6 +190,7 @@ export const adminApi = {
   stats: () => api.get('/admin/stats').then((r) => r.data),
   users: (params?: object) => api.get('/admin/users', { params }).then((r) => r.data),
   invite: (d: { name: string; email: string; role: string }) => api.post('/admin/users/invite', d).then((r) => r.data),
+  createUser: (d: { name: string; email: string; role: string; password: string }) => api.post('/admin/users', d).then((r) => r.data),
   ban: (id: number) => api.post(`/admin/users/${id}/ban`),
   unban: (id: number) => api.post(`/admin/users/${id}/unban`),
   verifyEmail: (id: number) => api.post(`/admin/users/${id}/verify-email`).then((r) => r.data),

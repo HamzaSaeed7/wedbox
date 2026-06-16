@@ -430,18 +430,28 @@ export function BrideDressForm({ service, onChange }: FormProps) {
       </div>
       <div>
         <Label>Add-ons</Label>
-        <div className="flex gap-8 mt-8" style={{ flexWrap: 'wrap' }}>
+        <div className="flex gap-12 mt-8" style={{ flexWrap: 'wrap' }}>
           {b.extras.map((e) => {
             const on = extras.includes(e.id);
             return (
               <button key={e.id} type="button"
                 onClick={() => setExtras((s) => s.includes(e.id) ? s.filter((x) => x !== e.id) : [...s, e.id])}
-                className={`chip chip-selectable ${on ? 'chip-selected' : ''}`}
-                style={e.image ? { paddingLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 8 } : undefined}>
-                {e.image && (
-                  <img src={e.image} alt="" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                style={{ width: 128, padding: 0, borderRadius: 14, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', position: 'relative',
+                  border: `2px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
+                  background: on ? 'var(--primary-50)' : 'white' }}>
+                {e.image
+                  ? <img src={e.image} alt="" style={{ width: '100%', height: 96, objectFit: 'cover', display: 'block' }} />
+                  : <div style={{ width: '100%', height: 96, background: 'var(--bg-3)', display: 'grid', placeItems: 'center' }}><Icon name="camera" size={24} color="var(--line)" /></div>
+                }
+                <div style={{ padding: '8px 10px' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{e.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>€{e.price}</div>
+                </div>
+                {on && (
+                  <span style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: 999, background: 'var(--primary)', display: 'grid', placeItems: 'center' }}>
+                    <Icon name="check" size={12} color="white" />
+                  </span>
                 )}
-                <span>{e.name} · €{e.price}</span>
               </button>
             );
           })}
