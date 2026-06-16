@@ -150,6 +150,11 @@ function AdminUsers() {
     onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setInviteResult(res); },
     onError: () => setInviteErr('This email is already in use or is invalid.'),
   });
+  const createUserMutation = useMutation({
+    mutationFn: (d: { name: string; email: string; role: string; password: string }) => adminApi.createUser(d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-users'] }); setShowCreate(false); showToast('User created.', 'success'); },
+    onError: () => setCreateErr('Could not create user. Check the email is unique and the password is at least 8 characters.'),
+  });
 
   const list: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
   const total: number  = apiResult?.total ?? 0;
@@ -187,6 +192,12 @@ function AdminUsers() {
   const [inviteErr, setInviteErr] = useState('');
   const [inviteResult, setInviteResult] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
+  // Create user modal
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', email: '', role: 'customer', password: '' });
+  const [createErr, setCreateErr] = useState('');
+  const [showCreatePw, setShowCreatePw] = useState(false);
+
   const pageNumbers = (() => {
     if (lastPage <= 7) return Array.from({ length: lastPage }, (_, i) => i + 1);
     if (page <= 4) return [1, 2, 3, 4, 5, -1, lastPage];
@@ -196,12 +207,18 @@ function AdminUsers() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 32 }}>Users</h1>
-        <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-          onClick={() => { setInviteForm({ name: '', email: '', role: 'customer' }); setInviteErr(''); setInviteResult(null); setShowInvite(true); }}>
-          <Icon name="plus" size={14} /> Invite user
-        </button>
+        <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
+          <button className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setInviteForm({ name: '', email: '', role: 'customer' }); setInviteErr(''); setInviteResult(null); setShowInvite(true); }}>
+            <Icon name="plus" size={14} /> Invite user
+          </button>
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setCreateForm({ name: '', email: '', role: 'customer', password: '' }); setCreateErr(''); setShowCreatePw(false); setShowCreate(true); }}>
+            <Icon name="plus" size={14} /> Create user
+          </button>
+        </div>
       </div>
 
       <div className="grid r-grid-4 mt-20" style={{ gap: 16 }}>
@@ -565,6 +582,61 @@ function AdminUsers() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Create user modal (admin sets password) ── */}
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="card" style={{ width: 440, maxWidth: '100%', padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Create user</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: -8 }}>Set up an account with a password you choose. The user can sign in immediately.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Full name</label>
+                <input className="input" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="Jane Smith" value={createForm.name}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Email address</label>
+                <input className="input" type="email" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="jane@example.com" value={createForm.email}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input className="input" type={showCreatePw ? 'text' : 'password'} style={{ width: '100%', padding: '8px 12px', paddingRight: 38, fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                    placeholder="At least 8 characters" value={createForm.password}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} />
+                  <button type="button" onClick={() => setShowCreatePw((v) => !v)} aria-label={showCreatePw ? 'Hide password' : 'Show password'}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>
+                    <Icon name={showCreatePw ? 'eye-off' : 'eye'} size={16} />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Role</label>
+                <select className="input" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                  value={createForm.role}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, role: e.target.value }))}>
+                  <option value="customer">Customer</option>
+                  <option value="vendor">Vendor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              {createErr && <p style={{ color: '#E11D48', fontSize: 13 }}>{createErr}</p>}
+            </div>
+            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => setShowCreate(false)} disabled={createUserMutation.isPending}>Cancel</button>
+              <button className="btn btn-primary"
+                disabled={createUserMutation.isPending || !createForm.name || !createForm.email || createForm.password.length < 8}
+                onClick={() => { setCreateErr(''); createUserMutation.mutate(createForm); }}>
+                {createUserMutation.isPending ? 'Creating…' : 'Create user'}
+              </button>
+            </div>
           </div>
         </div>
       )}

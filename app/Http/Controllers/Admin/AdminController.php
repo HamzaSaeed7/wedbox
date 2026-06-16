@@ -285,4 +285,25 @@ class AdminController extends Controller
             'temporary_password' => $tempPassword,
         ], 201);
     }
+
+    public function createUser(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'role'     => 'required|in:customer,vendor,admin',
+            'password' => 'required|string|min:8|max:255',
+        ]);
+
+        $user = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'role'     => $request->role,
+            'password' => Hash::make($request->password),
+        ]);
+        // email_verified_at is not mass-assignable — set it so the user can sign in immediately
+        $user->forceFill(['email_verified_at' => now()])->save();
+
+        return response()->json(['user' => $user], 201);
+    }
 }

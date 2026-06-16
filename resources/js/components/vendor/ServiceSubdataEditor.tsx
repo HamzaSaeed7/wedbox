@@ -386,7 +386,7 @@ function BrideDressForm({ data, onChange }: { data: any; onChange: (d: any) => v
           <TagInput tags={sizes} onChange={(t) => onChange({ ...d, available_sizes: t })} placeholder="e.g. XS, S, M, L…" />
         </Field>
       </div>
-      <SectionTitle title="Extras / accessories" sub="Each extra can show a photo on the booking page." />
+      <SectionTitle title="Add-ons" sub="Each add-on can show a photo on the booking page." />
       {extras.map((e2, i) => (
         <div key={i} className="flex gap-8 mt-8 items-center">
           {/* Image upload / preview */}
