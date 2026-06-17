@@ -25,6 +25,26 @@ const PHONE_CODES = [
   { code: '+971', flag: '🇦🇪', country: 'AE' },
 ];
 
+// Expected national-number digit counts for the supported dialling codes
+const PHONE_DIGITS: Record<string, number> = {
+  '+357': 8, '+30': 10, '+44': 10, '+49': 11, '+33': 9, '+1': 10, '+7': 10, '+971': 9,
+};
+
+// Returns an error message for an invalid phone number, or '' when valid/empty (phone is optional)
+function phoneError(code: string, number: string): string {
+  const cleaned = number.trim();
+  if (!cleaned) return '';
+  if (!/^[\d\s-]+$/.test(cleaned)) return 'Phone number can only contain digits.';
+  const digits = cleaned.replace(/\D/g, '');
+  const expected = PHONE_DIGITS[code];
+  if (expected) {
+    if (digits.length !== expected) return `Enter a valid ${expected}-digit number for ${code}.`;
+  } else if (digits.length < 6 || digits.length > 15) {
+    return 'Enter a valid phone number.';
+  }
+  return '';
+}
+
 export default function VendorOnboarding({ categories, cities }: Props) {
   const user = useAuthUser();
   const { logout, showToast } = useStore();
@@ -83,6 +103,8 @@ export default function VendorOnboarding({ categories, cities }: Props) {
     const newErrors: Record<string, string> = {};
     if (!form.business_name.trim()) newErrors.business_name = 'Business name is required.';
     if (!form.category_id) newErrors.category_id = 'Please select a category.';
+    const phoneErr = phoneError(form.phoneCode, form.phoneNumber);
+    if (phoneErr) newErrors.phone = phoneErr;
 
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
 
@@ -261,28 +283,37 @@ export default function VendorOnboarding({ categories, cities }: Props) {
 
           {/* Phone */}
           <label className="block text-sm font-medium text-gray-700 mb-1">Phone:</label>
-          <div className={`flex border rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#38b2ac] mb-6 ${
-            errors.phone ? 'border-red-400' : 'border-gray-300'
-          }`}>
-            <select
-              value={form.phoneCode}
-              onChange={(e) => set('phoneCode', e.target.value)}
-              className="bg-gray-50 border-r border-gray-300 px-3 py-2.5 text-sm text-gray-700 focus:outline-none"
-            >
-              {PHONE_CODES.map((p) => (
-                <option key={p.code} value={p.code}>
-                  {p.flag} {p.code}
-                </option>
-              ))}
-            </select>
-            <input
-              type="tel"
-              value={form.phoneNumber}
-              onChange={(e) => set('phoneNumber', e.target.value)}
-              placeholder="96 123456"
-              className="flex-1 px-4 py-2.5 text-sm focus:outline-none"
-            />
-          </div>
+          {(() => {
+            const livePhoneErr = errors.phone || phoneError(form.phoneCode, form.phoneNumber);
+            return (
+              <>
+                <div className={`flex border rounded-full overflow-hidden focus-within:ring-2 focus-within:ring-[#38b2ac] ${
+                  livePhoneErr ? 'border-red-400 mb-1' : 'border-gray-300 mb-6'
+                }`}>
+                  <select
+                    value={form.phoneCode}
+                    onChange={(e) => set('phoneCode', e.target.value)}
+                    className="bg-gray-50 border-r border-gray-300 px-3 py-2.5 text-sm text-gray-700 focus:outline-none"
+                  >
+                    {PHONE_CODES.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.flag} {p.code}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={form.phoneNumber}
+                    onChange={(e) => set('phoneNumber', e.target.value.replace(/[^\d]/g, ''))}
+                    placeholder="96123456"
+                    className="flex-1 px-4 py-2.5 text-sm focus:outline-none"
+                  />
+                </div>
+                {livePhoneErr && <p className="text-xs text-red-500 mb-6">{livePhoneErr}</p>}
+              </>
+            );
+          })()}
 
           {/* Actions */}
           <div className="flex gap-3">
