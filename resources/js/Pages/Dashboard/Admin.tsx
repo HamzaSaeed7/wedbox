@@ -86,6 +86,9 @@ function SkRow() {
   );
 }
 
+// Basic email format check for the create-user form
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // ─── Users
 function AdminUsers() {
   const [q, setQ] = useState('');
@@ -601,9 +604,13 @@ function AdminUsers() {
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Email address</label>
-                <input className="input" type="email" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                <input className="input" type="email" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box',
+                  border: `1px solid ${createForm.email && !EMAIL_RE.test(createForm.email) ? '#E11D48' : 'var(--border)'}` }}
                   placeholder="jane@example.com" value={createForm.email}
                   onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} />
+                {createForm.email && !EMAIL_RE.test(createForm.email) && (
+                  <p style={{ fontSize: 11, marginTop: 5, color: '#E11D48' }}>Enter a valid email address (e.g. jane@example.com).</p>
+                )}
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Password</label>
@@ -616,6 +623,9 @@ function AdminUsers() {
                     <Icon name={showCreatePw ? 'eye-off' : 'eye'} size={16} />
                   </button>
                 </div>
+                <p style={{ fontSize: 11, marginTop: 5, color: createForm.password && createForm.password.length < 8 ? '#E11D48' : 'var(--muted)' }}>
+                  Must be at least 8 characters{createForm.password ? ` (${createForm.password.length}/8)` : ''}.
+                </p>
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Role</label>
@@ -629,14 +639,26 @@ function AdminUsers() {
               </div>
               {createErr && <p style={{ color: '#E11D48', fontSize: 13 }}>{createErr}</p>}
             </div>
-            <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
-              <button className="btn btn-ghost" onClick={() => setShowCreate(false)} disabled={createUserMutation.isPending}>Cancel</button>
-              <button className="btn btn-primary"
-                disabled={createUserMutation.isPending || !createForm.name || !createForm.email || createForm.password.length < 8}
-                onClick={() => { setCreateErr(''); createUserMutation.mutate(createForm); }}>
-                {createUserMutation.isPending ? 'Creating…' : 'Create user'}
-              </button>
-            </div>
+            {(() => {
+              const reason = !createForm.name.trim() ? 'Enter a full name to continue.'
+                : !createForm.email.trim() ? 'Enter an email address to continue.'
+                : !EMAIL_RE.test(createForm.email) ? 'Enter a valid email address.'
+                : createForm.password.length < 8 ? 'Password must be at least 8 characters.'
+                : '';
+              return (
+                <div className="flex items-center gap-10" style={{ justifyContent: 'flex-end' }}>
+                  {!createUserMutation.isPending && reason && (
+                    <span className="text-12 muted" style={{ marginRight: 'auto' }}>{reason}</span>
+                  )}
+                  <button className="btn btn-ghost" onClick={() => setShowCreate(false)} disabled={createUserMutation.isPending}>Cancel</button>
+                  <button className="btn btn-primary"
+                    disabled={createUserMutation.isPending || !!reason}
+                    onClick={() => { setCreateErr(''); createUserMutation.mutate(createForm); }}>
+                    {createUserMutation.isPending ? 'Creating…' : 'Create user'}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
