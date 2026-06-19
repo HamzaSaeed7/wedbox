@@ -979,7 +979,7 @@ export function InvitationForm({ service, onChange }: FormProps) {
       )}
 
       <div className="flex gap-16" style={{ flexWrap: 'wrap' }}>
-        <StepperField label="How many invitations" required value={qty} onChange={setQty} />
+        <StepperField label="How many invitations" required value={qty} onChange={setQty} min={1} />
         <div>
           <Label>Save the date — when is your event?</Label>
           <input type="date" className="input mt-8" value={eventDate} onChange={(e) => setEventDate(e.target.value)} style={{ height: 44 }} />
