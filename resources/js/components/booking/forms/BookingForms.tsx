@@ -934,7 +934,7 @@ export function HairForm({ service, onChange }: FormProps) {
 // ─── 19. Invitation
 export function InvitationForm({ service, onChange }: FormProps) {
   const iv = service.invitation as InvitationConfig;
-  const [types, setTypes] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>(() => iv.types[0] ? [iv.types[0].id] : []);
   const [qty, setQty] = useState(50);
   const [neededBy, setNeededBy] = useState('');
   const [eventDate, setEventDate] = useState('');
@@ -955,6 +955,7 @@ export function InvitationForm({ service, onChange }: FormProps) {
 
   useEffect(() => onChange({
     total,
+    valid: types.length > 0,
     summary: `${qty} × ${design?.name ?? 'invitation'}${typeNames.length ? ' · ' + typeNames.join(', ') : ''}`,
     payload: {
       types: typeNames, design_id: designId ? Number(designId) : null, design_name: design?.name ?? null,

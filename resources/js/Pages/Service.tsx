@@ -325,7 +325,7 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
         <span className="muted text-13">Total amount</span>
         <span className="total">€{total.toLocaleString()}</span>
       </div>
-      <button className="btn btn-primary btn-block btn-lg mt-16" onClick={onReserve} disabled={!total || added}>
+      <button className="btn btn-primary btn-block btn-lg mt-16" onClick={onReserve} disabled={!total || formState.valid === false || added}>
         {added ? '✓ Added to cart' : 'Reserve'}
       </button>
       <button className="btn btn-ghost btn-block mt-8"><Icon name="msg" size={16} /> Contact vendor</button>

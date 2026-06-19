@@ -369,4 +369,5 @@ export interface FormState {
   summary: string;
   payload: Record<string, unknown>;
   items?: FormStateItem[];
+  valid?: boolean;
 }
