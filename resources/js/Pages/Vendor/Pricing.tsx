@@ -259,21 +259,6 @@ export default function VendorPricing() {
         </div>
       </section>
 
-      {/* ── Guarantee strip ─────────────────────────────────────── */}
-      <section className="bg-white py-10 px-4 border-t border-gray-100">
-        <div className="mx-auto max-w-3xl flex flex-col sm:flex-row items-center justify-center gap-8 text-center text-sm text-gray-500">
-          {[
-            { icon: '🔒', text: 'Secure payment via Stripe' },
-            { icon: '📋', text: 'Professional profile setup included' },
-            { icon: '🚫', text: '0% commission, ever' },
-          ].map((item) => (
-            <div key={item.text} className="flex items-center gap-2">
-              <span className="text-xl">{item.icon}</span>
-              <span>{item.text}</span>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────── */}
       <section className="bg-[#f7fbfb] py-16 px-4">

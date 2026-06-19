@@ -72,8 +72,7 @@ export default function AuthPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
-  const [devVerifying, setDevVerifying] = useState(false);
-  const { login, register, authLoading } = useStore();
+const { login, register, authLoading } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,19 +116,6 @@ export default function AuthPage() {
       setTimeout(() => setResendStatus('idle'), 4000);
     } catch {
       setResendStatus('idle');
-    }
-  };
-
-  const handleDevVerify = async () => {
-    setDevVerifying(true);
-    try {
-      await authApi.devVerify(registeredEmail);
-      setStep('form');
-      setMode('login');
-      setError('');
-      router.visit('/auth?verified=1');
-    } catch {
-      setDevVerifying(false);
     }
   };
 
@@ -230,14 +216,6 @@ export default function AuthPage() {
                 <button className="btn btn-ghost btn-block" onClick={() => { setStep('form'); setMode('login'); setError(''); }}>
                   Back to sign in
                 </button>
-                {/* DEV ONLY — remove once IP is whitelisted in Brevo */}
-                <div style={{ marginTop: 8, paddingTop: 16, borderTop: '1px dashed var(--line)' }}>
-                  <button className="btn btn-block"
-                    style={{ background: '#FFF7E6', color: '#D97706', border: '1px dashed #FCD34D', fontSize: 13 }}
-                    onClick={handleDevVerify} disabled={devVerifying}>
-                    {devVerifying ? 'Verifying…' : '⚡ Dev: skip email & verify now'}
-                  </button>
-                </div>
               </div>
             </div>
           ) : (
