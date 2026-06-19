@@ -211,6 +211,6 @@ export const adminApi = {
 
 // ─── Feedback
 export const feedbackApi = {
-  submit: (d: { feedback_text: string; experience: 'happy' | 'sad' | 'neutral' }) =>
+  submit: (d: { feedback_text: string; experience: 'happy' | 'sad' | 'angry' }) =>
     api.post('/feedback', d).then((r) => r.data),
 };

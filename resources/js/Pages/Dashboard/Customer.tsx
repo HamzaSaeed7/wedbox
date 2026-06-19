@@ -8,6 +8,7 @@ import { useStore, useAuthUser } from '../../store';
 import { ordersApi, favoritesApi, conversationsApi, profileApi } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import ToastStack from '../../components/shared/Toast';
+import FeedbackWidget from '../../components/shared/FeedbackWidget';
 
 interface DisplayOrder {
   id: number;
@@ -84,6 +85,7 @@ function CustomerSidebar({ active }: { active: string }) {
         ))}
       </nav>
       <div className="dash-side-foot" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <FeedbackWidget />
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
           <Icon name="home" size={18} color="white" /> Back to site
         </Link>

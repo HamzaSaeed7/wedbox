@@ -34,7 +34,7 @@ function AdminSidebar({ active }: { active: string }) {
     { id: 'blogs',     href: '/dashboard/admin/blogs',     label: 'Blogs',     icon: 'blog' },
     { id: 'users',     href: '/dashboard/admin/users',     label: 'Users',     icon: 'bookings' },
     { id: 'orders',    href: '/dashboard/admin/orders',    label: 'Orders',    icon: 'cart' },
-    { id: 'feedback',  href: '/dashboard/admin/feedback',  label: 'Feedback',  icon: 'star' },
+    { id: 'feedback',  href: '/dashboard/admin/feedback',  label: 'Feedback',  icon: 'starOutline' },
     { id: 'settings',  href: '/dashboard/admin/settings',  label: 'Settings',  icon: 'settings' },
   ];
   return (
