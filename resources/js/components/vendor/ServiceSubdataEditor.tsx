@@ -941,8 +941,87 @@ function extractSubdata(service: any): any {
     case 'bar':          return service.bar ?? null;
     case 'makeup':       return service.makeup ?? null;                                         // DB: makeup
     case 'hair':         return service.hair ?? null;
+    case 'invitation':   return service.invitation ?? null;
     default:             return null;
   }
+}
+
+// ─── 19. Invitation ───────────────────────────────────────────────────────────
+function InvitationForm({ data, onChange }: { data: any; onChange: (d: any) => void }) {
+  const d = data ?? {};
+  const types: any[] = d.types ?? [];
+  const designs: any[] = d.designs ?? [];
+  const addons: any[] = d.addons ?? [];
+
+  const setTypes = (t: any[]) => onChange({ ...d, types: t });
+  const setDesigns = (des: any[]) => onChange({ ...d, designs: des });
+  const setAddons = (a: any[]) => onChange({ ...d, addons: a });
+
+  return (
+    <div>
+      <SectionTitle title="Invitation types" sub="Offer Digital and/or Printed — set a per-invitation price for each. Customers can pick one or more. (The customer picks their event date separately.)" />
+      {types.map((t, i) => (
+        <div key={i} className="flex gap-8 mt-8 items-center">
+          <input className="input" value={t.name} onChange={(e) => setTypes(types.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="e.g. Digital Invitation" style={{ flex: 2 }} />
+          <CurrencyInput value={t.price ?? 0} onChange={(e) => setTypes(types.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€ / invite" containerStyle={{ width: 120 }} />
+          <RemoveBtn onClick={() => setTypes(types.filter((_, j) => j !== i))} />
+        </div>
+      ))}
+      <div className="flex gap-8">
+        <AddBtn label="Add type" onClick={() => setTypes([...types, { name: '', price: 0 }])} />
+        {types.length === 0 && (
+          <AddBtn label="Add Digital / Printed" onClick={() => setTypes([
+            { name: 'Digital Invitation', price: 0 },
+            { name: 'Printed Invitation', price: 0 },
+          ])} />
+        )}
+      </div>
+
+      <SectionTitle title="Designs" sub="Each design is a selectable card with a photo and its own per-invitation price." />
+      {designs.map((des, i) => (
+        <div key={i} className="card card-pad mt-8" style={{ background: 'var(--bg-2)' }}>
+          <div className="flex gap-8 items-center">
+            <label style={{ position: 'relative', width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: '2px dashed var(--line)', display: 'grid', placeItems: 'center', cursor: des._uploading ? 'wait' : 'pointer', flexShrink: 0, background: 'var(--bg-3)' }}>
+              {des.image
+                ? <img src={des.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : des._uploading
+                  ? <span className="text-10 muted">…</span>
+                  : <Icon name="plus" size={16} color="var(--muted)" />
+              }
+              <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!!des._uploading}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  e.target.value = '';
+                  setDesigns(designs.map((x, j) => j === i ? { ...x, _uploading: true } : x));
+                  try {
+                    const url = await uploadApi.serviceImage(file);
+                    setDesigns(designs.map((x, j) => j === i ? { ...x, image: url, _uploading: false } : x));
+                  } catch {
+                    setDesigns(designs.map((x, j) => j === i ? { ...x, _uploading: false } : x));
+                  }
+                }}
+              />
+            </label>
+            <input className="input" value={des.name} onChange={(e) => setDesigns(designs.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="Design name" style={{ flex: 2 }} />
+            <CurrencyInput value={des.price ?? 0} onChange={(e) => setDesigns(designs.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€ / invite" containerStyle={{ width: 120 }} />
+            <RemoveBtn onClick={() => setDesigns(designs.filter((_, j) => j !== i))} />
+          </div>
+        </div>
+      ))}
+      <AddBtn label="Add design" onClick={() => setDesigns([...designs, { name: '', price: 0, image: '' }])} />
+
+      <SectionTitle title="Add-ons" sub="Optional extras like envelopes or a wax seal — priced per invitation." />
+      {addons.map((a, i) => (
+        <div key={i} className="flex gap-8 mt-8 items-center">
+          <input className="input" value={a.name} onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="e.g. Envelope" style={{ flex: 2 }} />
+          <CurrencyInput value={a.price ?? 0} onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€ / invite" containerStyle={{ width: 120 }} />
+          <RemoveBtn onClick={() => setAddons(addons.filter((_, j) => j !== i))} />
+        </div>
+      ))}
+      <AddBtn label="Add add-on" onClick={() => setAddons([...addons, { name: '', price: 0 }])} />
+    </div>
+  );
 }
 
 export default function ServiceSubdataEditor({ service, onSave, isSaving }: ServiceSubdataEditorProps) {
@@ -980,6 +1059,11 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         payload = { ...payload, extras: payload.extras.map(({ _uploading: _, ...e }: any) => e) }; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     }
+    if (slug === 'invitation') {
+      if (Array.isArray(payload.designs)) {
+        payload = { ...payload, designs: payload.designs.map(({ _uploading: _, ...d }: any) => d) }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+    }
     await onSave(payload);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -992,6 +1076,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
     'bridesmaid': 'Bridesmaids', 'flower-girl': 'Flower Girl Dress', 'yacht': 'Yacht Hire',
     'bachelor': 'Bachelor Party', 'bachelorette': 'Bachelorette Party',
     'hotel': 'Hotel / Accommodation', 'bar': 'Bar Service', 'makeup': 'Make-up', 'hair': 'Hair Styling',
+    'invitation': 'Invitation',
   };
 
   return (
@@ -1025,6 +1110,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         {slug === 'bar'          && <BarForm          data={formData} onChange={setFormData} />}
         {slug === 'makeup'       && <MakeupForm       data={formData} onChange={setFormData} />}
         {slug === 'hair'         && <HairVendorForm   data={formData} onChange={setFormData} />}
+        {slug === 'invitation'   && <InvitationForm   data={formData} onChange={setFormData} />}
       </div>
     </div>
   );

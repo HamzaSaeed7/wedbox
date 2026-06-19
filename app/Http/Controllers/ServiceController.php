@@ -86,6 +86,7 @@ class ServiceController extends Controller
             'bar'           => $service->load('bar.menus.items'),
             'makeup'        => $service->load('makeup'),
             'hair'          => $service->load('hair'),
+            'invitation'    => $service->load('invitation.types', 'invitation.designs', 'invitation.addons'),
             default         => null,
         };
     }

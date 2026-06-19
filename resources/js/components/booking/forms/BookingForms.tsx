@@ -1,7 +1,7 @@
 // All 18 booking form components in one file
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { publicApi } from '../../../lib/api';
+import { publicApi, uploadApi } from '../../../lib/api';
 import Icon from '../../shared/Icon';
 import {
   Label, FieldNote, FieldInput, Stepper, StepperField, SizeChips,
@@ -15,6 +15,7 @@ import type {
   PhotographyConfig, MusicConfig, BrideDressConfig, GroomSuiteConfig,
   BridesmaidConfig, BestManConfig, FlowerGirlConfig, YachtConfig,
   BachelorConfig, BacheloretteConfig, HotelConfig, BarConfig, MakeupConfig,
+  InvitationConfig,
 } from '../../../lib/types';
 
 type FormProps = { service: Service; onChange: (s: FormState) => void; initialPayload?: Record<string, unknown> };
@@ -930,6 +931,155 @@ export function HairForm({ service, onChange }: FormProps) {
   );
 }
 
+// ─── 19. Invitation
+export function InvitationForm({ service, onChange }: FormProps) {
+  const iv = service.invitation as InvitationConfig;
+  const [types, setTypes] = useState<string[]>([]);
+  const [qty, setQty] = useState(50);
+  const [neededBy, setNeededBy] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [designId, setDesignId] = useState<string | null>(iv.designs[0]?.id ?? null);
+  const [addons, setAddons] = useState<string[]>([]);
+  const [text, setText] = useState('');
+  const [customUrl, setCustomUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const design = iv.designs.find((d) => d.id === designId);
+  const typeSum = types.reduce((s, id) => s + (iv.types.find((t) => t.id === id)?.price || 0), 0);
+  const addonSum = addons.reduce((s, id) => s + (iv.addons.find((a) => a.id === id)?.price || 0), 0);
+  const unit = (design?.price || 0) + typeSum + addonSum;
+  const total = unit * Math.max(1, qty);
+
+  const typeNames = types.map((id) => iv.types.find((t) => t.id === id)?.name).filter(Boolean);
+  const addonNames = addons.map((id) => iv.addons.find((a) => a.id === id)?.name).filter(Boolean);
+
+  useEffect(() => onChange({
+    total,
+    summary: `${qty} × ${design?.name ?? 'invitation'}${typeNames.length ? ' · ' + typeNames.join(', ') : ''}`,
+    payload: {
+      types: typeNames, design_id: designId ? Number(designId) : null, design_name: design?.name ?? null,
+      addons: addonNames, quantity: qty, needed_by: neededBy || null, event_date: eventDate || null,
+      invitation_text: text, custom_design_url: customUrl || null,
+    },
+  }), [total, qty, designId, neededBy, eventDate, text, customUrl, types.join(','), addons.join(',')]);
+
+  return (
+    <div className="flex" style={{ flexDirection: 'column', gap: 22 }}>
+      {iv.types.length > 0 && (
+        <div>
+          <Label required>Invitation type — pick one or more</Label>
+          <div className="flex" style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            {iv.types.map((t) => (
+              <CheckRow key={t.id} checked={types.includes(t.id)} price={t.price}
+                onChange={() => setTypes((s) => s.includes(t.id) ? s.filter((x) => x !== t.id) : [...s, t.id])}
+                label={t.name} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-16" style={{ flexWrap: 'wrap' }}>
+        <StepperField label="How many invitations" required value={qty} onChange={setQty} />
+        <div>
+          <Label>Save the date — when is your event?</Label>
+          <input type="date" className="input mt-8" value={eventDate} onChange={(e) => setEventDate(e.target.value)} style={{ height: 44 }} />
+        </div>
+        <div>
+          <Label>When you need them by</Label>
+          <input type="date" className="input mt-8" value={neededBy} onChange={(e) => setNeededBy(e.target.value)} style={{ height: 44 }} />
+        </div>
+      </div>
+
+      {iv.designs.length > 0 && (
+        <div>
+          <Label required>Choose a design</Label>
+          <div className="flex gap-12 mt-8" style={{ flexWrap: 'wrap' }}>
+            {iv.designs.map((dz) => {
+              const on = designId === dz.id;
+              return (
+                <button key={dz.id} type="button" onClick={() => setDesignId(dz.id)}
+                  style={{ width: 128, padding: 0, borderRadius: 14, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', position: 'relative',
+                    border: `2px solid ${on ? 'var(--primary)' : 'var(--line)'}`, background: on ? 'var(--primary-50)' : 'white' }}>
+                  {dz.image
+                    ? <img src={dz.image} alt="" style={{ width: '100%', height: 96, objectFit: 'cover', display: 'block' }} />
+                    : <div style={{ width: '100%', height: 96, background: 'var(--bg-3)', display: 'grid', placeItems: 'center' }}><Icon name="mail" size={24} color="var(--line)" /></div>
+                  }
+                  <div style={{ padding: '8px 10px' }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{dz.name || 'Design'}</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>€{dz.price} / invite</div>
+                  </div>
+                  {on && (
+                    <span style={{ position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: 999, background: 'var(--primary)', display: 'grid', placeItems: 'center' }}>
+                      <Icon name="check" size={12} color="white" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {iv.addons.length > 0 && (
+        <div>
+          <Label>Add-ons</Label>
+          <div className="flex" style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            {iv.addons.map((a) => (
+              <CheckRow key={a.id} checked={addons.includes(a.id)} price={a.price}
+                onChange={() => setAddons((s) => s.includes(a.id) ? s.filter((x) => x !== a.id) : [...s, a.id])}
+                label={a.name} sub="per invitation" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <Label>Your invitation content</Label>
+        <textarea className="textarea mt-8" rows={4} placeholder="Type the wording you'd like on your invitation…"
+          value={text} onChange={(e) => setText(e.target.value)} style={{ width: '100%', resize: 'vertical' }} />
+      </div>
+
+      <div>
+        <Label>Upload a custom design <span className="muted fw-500 text-12">(optional)</span></Label>
+        {customUrl ? (
+          <div className="flex items-center gap-12 mt-8">
+            <div style={{ position: 'relative', width: 80, height: 80, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+              <img src={customUrl} alt="Custom design" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <button type="button" onClick={() => setCustomUrl('')}
+              style={{ background: 'transparent', border: 0, color: '#E11D48', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className="flex items-center justify-center mt-8" style={{
+            border: '2px dashed var(--line)', borderRadius: 14, padding: '28px 16px', cursor: uploading ? 'wait' : 'pointer',
+            flexDirection: 'column', gap: 8, color: 'var(--muted)', background: 'var(--bg-2)',
+          }}>
+            <Icon name="upload" size={22} />
+            <span className="text-14">{uploading ? 'Uploading…' : 'Click to upload your own design'}</span>
+            <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                e.target.value = '';
+                setUploading(true);
+                try {
+                  const url = await uploadApi.serviceImage(file);
+                  setCustomUrl(url);
+                } catch {
+                  // surface nothing intrusive; the field is optional
+                } finally {
+                  setUploading(false);
+                }
+              }} />
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Form map (slug → component)
 import type { ComponentType } from 'react';
 export const BOOKING_FORM_MAP: Record<string, ComponentType<FormProps>> = {
@@ -951,4 +1101,5 @@ export const BOOKING_FORM_MAP: Record<string, ComponentType<FormProps>> = {
   'bar':          BarForm,
   'makeup':       MakeupForm,
   'hair':         HairForm,
+  'invitation':   InvitationForm,
 };

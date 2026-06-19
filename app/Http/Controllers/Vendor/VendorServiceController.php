@@ -62,6 +62,7 @@ class VendorServiceController extends Controller
             'bar'           => $service->load('bar.menus.items'),
             'makeup'        => $service->load('makeup'),
             'hair'          => $service->load('hair'),
+            'invitation'    => $service->load('invitation.types', 'invitation.designs', 'invitation.addons'),
             default         => null,
         };
     }
@@ -96,6 +97,7 @@ class VendorServiceController extends Controller
             'bar'           => $this->saveBar($service->id, $d),
             'makeup'        => $this->saveMakeup($service->id, $d),
             'hair'          => $this->saveHair($service->id, $d),
+            'invitation'    => $this->saveInvitation($service->id, $d),
             default         => null,
         };
 
@@ -407,6 +409,30 @@ class VendorServiceController extends Controller
             'available_date_trial_2' => $d['available_date_trial_2'] ?? null,
             'updated_at' => now(), 'created_at' => now(),
         ]);
+    }
+
+    private function saveInvitation(int $sid, array $d): void
+    {
+        $iid = DB::table('service_invitations')->where('service_id', $sid)->value('id');
+        if (!$iid) {
+            $iid = DB::table('service_invitations')->insertGetId(['service_id' => $sid, 'created_at' => now(), 'updated_at' => now()]);
+        }
+        DB::table('service_invitation_types')->where('service_invitation_id', $iid)->delete();
+        DB::table('service_invitation_designs')->where('service_invitation_id', $iid)->delete();
+        DB::table('service_invitation_addons')->where('service_invitation_id', $iid)->delete();
+
+        foreach (($d['types'] ?? []) as $t) {
+            if (trim((string)($t['name'] ?? '')) === '') continue;
+            DB::table('service_invitation_types')->insert(['service_invitation_id' => $iid, 'name' => $t['name'], 'price' => (float)($t['price'] ?? 0), 'created_at' => now(), 'updated_at' => now()]);
+        }
+        foreach (($d['designs'] ?? []) as $des) {
+            if (trim((string)($des['name'] ?? '')) === '' && empty($des['image'])) continue;
+            DB::table('service_invitation_designs')->insert(['service_invitation_id' => $iid, 'name' => $des['name'] ?? '', 'image' => $des['image'] ?? null, 'price' => (float)($des['price'] ?? 0), 'created_at' => now(), 'updated_at' => now()]);
+        }
+        foreach (($d['addons'] ?? []) as $a) {
+            if (trim((string)($a['name'] ?? '')) === '') continue;
+            DB::table('service_invitation_addons')->insert(['service_invitation_id' => $iid, 'name' => $a['name'], 'price' => (float)($a['price'] ?? 0), 'created_at' => now(), 'updated_at' => now()]);
+        }
     }
 
     public function store(Request $request)

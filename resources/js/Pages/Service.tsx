@@ -190,6 +190,18 @@ function normalizeMakeup(m: any) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeInvitation(iv: any) {
+  if (!iv) return undefined;
+  // Already normalized (camelCase shape from a previous pass)
+  if (Array.isArray(iv.types) && iv.types[0]?.id !== undefined && iv.types[0]?.service_invitation_id === undefined) return iv;
+  return {
+    types:   (iv.types ?? []).map((t: any, i: number) => ({ id: String(t.id ?? i), name: t.name ?? '', price: Number(t.price ?? 0) })),
+    designs: (iv.designs ?? []).map((dz: any, i: number) => ({ id: String(dz.id ?? i), name: dz.name ?? '', image: dz.image ?? '', price: Number(dz.price ?? 0) })),
+    addons:  (iv.addons ?? []).map((a: any, i: number) => ({ id: String(a.id ?? i), name: a.name ?? '', price: Number(a.price ?? 0) })),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeService(s: any): Service {
   return {
     id: s.id, slug: s.category?.slug ?? s.slug ?? '',
@@ -206,6 +218,7 @@ function normalizeService(s: any): Service {
     yacht: normalizeYacht(s.yacht_hire ?? s.yacht), bachelor: normalizeBachelor(s.bachelor),
     bachelorette: normalizeBachelorette(s.bachelorette), hotel: normalizeHotel(s.accommodation ?? s.hotel),
     bar: normalizeBar(s.bar), makeup: normalizeMakeup(s.makeup), hair: normalizeHair(s.hair),
+    invitation: normalizeInvitation(s.invitation),
   };
 }
 
@@ -620,6 +633,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
       'groom-suite': 'groomSuite', 'best-man': 'bestMan', bridesmaid: 'bridesmaid',
       'flower-girl': 'flowerGirl', 'yacht': 'yacht', bachelor: 'bachelor',
       bachelorette: 'bachelorette', hotel: 'hotel', bar: 'bar', 'makeup': 'makeup',
+      'invitation': 'invitation',
     };
     const subKey = SUB_DATA_KEYS[service.slug];
     const hasSubData = !subKey || service[subKey] != null;
