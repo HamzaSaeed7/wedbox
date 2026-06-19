@@ -34,7 +34,7 @@ export default function Contact() {
             <p className="muted mt-16">Got a question about your booking or our marketplace? Drop us a line — we reply within a day.</p>
             <div className="mt-24" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
-                { icon: 'msg',      label: 'hello@wedbox.io' },
+                { icon: 'msg',      label: 'info@wedbox.io' },
                 { icon: 'location', label: 'Limassol, Cyprus · London, UK' },
                 { icon: 'clock',    label: 'Monday–Friday · 9am to 6pm (EET)' },
               ].map(({ icon, label }) => (

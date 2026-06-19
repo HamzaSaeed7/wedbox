@@ -98,12 +98,28 @@ class AuthController extends Controller
             'last_name'  => $data['last_name'],
         ]);
 
-        $user->sendEmailVerificationNotification();
+        // Don't let a mail-provider failure (e.g. Brevo IP not whitelisted)
+        // crash registration after the account has already been created.
+        // The user still reaches the "check your inbox" step and can resend.
+        $emailSent = true;
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            $emailSent = false;
+            \Log::error('Verification email failed to send during registration', [
+                'user_id' => $user->id,
+                'email'   => $user->email,
+                'error'   => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'needs_verification' => true,
             'email'              => $user->email,
-            'message'            => 'Account created. Please check your email to verify your address.',
+            'email_sent'         => $emailSent,
+            'message'            => $emailSent
+                ? 'Account created. Please check your email to verify your address.'
+                : 'Account created, but we could not send the verification email right now. Please use “Resend” shortly.',
         ], 201);
     }
 
