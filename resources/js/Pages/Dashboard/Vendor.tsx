@@ -9,6 +9,7 @@ import { vendorApi, uploadApi, conversationsApi } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import CurrencyInput from '../../components/shared/CurrencyInput';
 import ServiceSubdataEditor from '../../components/vendor/ServiceSubdataEditor';
+import FeedbackWidget from '../../components/shared/FeedbackWidget';
 
 function Stat({ tone, icon, label, value }: { tone: string; icon: string; label: string; value: number | string }) {
   const bg: Record<string, string> = { amber: '#FFF7E6', green: '#E6F7F0', neutral: '#F5F5F5', rose: '#FFF0F0', blue: '#E6F0FF' };
@@ -55,6 +56,7 @@ function VendorSidebar({ active }: { active: string }) {
         ))}
       </nav>
       <div className="dash-side-foot" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <FeedbackWidget />
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, color: 'white', fontWeight: 500, fontSize: 14, background: 'rgba(255,255,255,.1)', textDecoration: 'none' }}>
           <Icon name="home" size={18} color="white" /> Back to site
         </Link>
