@@ -3,11 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import Icon from '../components/shared/Icon';
 import ServiceCard from '../components/shared/ServiceCard';
 import SearchBar from '../components/shared/SearchBar';
-import { CATEGORIES, IMG } from '../lib/data';
+import { CATEGORIES } from '../lib/data';
 import { servicesApi, publicApi } from '../lib/api';
 import type { Service } from '../lib/types';
 import PublicLayout from '../Layouts/PublicLayout';
 import smartphoneMockup from '../../Images/smartphone-mockup-floating.png';
+import ayiaNapaImg from '../../Images/Ayia Napa.jpg';
+import paphosImg from '../../Images/Paphos.jpg';
+import limassolImg from '../../Images/Limassol.jpg';
+import protarasImg from '../../Images/Protaras.jpg';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeService(s: any): Service {
@@ -154,11 +158,23 @@ function HowItWorks() {
 }
 
 function DestinationsGrid() {
+  const { data: counts } = useQuery<Record<string, number>>({
+    queryKey: ['destinations'],
+    queryFn: () => publicApi.destinations(),
+    staleTime: 300_000,
+  });
+
+  const tagFor = (name: string) => {
+    const n = counts?.[name];
+    if (n == null) return '';
+    return `${n} ${n === 1 ? 'vendor' : 'vendors'}`;
+  };
+
   const items = [
-    { name: 'Ayia Napa', img: IMG('1507525428034-b723cf961d3e', 800, 600), tag: '142 vendors' },
-    { name: 'Paphos',    img: IMG('1519225421980-715cb0215aed', 800, 600), tag: '98 vendors' },
-    { name: 'Limassol',  img: IMG('1505944270255-72b8c68c6a70', 800, 600), tag: '124 vendors' },
-    { name: 'Protaras',  img: IMG('1566073771259-6a8506099945', 800, 600), tag: '67 vendors' },
+    { name: 'Ayia Napa', img: ayiaNapaImg, tag: tagFor('Ayia Napa') },
+    { name: 'Paphos',    img: paphosImg,   tag: tagFor('Paphos') },
+    { name: 'Limassol',  img: limassolImg, tag: tagFor('Limassol') },
+    { name: 'Protaras',  img: protarasImg, tag: tagFor('Protaras') },
   ];
   return (
     <section className="container-wide" style={{ padding: '72px 28px' }}>

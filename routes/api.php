@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminVendorSetupController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
@@ -29,6 +30,7 @@ Route::get('/blog/{slug}', [BlogController::class, 'show']);
 Route::get('/testimonials', [PublicController::class, 'testimonials']);
 Route::get('/categories', [PublicController::class, 'categories']);
 Route::get('/cities', [PublicController::class, 'cities']);
+Route::get('/destinations', [PublicController::class, 'destinations']);
 Route::post('/contact', [PublicController::class, 'contact']);
 
 // Auth
@@ -127,6 +129,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/blog/{blogPost}', [BlogController::class, 'update']);
         Route::delete('/blog/{blogPost}', [BlogController::class, 'destroy']);
         Route::get('/vendors',  [AdminController::class, 'vendors']);
+
+        // Admin vendor onboarding & service setup (on the vendor's behalf — gate bypassed)
+        Route::get('/vendors/{user}/setup',         [AdminVendorSetupController::class, 'show']);
+        Route::post('/vendors/{user}/onboarding',   [AdminVendorSetupController::class, 'saveOnboarding']);
+        Route::post('/vendors/{user}/services',     [AdminVendorSetupController::class, 'createService']);
+        Route::put('/services/{service}/admin-update',  [AdminVendorSetupController::class, 'updateService']);
+        Route::put('/services/{service}/admin-subdata', [AdminVendorSetupController::class, 'updateSubdata']);
+
         Route::get('/orders',   [AdminController::class, 'orders']);
         Route::get('/feedback', [AdminController::class, 'adminFeedback']);
     });

@@ -68,6 +68,7 @@ export const servicesApi = {
 export const publicApi = {
   categories: () => api.get('/categories').then((r) => r.data),
   cities: () => api.get('/cities').then((r) => r.data),
+  destinations: () => api.get('/destinations').then((r) => r.data),
   testimonials: () => api.get('/testimonials').then((r) => r.data),
   contact: (d: object) => api.post('/contact', d).then((r) => r.data),
   blog: () => api.get('/blog').then((r) => r.data),
@@ -205,6 +206,12 @@ export const adminApi = {
   updatePost: (id: number, d: object) => api.put(`/admin/blog/${id}`, d).then((r) => r.data),
   deletePost: (id: number) => api.delete(`/admin/blog/${id}`),
   vendors: (params?: object) => api.get('/admin/vendors', { params }).then((r) => r.data),
+  // Vendor setup on behalf of a vendor (onboarding + service + per-category details)
+  vendorSetup: (id: number) => api.get(`/admin/vendors/${id}/setup`).then((r) => r.data),
+  saveVendorOnboarding: (id: number, d: object) => api.post(`/admin/vendors/${id}/onboarding`, d).then((r) => r.data),
+  createVendorService: (id: number, d: object) => api.post(`/admin/vendors/${id}/services`, d).then((r) => r.data),
+  updateVendorService: (sid: number, d: object) => api.put(`/admin/services/${sid}/admin-update`, d).then((r) => r.data),
+  updateVendorSubdata: (sid: number, data: object) => api.put(`/admin/services/${sid}/admin-subdata`, { data }).then((r) => r.data),
   orders: (params?: object) => api.get('/admin/orders', { params }).then((r) => r.data),
   adminFeedback: (params?: object) => api.get('/admin/feedback', { params }).then((r) => r.data),
 };

@@ -7,6 +7,7 @@ import { useStore, useAuthUser } from '../../store';
 import { CATEGORIES } from '../../lib/data';
 import { adminApi, profileApi, uploadApi } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
+import VendorSetupPanel from '../../components/admin/VendorSetupPanel';
 
 // ─── Stat card
 function Stat({ tone, icon, label, value }: { tone: string; icon: string; label: string; value: number }) {
@@ -1225,6 +1226,26 @@ function AdminVendors() {
   });
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
+  // Setup panel + inline "New vendor" creation
+  const [setupVendorId, setSetupVendorId] = useState<number | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '' });
+  const [showCreatePw, setShowCreatePw] = useState(false);
+  const [createErr, setCreateErr] = useState('');
+
+  const createVendorMutation = useMutation({
+    mutationFn: (d: { name: string; email: string; password: string }) => adminApi.createUser({ ...d, role: 'vendor' }),
+    onSuccess: (res: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      setShowCreate(false);
+      qc.invalidateQueries({ queryKey: ['admin-vendors'] });
+      const newId = res?.user?.id;
+      if (newId) setSetupVendorId(newId);
+    },
+    onError: (err: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      setCreateErr(err?.response?.data?.message ?? Object.values(err?.response?.data?.errors ?? {})[0]?.[0] ?? 'Could not create vendor.');
+    },
+  });
+
   const list: any[] = apiResult?.data ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
   const total: number = apiResult?.total ?? 0;
   const lastPage: number = apiResult?.last_page ?? 1;
@@ -1247,10 +1268,16 @@ function AdminVendors() {
     <div>
       <div className="flex items-center justify-between">
         <h1 style={{ fontSize: 32 }}>Vendors</h1>
-        <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
-          <input type="text" placeholder="Search vendors…" value={q} onChange={(e) => setQ(e.target.value)}
-            style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+        <div className="flex items-center gap-8" style={{ flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
+            <input type="text" placeholder="Search vendors…" value={q} onChange={(e) => setQ(e.target.value)}
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+          </div>
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={() => { setCreateForm({ name: '', email: '', password: '' }); setCreateErr(''); setShowCreatePw(false); setShowCreate(true); }}>
+            <Icon name="plus" size={14} /> New vendor
+          </button>
         </div>
       </div>
 
@@ -1291,6 +1318,9 @@ function AdminVendors() {
                   <td className="hide-tablet fw-600">€{Number(v.total_earning).toLocaleString()}</td>
                   <td><span className="chip" style={{ ...statusChip(v.status), fontSize: 11 }}>{v.status}</span></td>
                   <td style={{ textAlign: 'right' }}>
+                    <button className="btn btn-ghost btn-sm" title="Setup vendor" onClick={() => setSetupVendorId(v.id)}>
+                      <Icon name="pencil" size={12} />
+                    </button>
                     <button className="btn btn-ghost btn-sm" style={{ color: '#E11D48' }} title="Delete" onClick={() => setConfirmId(v.id)}>
                       <Icon name="trash" size={12} />
                     </button>
@@ -1331,6 +1361,69 @@ function AdminVendors() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* New vendor modal */}
+      {showCreate && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="card" style={{ width: 440, maxWidth: '100%', padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>New vendor</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: -8 }}>Create the vendor account, then set up their profile and service.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Full name</label>
+                <input className="input" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="Jane Smith" value={createForm.name} onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Email address</label>
+                <input className="input" type="email" style={{ width: '100%', padding: '8px 12px', fontSize: 13, borderRadius: 8, background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box',
+                  border: `1px solid ${createForm.email && !EMAIL_RE.test(createForm.email) ? '#E11D48' : 'var(--border)'}` }}
+                  placeholder="jane@example.com" value={createForm.email} onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} />
+                {createForm.email && !EMAIL_RE.test(createForm.email) && (
+                  <p style={{ fontSize: 11, marginTop: 5, color: '#E11D48' }}>Enter a valid email address.</p>
+                )}
+              </div>
+              <div>
+                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 5 }}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input className="input" type={showCreatePw ? 'text' : 'password'} style={{ width: '100%', padding: '8px 12px', paddingRight: 38, fontSize: 13, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', outline: 'none', boxSizing: 'border-box' }}
+                    placeholder="At least 8 characters" value={createForm.password} onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} />
+                  <button type="button" onClick={() => setShowCreatePw((v) => !v)} aria-label={showCreatePw ? 'Hide password' : 'Show password'}
+                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>
+                    <Icon name={showCreatePw ? 'eye-off' : 'eye'} size={16} />
+                  </button>
+                </div>
+                <p style={{ fontSize: 11, marginTop: 5, color: createForm.password && createForm.password.length < 8 ? '#E11D48' : 'var(--muted)' }}>
+                  Must be at least 8 characters{createForm.password ? ` (${createForm.password.length}/8)` : ''}.
+                </p>
+              </div>
+              {createErr && <p style={{ color: '#E11D48', fontSize: 13 }}>{createErr}</p>}
+            </div>
+            {(() => {
+              const reason = !createForm.name.trim() ? 'Enter a full name to continue.'
+                : !createForm.email.trim() ? 'Enter an email address to continue.'
+                : !EMAIL_RE.test(createForm.email) ? 'Enter a valid email address.'
+                : createForm.password.length < 8 ? 'Password must be at least 8 characters.'
+                : '';
+              return (
+                <div className="flex items-center gap-10" style={{ justifyContent: 'flex-end' }}>
+                  {!createVendorMutation.isPending && reason && <span className="text-12 muted" style={{ marginRight: 'auto' }}>{reason}</span>}
+                  <button className="btn btn-ghost" onClick={() => setShowCreate(false)} disabled={createVendorMutation.isPending}>Cancel</button>
+                  <button className="btn btn-primary" disabled={createVendorMutation.isPending || !!reason}
+                    onClick={() => { setCreateErr(''); createVendorMutation.mutate(createForm); }}>
+                    {createVendorMutation.isPending ? 'Creating…' : 'Create & set up'}
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Vendor setup panel */}
+      {setupVendorId != null && (
+        <VendorSetupPanel vendorId={setupVendorId} onClose={() => { setSetupVendorId(null); qc.invalidateQueries({ queryKey: ['admin-vendors'] }); }} />
       )}
     </div>
   );

@@ -28,3 +28,6 @@ Thumbs.db
 
 backend/
 .claude/
+
+# Vite dev cache
+/.vite
