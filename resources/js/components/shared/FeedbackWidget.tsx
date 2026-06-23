@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation } from '@tanstack/react-query';
 import Icon from './Icon';
 import { useStore } from '../../store';
@@ -43,7 +44,7 @@ export default function FeedbackWidget() {
         <Icon name="msg" size={18} color="white" /> Feedback
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
           onClick={() => !submitMutation.isPending && setOpen(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
@@ -88,7 +89,8 @@ export default function FeedbackWidget() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

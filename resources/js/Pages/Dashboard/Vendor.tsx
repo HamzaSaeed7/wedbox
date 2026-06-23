@@ -214,7 +214,7 @@ function VendorService() {
   const user = useAuthUser();
   const { showToast } = useStore();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<'basic' | 'details' | 'reviews'>('basic');
+  const [tab, setTab] = useState<'info' | 'reviews'>('info');
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const { data: apiServices } = useQuery({
@@ -324,7 +324,7 @@ function VendorService() {
                 </button>
             }
           </>)}
-          {tab === 'basic' && (
+          {tab === 'info' && (
             <button className="btn btn-primary" onClick={() => apiSvc && updateMutation.mutate()} disabled={!apiSvc || updateMutation.isPending}>
               {saved ? '✓ Saved' : updateMutation.isPending ? 'Saving…' : 'Update'}
             </button>
@@ -348,17 +348,17 @@ function VendorService() {
 
       {/* Tab row */}
       <div className="tabs mt-20">
-        {(['basic', 'details', 'reviews'] as const).map((t) => (
+        {(['info', 'reviews'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`tab ${tab === t ? 'tab-active' : ''}`}
             style={{ background: 'transparent', border: 0 }}>
-            {t === 'basic' ? 'Basic Info' : t === 'details' ? 'Service Details' : 'Reviews'}
+            {t === 'info' ? 'Service Info' : 'Reviews'}
           </button>
         ))}
       </div>
 
-      {/* ── Basic Info ── */}
-      {tab === 'basic' && (
+      {/* ── Basic Info + Service Details (merged) ── */}
+      {tab === 'info' && (
         <div className="card card-pad mt-16">
           <div><label className="field-label">Service title</label>
             <input className="input mt-8" value={svcTitle} onChange={(e) => setSvcTitle(e.target.value)} /></div>
@@ -428,8 +428,8 @@ function VendorService() {
         </div>
       )}
 
-      {/* ── Service Details ── */}
-      {tab === 'details' && (
+      {/* ── Service Details (merged into Service Info tab) ── */}
+      {tab === 'info' && apiSvc && (
         <div className="card card-pad mt-16">
           {isLoadingFull
             ? <div className="muted text-14 py-20" style={{ textAlign: 'center' }}>Loading service details…</div>

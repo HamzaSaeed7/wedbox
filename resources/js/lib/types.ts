@@ -47,7 +47,6 @@ export interface FloristPackage {
   tier?: 'bronze' | 'silver' | 'gold' | null;
   features: string[];
   images: string[];
-  images?: string[];
 }
 
 export interface FloristDesign {
@@ -125,6 +124,31 @@ export interface BrideDressConfig {
   priceBuy: number;
   sizes: string[];
   extras: BrideDressExtra[];
+}
+
+export interface InvitationType {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface InvitationDesign {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+}
+
+export interface InvitationAddon {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface InvitationConfig {
+  types: InvitationType[];
+  designs: InvitationDesign[];
+  addons: InvitationAddon[];
 }
 
 export interface GroomSuiteConfig {
@@ -268,6 +292,7 @@ export interface Service {
   bar?: BarConfig;
   makeup?: MakeupConfig;
   hair?: HairConfig;
+  invitation?: InvitationConfig;
 }
 
 export interface Order {
@@ -344,4 +369,5 @@ export interface FormState {
   summary: string;
   payload: Record<string, unknown>;
   items?: FormStateItem[];
+  valid?: boolean;
 }

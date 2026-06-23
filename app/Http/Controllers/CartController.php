@@ -115,6 +115,7 @@ class CartController extends Controller
             'bar'           => \App\Models\OrderBar::class,
             'makeup'        => \App\Models\OrderMakeup::class,
             'hair'          => \App\Models\OrderHair::class,
+            'invitation'    => \App\Models\OrderInvitation::class,
         ];
 
         $modelClass = $modelMap[$order->order_type] ?? null;
@@ -172,6 +173,14 @@ class CartController extends Controller
                               'selected_menus'   => $d['menus']     ?? []],
             'makeup'      => ['selected_packages' => $d['selected'] ?? []],
             'hair'        => ['selected_packages' => $d['selected'] ?? []],
+            'invitation'  => ['quantity'         => $d['quantity']        ?? 1,
+                              'needed_by'        => $d['needed_by']       ?? null,
+                              'event_date'       => $d['event_date']      ?? null,
+                              'selected_types'   => $d['types']           ?? [],
+                              'design_id'        => $d['design_id']       ?? null,
+                              'selected_addons'  => $d['addons']          ?? [],
+                              'invitation_text'  => $d['invitation_text'] ?? null,
+                              'custom_design_url'=> $d['custom_design_url'] ?? null],
             default       => $d,
         };
 

@@ -92,13 +92,13 @@ export function Stepper({
 }
 
 // ─── Stepper with label
-export function StepperField({ label, value, onChange, required }: {
-  label: string; value: number; onChange: (v: number) => void; required?: boolean;
+export function StepperField({ label, value, onChange, required, min = 0, max = 999 }: {
+  label: string; value: number; onChange: (v: number) => void; required?: boolean; min?: number; max?: number;
 }) {
   return (
     <div>
       <Label required={required}>{label}</Label>
-      <div className="mt-8"><Stepper value={value} onChange={onChange} /></div>
+      <div className="mt-8"><Stepper value={value} onChange={onChange} min={min} max={max} /></div>
     </div>
   );
 }

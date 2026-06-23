@@ -115,8 +115,12 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        // Use ?: (not the env default) so an *empty* MAIL_FROM_NAME — e.g. when
+        // "${APP_NAME}" fails to interpolate under config:cache on production —
+        // still falls back to a real name instead of sending a blank sender
+        // (which makes Brevo display the account name "Brevo" instead of WedBox).
+        'address' => env('MAIL_FROM_ADDRESS') ?: 'info@wedbox.io',
+        'name' => env('MAIL_FROM_NAME') ?: (env('APP_NAME') ?: 'WedBox'),
     ],
 
 ];
