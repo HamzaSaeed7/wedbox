@@ -938,7 +938,18 @@ function extractSubdata(service: any): any {
     case 'bachelor':     return service.bachelor ?? null;
     case 'bachelorette': return service.bachelorette ?? null;
     case 'hotel':        return service.accommodation ?? null;
-    case 'bar':          return service.bar ?? null;
+    case 'bar': {
+      const bar = service.bar ?? null;
+      if (!bar) return null;
+      // Backend returns menu items as objects ({id, name, …}); TagInput needs strings.
+      return {
+        ...bar,
+        menus: (bar.menus ?? []).map((m: any) => ({
+          ...m,
+          items: (m.items ?? []).map((it: any) => typeof it === 'string' ? it : (it.name ?? '')),
+        })),
+      };
+    }
     case 'makeup':       return service.makeup ?? null;                                         // DB: makeup
     case 'hair':         return service.hair ?? null;
     case 'invitation':   return service.invitation ?? null;
