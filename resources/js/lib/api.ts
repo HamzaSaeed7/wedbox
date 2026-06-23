@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { downscaleImage } from './image';
 
 // Session-based — no Bearer token; cookies handle auth (set up in app.jsx)
 const api = axios.create({
@@ -137,9 +138,9 @@ export const vendorOnboardingApi = {
     phone?: string;
     avatar_url?: string;
   }) => api.post('/vendor/onboarding', d).then((r) => r.data),
-  uploadAvatar: (file: File) => {
+  uploadAvatar: async (file: File) => {
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', await downscaleImage(file, 1024));
     return api.post('/upload/avatar', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r) => r.data);
@@ -148,16 +149,16 @@ export const vendorOnboardingApi = {
 
 // ─── File uploads (general)
 export const uploadApi = {
-  serviceImage: (file: File) => {
+  serviceImage: async (file: File) => {
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', await downscaleImage(file, 1600));
     return api.post('/upload/service-image', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r: { data: { url: string } }) => r.data.url);
   },
-  avatar: (file: File) => {
+  avatar: async (file: File) => {
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', await downscaleImage(file, 1024));
     return api.post('/upload/avatar', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r: { data: { url: string } }) => r.data.url);
