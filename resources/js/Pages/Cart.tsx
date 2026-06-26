@@ -27,7 +27,7 @@ export default function Cart() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cart'] });
       showToast('Reservation confirmed! Vendors will respond shortly.', 'success');
-      router.visit('/dashboard/buyer/orders');
+      router.visit('/dashboard/buyer');
     },
     onError: () => showToast('Could not confirm reservation. Please try again.', 'error'),
   });

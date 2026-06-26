@@ -57,9 +57,10 @@ export default function SearchBar({ pill = true, dark = false, big = false }: Se
     staleTime: 10 * 60 * 1000,
   });
 
-  const categoryOptions = (Array.isArray(apiCategories) && apiCategories.length > 0)
+  const categoryOptions = ((Array.isArray(apiCategories) && apiCategories.length > 0)
     ? apiCategories.map((c: { slug: string; name: string }) => ({ value: c.slug, label: c.name }))
-    : CATEGORIES.map((c) => ({ value: c.slug, label: c.name }));
+    : CATEGORIES.map((c) => ({ value: c.slug, label: c.name }))
+  ).sort((a, b) => a.label.localeCompare(b.label));
 
   const cityOptions = (Array.isArray(apiCities) && apiCities.length > 0)
     ? apiCities.map((c: { name: string }) => ({ value: c.name, label: c.name }))

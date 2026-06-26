@@ -385,7 +385,7 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
 .dash-grid-3    { display: grid; grid-template-columns: repeat(3, 1fr); }
 .dash-img-4     { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .dash-summary-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; }
-.order-row-grid { display: grid; grid-template-columns: 80px 1fr auto; }
+.order-row-grid { display: grid; grid-template-columns: 80px 1fr auto; gap: 14px; }
 
 @media (max-width: 900px) {
   .dash-home-split { grid-template-columns: 1fr; }

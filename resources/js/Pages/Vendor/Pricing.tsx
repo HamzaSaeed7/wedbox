@@ -93,10 +93,10 @@ export default function VendorPricing() {
   return (
     <PublicLayout>
       {/* ── Hero ────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#e6f7f6] via-white to-[#f5f0ff] py-20 px-4">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#e6f7f6] via-white to-[#f0fdfb] py-20 px-4">
         {/* decorative blobs */}
         <div className="pointer-events-none absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#38b2ac]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-purple-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-[#38b2ac]/10 blur-3xl" />
 
         <div className="relative mx-auto max-w-2xl text-center">
           <span className="inline-block mb-4 rounded-full bg-[#38b2ac]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-[#38b2ac]">
@@ -141,9 +141,8 @@ export default function VendorPricing() {
                   </span>
                 )}
                 <h2
-                  className={`text-xl font-bold mb-1 ${
-                    plan.highlight ? 'text-white' : 'text-gray-900'
-                  }`}
+                  className="text-xl font-bold mb-1"
+                  style={{ color: plan.highlight ? '#fff' : undefined }}
                 >
                   {plan.name}
                 </h2>
@@ -183,7 +182,7 @@ export default function VendorPricing() {
                 </div>
 
                 {plan.savingBadge && (
-                  <span className="inline-block mt-3 rounded-full bg-yellow-400/20 border border-yellow-300/50 px-3 py-0.5 text-xs font-semibold text-yellow-200">
+                  <span className="inline-block mt-3 rounded-full bg-white/20 border border-white/40 px-3 py-0.5 text-xs font-semibold text-white">
                     {plan.savingBadge}
                   </span>
                 )}
@@ -238,7 +237,7 @@ export default function VendorPricing() {
                   } ${
                     plan.highlight
                       ? 'bg-[#38b2ac] text-white hover:bg-[#2c9c96] shadow-lg shadow-[#38b2ac]/30'
-                      : 'bg-gray-900 text-white hover:bg-gray-700'
+                      : 'bg-[#38b2ac] text-white hover:bg-[#2c9c96]'
                   }`}
                 >
                   {loading === plan.id ? (

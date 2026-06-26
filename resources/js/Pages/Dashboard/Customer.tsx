@@ -98,6 +98,8 @@ function CustomerSidebar({ active }: { active: string }) {
 }
 
 function OrderRow({ order }: { order: DisplayOrder }) {
+  const qc = useQueryClient();
+  const showToast = useStore((s) => s.showToast);
   const statusStyle: Record<string, { bg: string; color: string }> = {
     pending:   { bg: '#FFF7E6', color: '#D97706' },
     approved:  { bg: '#E6F7F0', color: '#059669' },
@@ -106,11 +108,27 @@ function OrderRow({ order }: { order: DisplayOrder }) {
     cancelled: { bg: '#F5F5F5', color: '#9CA3AF' },
   };
   const ss = statusStyle[order.status] || statusStyle.pending;
+
+  const cancelMutation = useMutation({
+    mutationFn: () => ordersApi.cancel(order.id),
+    onSuccess: () => {
+      showToast('Booking cancelled.', 'success');
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['orders-summary'] });
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) =>
+      showToast(err?.response?.data?.message ?? 'Could not cancel booking.', 'error'),
+  });
+
+  const handleCancel = () => {
+    if (window.confirm('Cancel this booking? This cannot be undone.')) cancelMutation.mutate();
+  };
+
   return (
     <div className="card order-row-grid" style={{ padding: '14px 16px', marginBottom: 10 }}>
       {order.serviceImage
-        ? <img src={order.serviceImage} alt="" style={{ width: 80, height: 64, borderRadius: 10, objectFit: 'cover' }} />
-        : <div style={{ width: 80, height: 64, borderRadius: 10, background: 'var(--bg-3)' }} />
+        ? <img src={order.serviceImage} alt="" style={{ width: '100%', aspectRatio: '1/1', borderRadius: 10, objectFit: 'cover', display: 'block' }} />
+        : <div style={{ width: '100%', aspectRatio: '1/1', borderRadius: 10, background: 'var(--bg-3)' }} />
       }
       <div>
         <div className="flex items-center gap-8">
@@ -119,6 +137,16 @@ function OrderRow({ order }: { order: DisplayOrder }) {
         </div>
         <div className="fw-700 mt-4">{order.serviceTitle}</div>
         {order.note && <div className="muted text-12 mt-4">{order.note}</div>}
+        {order.status === 'pending' && (
+          <button
+            onClick={handleCancel}
+            disabled={cancelMutation.isPending}
+            className="text-12 fw-600 mt-8"
+            style={{ background: 'transparent', border: 0, padding: 0, color: '#E11D48', cursor: cancelMutation.isPending ? 'wait' : 'pointer' }}
+          >
+            {cancelMutation.isPending ? 'Cancelling…' : 'Cancel booking'}
+          </button>
+        )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between' }}>
         <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: ss.bg, color: ss.color }}>{order.status}</span>
@@ -487,7 +515,7 @@ export default function CustomerDashboard({ sub: subProp }: CustomerProps) {
       <ToastStack />
       <CustomerSidebar active={sub} />
       <main className="dash-main">
-        {sub === ''          && <BuyerHome />}
+        {(sub === '' || sub === 'orders') && <BuyerHome />}
         {sub === 'messages'  && <BuyerMessages />}
         {sub === 'favorites' && <BuyerFavorites />}
         {sub === 'account'   && <BuyerAccount />}

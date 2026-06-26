@@ -46,6 +46,29 @@ function phoneError(code: string, number: string): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyObj = any;
 
+// Turn a failed image upload into a clear, human message. Covers the common
+// cases: wrong file type, too large (server 422 `max` rule or PHP 413), and
+// network/other failures.
+function uploadErrorMessage(err: AnyObj, maxMb: number): string {
+  const resp = err?.response;
+  if (resp?.status === 413) return `Image is too large — keep it under ${maxMb} MB.`;
+  const first: string | undefined = resp?.data?.errors?.file?.[0];
+  if (first) {
+    if (/image/i.test(first)) return 'That file isn’t a supported image (use JPG, PNG or WEBP).';
+    if (/great|kilobyte|\bmax\b|size/i.test(first)) return `Image is too large — keep it under ${maxMb} MB.`;
+    return first;
+  }
+  if (resp?.data?.message) return resp.data.message;
+  return 'Upload failed — please check your connection and try again.';
+}
+
+// Quick client-side guard so obvious mistakes fail instantly without a round
+// trip. Size isn't checked here because images are downscaled before sending.
+function imageTypeError(file: File): string {
+  if (!file.type.startsWith('image/')) return 'Please choose an image file (JPG, PNG or WEBP).';
+  return '';
+}
+
 export default function VendorSetupPanel({ vendorId, onClose }: Props) {
   const qc = useQueryClient();
   const showToast = useStore((s) => s.showToast);
@@ -118,6 +141,7 @@ function OnboardingTab({ vendorId, profile, categories, cities, hasService, onSa
   const showToast = useStore((s) => s.showToast);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   // Split a stored "+357 96123456" phone into code + number
   const parsePhone = (raw?: string | null) => {
@@ -184,9 +208,12 @@ function OnboardingTab({ vendorId, profile, categories, cities, hasService, onSa
     const file = ev.target.files?.[0];
     if (!file) return;
     ev.target.value = '';
+    setAvatarError('');
+    const typeErr = imageTypeError(file);
+    if (typeErr) { setAvatarError(typeErr); return; }
     setUploading(true);
     try { set('avatar_url', await uploadApi.avatar(file)); }
-    catch { showToast('Avatar upload failed.', 'error'); }
+    catch (err) { setAvatarError(uploadErrorMessage(err, 5)); }
     finally { setUploading(false); }
   };
 
@@ -205,6 +232,7 @@ function OnboardingTab({ vendorId, profile, categories, cities, hasService, onSa
         <div>
           <div className="fw-600 text-14">Profile picture</div>
           <div className="muted text-12 mt-2">Shown on the vendor's public profile.</div>
+          {avatarError && <div className="text-12 mt-4" style={{ color: '#E11D48' }}>{avatarError}</div>}
         </div>
       </div>
 
@@ -291,6 +319,7 @@ function ServiceTab({ vendorId, profile, categories, service, onSaved }: {
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   useEffect(() => {
     setTitle(service?.title ?? '');
@@ -345,9 +374,12 @@ function ServiceTab({ vendorId, profile, categories, service, onSaved }: {
     const file = ev.target.files?.[0];
     if (!file) return;
     ev.target.value = '';
+    setImageError('');
+    const typeErr = imageTypeError(file);
+    if (typeErr) { setImageError(typeErr); return; }
     setUploading(true);
     try { persistImages([...images, await uploadApi.serviceImage(file)]); }
-    catch { showToast('Image upload failed.', 'error'); }
+    catch (err) { setImageError(uploadErrorMessage(err, 10)); }
     finally { setUploading(false); }
   };
 
@@ -391,13 +423,12 @@ function ServiceTab({ vendorId, profile, categories, service, onSaved }: {
               </button>
             </div>
           ))}
-          <label style={{ aspectRatio: '1/1', borderRadius: 12, border: '2px dashed var(--line)', display: 'grid', placeItems: 'center', cursor: uploading ? 'wait' : 'pointer', color: 'var(--muted)', opacity: uploading ? 0.6 : 1 }}>
-            <div style={{ textAlign: 'center' }}>
-              {uploading ? <div className="text-11">Uploading…</div> : <><Icon name="plus" size={20} /><div className="text-11 mt-4">Add photo</div></>}
-            </div>
+          <label style={{ aspectRatio: '1/1', borderRadius: 12, border: '2px dashed var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, textAlign: 'center', cursor: uploading ? 'wait' : 'pointer', color: 'var(--muted)', opacity: uploading ? 0.6 : 1 }}>
+            {uploading ? <div className="text-11">Uploading…</div> : <><Icon name="plus" size={20} /><div className="text-11">Add photo</div></>}
             <input type="file" style={{ display: 'none' }} accept="image/*" disabled={uploading} onChange={handleUpload} />
           </label>
         </div>
+        {imageError && <p className="text-12 mt-8" style={{ color: '#E11D48' }}>{imageError}</p>}
       </div>
 
       <div>

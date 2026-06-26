@@ -30,4 +30,23 @@ class OrderController extends Controller
             'counts_by_status'  => (clone $orders)->selectRaw('status, count(*) as count')->groupBy('status')->pluck('count', 'status'),
         ]);
     }
+
+    /**
+     * Cancel a booking. Buyers may only cancel their own orders, and only while
+     * they are still pending — once a vendor has approved, cancellation is blocked.
+     */
+    public function cancel(Request $request, Order $order)
+    {
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        if ($order->status !== 'pending') {
+            return response()->json(['message' => 'Only pending bookings can be cancelled.'], 422);
+        }
+
+        $order->update(['status' => 'cancelled']);
+
+        return response()->json($order->fresh()->load('service.category'));
+    }
 }
