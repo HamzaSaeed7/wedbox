@@ -76,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/summary', [OrderController::class, 'summary']);
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
 
     Route::get('/favorites', [FavoriteController::class, 'index']);
     Route::post('/favorites/{service}', [FavoriteController::class, 'store']);
@@ -131,9 +132,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/vendors',  [AdminController::class, 'vendors']);
 
         // Admin vendor onboarding & service setup (on the vendor's behalf — gate bypassed)
-        Route::get('/vendors/{user}/setup',         [AdminVendorSetupController::class, 'show']);
-        Route::post('/vendors/{user}/onboarding',   [AdminVendorSetupController::class, 'saveOnboarding']);
-        Route::post('/vendors/{user}/services',     [AdminVendorSetupController::class, 'createService']);
+        Route::get('/vendors/{vendor}/setup',         [AdminVendorSetupController::class, 'show']);
+        Route::post('/vendors/{vendor}/onboarding',   [AdminVendorSetupController::class, 'saveOnboarding']);
+        Route::post('/vendors/{vendor}/services',     [AdminVendorSetupController::class, 'createService']);
         Route::put('/services/{service}/admin-update',  [AdminVendorSetupController::class, 'updateService']);
         Route::put('/services/{service}/admin-subdata', [AdminVendorSetupController::class, 'updateSubdata']);
 

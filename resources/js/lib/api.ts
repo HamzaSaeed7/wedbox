@@ -97,6 +97,7 @@ export const profileApi = {
 export const ordersApi = {
   list: (params?: object) => api.get('/orders', { params }).then((r) => r.data),
   summary: () => api.get('/orders/summary').then((r) => r.data),
+  cancel: (id: number) => api.post(`/orders/${id}/cancel`).then((r) => r.data),
 };
 
 // ─── Favorites
