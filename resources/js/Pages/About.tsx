@@ -2,9 +2,9 @@ import { Link } from '@inertiajs/react';
 import Icon from '../components/shared/Icon';
 import PublicLayout from '../Layouts/PublicLayout';
 
-import about1 from '../assets/about1.png';
-import about3 from '../assets/about3.png';
-import about4 from '../assets/about4.png';
+import about1 from '../assets/about-hero.jpeg';
+import about3 from '../assets/about-why.jpeg';
+import about4 from '../assets/about-dream.jpeg';
 
 const OFFERS = [
   { icon: 'hotel',    title: 'Hotel Bookings',                  desc: 'Find accommodations for you and your guests to relax and enjoy the celebrations.' },
@@ -27,10 +27,10 @@ export default function About() {
       <div>
         <section style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, overflow: 'hidden' }}>
           <img src={about1} alt="About WedBox" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.12)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.22) 38%, rgba(0,0,0,.15) 100%)' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
             <div className="container-wide" style={{ width: '100%', padding: '0 28px', pointerEvents: 'none' }}>
-              <div style={{ background: 'rgba(77,201,201,0.42)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderRadius: 20, border: '1px solid rgba(255,255,255,.22)', padding: '44px 48px', maxWidth: 560, color: 'white', pointerEvents: 'auto' }}>
+              <div style={{ background: 'rgba(20,58,60,0.62)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderRadius: 20, border: '1px solid rgba(255,255,255,.22)', padding: '44px 48px', maxWidth: 560, color: 'white', boxShadow: '0 18px 50px rgba(0,0,0,.28)', pointerEvents: 'auto' }}>
                 <h2 style={{ color: 'white', fontSize: 34, fontWeight: 700, marginBottom: 20 }}>About Us</h2>
                 <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(255,255,255,.95)', marginBottom: 16 }}>
                   Welcome to WedBox, your ultimate destination for planning and organizing your dream wedding in sunny Cyprus!
