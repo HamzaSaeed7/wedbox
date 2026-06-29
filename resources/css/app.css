@@ -349,7 +349,7 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
   .footer-grid { grid-template-columns: 1fr 1fr !important; }
   /* Truncate long text in table name cells */
   .tbl-name-cell { max-width: 160px; }
-  .tbl-name-cell .text-14, .tbl-name-cell .text-12 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tbl-name-cell .text-14, .tbl-name-cell .text-13, .tbl-name-cell .text-12 { display: block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 @media (max-width: 400px) {
   .footer-grid { grid-template-columns: 1fr !important; }

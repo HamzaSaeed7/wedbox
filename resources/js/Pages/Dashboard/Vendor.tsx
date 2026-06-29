@@ -308,9 +308,9 @@ function VendorService() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 32 }}>My Service</h1>
-        <div className="flex gap-10">
+        <div className="flex gap-10" style={{ flexWrap: 'wrap' }}>
           {apiSvc && (<>
             {!isPublished && (
               <span className="chip" style={{ background: '#FFF7E6', color: '#D97706', fontWeight: 700, fontSize: 12, border: '1px solid #FDE68A' }}>

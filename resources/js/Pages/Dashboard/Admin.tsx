@@ -1266,15 +1266,15 @@ function AdminVendors() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" style={{ flexWrap: 'wrap', gap: 12 }}>
         <h1 style={{ fontSize: 32 }}>Vendors</h1>
-        <div className="flex items-center gap-8" style={{ flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative' }}>
+        <div className="flex items-center gap-8" style={{ flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', flex: '1 1 180px', maxWidth: 260 }}>
             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><Icon name="search" size={14} color="var(--muted)" /></span>
             <input type="text" placeholder="Search vendors…" value={q} onChange={(e) => setQ(e.target.value)}
-              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: 220, outline: 'none' }} />
+              style={{ paddingLeft: 32, paddingRight: 12, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-2)', fontSize: 13, width: '100%', outline: 'none' }} />
           </div>
-          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
             onClick={() => { setCreateForm({ name: '', email: '', password: '' }); setCreateErr(''); setShowCreatePw(false); setShowCreate(true); }}>
             <Icon name="plus" size={14} /> New vendor
           </button>
@@ -1304,7 +1304,7 @@ function AdminVendors() {
                 <tr><td colSpan={7} style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>No vendors found.</td></tr>
               ) : list.map((v: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                 <tr key={v.id}>
-                  <td>
+                  <td className="tbl-name-cell">
                     <div className="flex items-center gap-10">
                       <div style={{ width: 32, height: 32, borderRadius: 999, background: 'var(--primary-50)', color: 'var(--primary-700)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 13, flexShrink: 0, overflow: 'hidden' }}>
                         {v.avatar_url ? <img src={v.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : v.email[0]?.toUpperCase()}
@@ -1407,8 +1407,8 @@ function AdminVendors() {
                 : createForm.password.length < 8 ? 'Password must be at least 8 characters.'
                 : '';
               return (
-                <div className="flex items-center gap-10" style={{ justifyContent: 'flex-end' }}>
-                  {!createVendorMutation.isPending && reason && <span className="text-12 muted" style={{ marginRight: 'auto' }}>{reason}</span>}
+                <div className="flex items-center gap-10" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                  {!createVendorMutation.isPending && reason && <span className="text-12 muted" style={{ marginRight: 'auto', flex: '1 1 100%' }}>{reason}</span>}
                   <button className="btn btn-ghost" onClick={() => setShowCreate(false)} disabled={createVendorMutation.isPending}>Cancel</button>
                   <button className="btn btn-primary" disabled={createVendorMutation.isPending || !!reason}
                     onClick={() => { setCreateErr(''); createVendorMutation.mutate(createForm); }}>
