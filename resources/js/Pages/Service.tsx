@@ -166,6 +166,17 @@ function normalizeHair(h: any) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeMakeup(m: any) {
   if (!m) return undefined;
+  // makeup config: packages, per-city travel fees, and optional add-ons
+  let rawLoc = m.location_prices;
+  if (typeof rawLoc === 'string') { try { rawLoc = JSON.parse(rawLoc); } catch { rawLoc = null; } }
+  const locationPrices: Record<string, number> = rawLoc && typeof rawLoc === 'object'
+    ? Object.fromEntries(Object.entries(rawLoc).map(([k, v]) => [k, Number(v) || 0]))
+    : {};
+  let rawAddons = m.addons;
+  if (typeof rawAddons === 'string') { try { rawAddons = JSON.parse(rawAddons); } catch { rawAddons = null; } }
+  const addons = Array.isArray(rawAddons)
+    ? rawAddons.map((a: any, i: number) => ({ id: String(a.id ?? `ma-${i}`), name: a.name ?? '', price: Number(a.price) || 0 }))
+    : [];
   // Packages mode — normalize each package to include tier, features, images
   if (m.pricing_mode === 'packages' || (m.packages !== undefined && Array.isArray(m.packages) && m.packages.length > 0 && m.packages[0]?.name !== undefined)) {
     const pkgs = (m.packages ?? []).map((p: any, i: number) => ({
@@ -177,7 +188,7 @@ function normalizeMakeup(m: any) {
       features: Array.isArray(p.features) ? p.features : [],
       images: Array.isArray(p.images) ? p.images : [],
     }));
-    return { packages: pkgs };
+    return { packages: pkgs, locationPrices, addons };
   }
   // Regular mode — build synthetic packages from flat price fields
   const pkgs: any[] = [];
@@ -186,7 +197,7 @@ function normalizeMakeup(m: any) {
   if (m.price_party != null && Number(m.price_party) > 0) pkgs.push({ id: 'mp3', name: "Hen's Party Make-Up", price: Number(m.price_party), blurb: 'Glam looks for you and your party', tier: null, features: [], images: [] });
   if (m.price_trial_1 != null && Number(m.price_trial_1) > 0) pkgs.push({ id: 'mp4', name: 'Trial 1', price: Number(m.price_trial_1), blurb: 'First practice session to perfect your look', tier: null, features: [], images: [] });
   if (m.price_trial_2 != null && Number(m.price_trial_2) > 0) pkgs.push({ id: 'mp5', name: 'Trial 2', price: Number(m.price_trial_2), blurb: 'Second refinement session before the big day', tier: null, features: [], images: [] });
-  return { packages: pkgs };
+  return { packages: pkgs, locationPrices, addons };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ServiceMakeup extends Model
 {
     protected $fillable = [
-        'service_id', 'pricing_mode', 'packages',
+        'service_id', 'pricing_mode', 'packages', 'location_prices', 'addons',
         'price_bridal', 'price_after_wedding', 'price_party', 'price_trial_1', 'price_trial_2',
         'available_date_trial_1', 'available_date_trial_2',
     ];
@@ -17,6 +17,8 @@ class ServiceMakeup extends Model
             'available_date_trial_1' => 'date',
             'available_date_trial_2' => 'date',
             'packages'               => 'array',
+            'location_prices'        => 'array',
+            'addons'                 => 'array',
         ];
     }
 

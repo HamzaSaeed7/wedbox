@@ -5,9 +5,11 @@
  * and calls onSave(data) when the vendor clicks Save.
  */
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Icon from '../shared/Icon';
 import CurrencyInput from '../shared/CurrencyInput';
-import { uploadApi } from '../../lib/api';
+import { uploadApi, publicApi } from '../../lib/api';
+import { CITIES } from '../../lib/data';
 
 // ─── Small reusable pieces ────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -662,6 +664,15 @@ function MakeupForm({ data, onChange }: { data: any; onChange: (d: any) => void 
   const pkgs: any[] = d.packages ?? [];
   const setPkgs = (p: any[]) => onChange({ ...d, packages: p });
 
+  const { data: apiCities } = useQuery({ queryKey: ['cities'], queryFn: () => publicApi.cities(), staleTime: 10 * 60 * 1000 });
+  const cityNames: string[] = Array.isArray(apiCities) && apiCities.length > 0
+    ? (apiCities as any[]).map((c) => c.name ?? c)
+    : CITIES.map((c) => c.name);
+  const locPrices: Record<string, number> = d.location_prices ?? {};
+  const setLocPrice = (city: string, val: number) => onChange({ ...d, location_prices: { ...locPrices, [city]: val } });
+  const addons: any[] = d.addons ?? [];
+  const setAddons = (a: any[]) => onChange({ ...d, addons: a });
+
   return (
     <div>
       {/* ── Pricing mode toggle ── */}
@@ -774,6 +785,30 @@ function MakeupForm({ data, onChange }: { data: any; onChange: (d: any) => void 
           <AddBtn label="Add package" onClick={() => setPkgs([...pkgs, { name: '', price: 0, tier: null, features: [], images: [] }])} />
         </>
       )}
+
+      {/* ── Travel locations ── */}
+      <SectionTitle title="Travel locations"
+        sub="Set the travel fee you charge to work in each city. In-studio is always free — leave a city at 0 to offer it free too." />
+      <Row cols={3}>
+        {cityNames.map((name) => (
+          <Field key={name} label={`${name} (€)`}>
+            <CurrencyInput value={locPrices[name] ?? ''} onChange={(e) => setLocPrice(name, +e.target.value)} />
+          </Field>
+        ))}
+      </Row>
+
+      {/* ── Add-ons ── */}
+      <SectionTitle title="Add-ons" sub="Optional extras customers can add to their booking (e.g. Lashes, Hairstyling)." />
+      {addons.map((a, i) => (
+        <div key={a.id ?? i} className="flex gap-8 items-center mt-8">
+          <input className="input" value={a.name ?? ''} placeholder="Add-on name" style={{ flex: 2 }}
+            onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
+          <CurrencyInput value={a.price ?? 0} placeholder="€" containerStyle={{ width: 100 }}
+            onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} />
+          <RemoveBtn onClick={() => setAddons(addons.filter((_, j) => j !== i))} />
+        </div>
+      ))}
+      <AddBtn label="Add add-on" onClick={() => setAddons([...addons, { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())), name: '', price: 0 }])} />
     </div>
   );
 }

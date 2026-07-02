@@ -799,12 +799,52 @@ export function BarForm({ service, onChange }: FormProps) {
 export function MakeupForm({ service, onChange }: FormProps) {
   const mk = service.makeup as MakeupConfig;
   const [selected, setSelected] = useState<Record<string, { on: boolean; date: string; time: string }>>({});
+  const [location, setLocation] = useState('');
+  const [addons, setAddons] = useState<string[]>([]);
   const [note, setNote] = useState('');
-  const total = useMemo(() => mk.packages.reduce((s, p) => s + (selected[p.id]?.on ? p.price : 0), 0), [selected]);
-  const summary = mk.packages.filter((p) => selected[p.id]?.on).map((p) => p.name).join(' + ') || 'No packages';
-  useEffect(() => onChange({ total, summary, payload: { selected, note } }), [total, selected, note]);
+
+  const { data: apiCities } = useQuery({
+    queryKey: ['cities'],
+    queryFn: () => publicApi.cities(),
+    staleTime: 10 * 60 * 1000,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cityNames: string[] = Array.isArray(apiCities) && apiCities.length > 0
+    ? (apiCities as any[]).map((c) => c.name ?? c)
+    : CITIES.map((c) => c.name);
+
+  // In-studio is always free; each city uses the vendor's configured travel fee (default 0).
+  const prices = mk.locationPrices ?? {};
+  const locOptions = [
+    { value: 'studio', label: 'In the studio', fee: 0 },
+    ...cityNames.map((name) => ({ value: name, label: name, fee: Number(prices[name] ?? 0) })),
+  ];
+  const loc = locOptions.find((l) => l.value === location);
+  const locFee = loc?.fee ?? 0;
+
+  const mkAddons = mk.addons ?? [];
+  const addonFee = mkAddons.reduce((s, a) => s + (addons.includes(a.id) ? a.price : 0), 0);
+
+  const total = useMemo(
+    () => mk.packages.reduce((s, p) => s + (selected[p.id]?.on ? p.price : 0), 0) + locFee + addonFee,
+    [selected, locFee, addonFee],
+  );
+  const pkgSummary = mk.packages.filter((p) => selected[p.id]?.on).map((p) => p.name).join(' + ') || 'No packages';
+  const summary = loc ? `${pkgSummary} · ${loc.label}` : pkgSummary;
+  useEffect(() => onChange({ total, summary, payload: { selected, location, locationFee: locFee, addons, note } }), [total, selected, location, locFee, addons, note]);
   return (
     <div className="flex" style={{ flexDirection: 'column', gap: 14 }}>
+      <div>
+        <Label required>Location</Label>
+        <select className="select mt-8" value={location} onChange={(e) => setLocation(e.target.value)}>
+          <option value="">Select location</option>
+          {locOptions.map((l) => (
+            <option key={l.value} value={l.value}>
+              {l.label}{l.fee > 0 ? ` (+€${l.fee})` : ' · free'}
+            </option>
+          ))}
+        </select>
+      </div>
       <Label required>Select your packages</Label>
       <div className="flex" style={{ flexDirection: 'column', gap: 10 }}>
         {mk.packages.map((p) => {
@@ -860,6 +900,18 @@ export function MakeupForm({ service, onChange }: FormProps) {
           );
         })}
       </div>
+      {mkAddons.length > 0 && (
+        <div>
+          <Label>Optional add-ons</Label>
+          <div className="flex" style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            {mkAddons.map((a) => (
+              <CheckRow key={a.id} checked={addons.includes(a.id)}
+                onChange={() => setAddons((s) => s.includes(a.id) ? s.filter((x) => x !== a.id) : [...s, a.id])}
+                label={a.name} price={a.price} />
+            ))}
+          </div>
+        </div>
+      )}
       <FieldNote note={note} onChange={setNote} />
     </div>
   );
