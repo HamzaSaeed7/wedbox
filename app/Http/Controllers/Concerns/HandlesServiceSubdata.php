@@ -362,9 +362,28 @@ trait HandlesServiceSubdata
             return $p;
         }, (array)($d['packages'] ?? []));
 
+        // Per-city travel fees: { "Nicosia": 100, ... } — coerce values to numbers.
+        $locationPrices = [];
+        foreach ((array)($d['location_prices'] ?? []) as $city => $fee) {
+            $locationPrices[$city] = (float)$fee;
+        }
+
+        // Optional extras: [{ id, name, price }] — keep only valid rows.
+        $addons = [];
+        foreach ((array)($d['addons'] ?? []) as $a) {
+            if (!is_array($a) || trim((string)($a['name'] ?? '')) === '') continue;
+            $addons[] = [
+                'id'    => (string)($a['id'] ?? \Illuminate\Support\Str::uuid()),
+                'name'  => (string)$a['name'],
+                'price' => (float)($a['price'] ?? 0),
+            ];
+        }
+
         DB::table('service_makeups')->updateOrInsert(['service_id' => $sid], [
             'pricing_mode'           => $mode,
             'packages'               => json_encode($packages),
+            'location_prices'        => json_encode((object)$locationPrices),
+            'addons'                 => json_encode($addons),
             'price_bridal'           => (float)($d['price_bridal'] ?? 0),
             'price_after_wedding'    => (float)($d['price_after_wedding'] ?? 0),
             'price_party'            => (float)($d['price_party'] ?? 0),

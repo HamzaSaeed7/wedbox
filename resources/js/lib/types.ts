@@ -255,8 +255,18 @@ export interface MakeupPackage {
   images: string[];
 }
 
+export interface MakeupAddon {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface MakeupConfig {
   packages: MakeupPackage[];
+  // Per-city travel fee, keyed by city name (e.g. { Nicosia: 100 }). Makeup only.
+  locationPrices?: Record<string, number>;
+  // Optional extras the customer can add. Makeup only.
+  addons?: MakeupAddon[];
 }
 
 export type HairConfig = MakeupConfig;
