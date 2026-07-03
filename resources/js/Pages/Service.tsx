@@ -7,7 +7,7 @@ import Stars from '../components/shared/Stars';
 import { BOOKING_FORM_MAP } from '../components/booking/forms/BookingForms';
 import { useStore, useAuthUser } from '../store';
 import { CATEGORIES } from '../lib/data';
-import { servicesApi, cartApi, reviewsApi } from '../lib/api';
+import { servicesApi, cartApi, reviewsApi, conversationsApi } from '../lib/api';
 import type { Service, FormState } from '../lib/types';
 import PublicLayout from '../Layouts/PublicLayout';
 
@@ -216,6 +216,7 @@ function normalizeInvitation(iv: any) {
 function normalizeService(s: any): Service {
   return {
     id: s.id, slug: s.category?.slug ?? s.slug ?? '',
+    vendorId: s.vendor_id ?? s.vendor?.id ?? 0,
     vendor: s.vendor?.vendor_profile?.business_name ?? s.vendor?.vendorProfile?.business_name ?? s.vendor?.name ?? '',
     title: s.title, location: s.location ?? '',
     images: Array.isArray(s.images) ? s.images.map((img: { url: string } | string) => typeof img === 'string' ? img : img.url).filter(Boolean) : [],
@@ -263,10 +264,11 @@ function Gallery({ images, active, setActive }: { images: string[]; active: numb
   );
 }
 
-function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added, serviceTitle }: {
+function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added, serviceTitle, onContactVendor, contactingVendor }: {
   cat: { name: string } | undefined;
   formState: FormState; date: string; setDate: (d: string) => void; onReserve: () => void;
   minDate?: string; added?: boolean; serviceTitle?: string;
+  onContactVendor?: () => void; contactingVendor?: boolean;
 }) {
   const total = formState.total || 0;
   const showToast = useStore((s) => s.showToast);
@@ -339,7 +341,9 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
       <button className="btn btn-primary btn-block btn-lg mt-16" onClick={onReserve} disabled={!total || formState.valid === false || added}>
         {added ? '✓ Added to cart' : 'Reserve'}
       </button>
-      <button className="btn btn-ghost btn-block mt-8"><Icon name="msg" size={16} /> Contact vendor</button>
+      <button className="btn btn-ghost btn-block mt-8" onClick={onContactVendor} disabled={contactingVendor}>
+        <Icon name="msg" size={16} /> {contactingVendor ? 'Opening chat…' : 'Contact vendor'}
+      </button>
       <hr />
       <div className="text-12 muted">Share this service</div>
       <div className="flex gap-8 mt-12">
@@ -618,6 +622,12 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['cart'] }),
   });
 
+  const contactVendorMutation = useMutation({
+    mutationFn: (d: { vendor_id: number; service_id?: number }) => conversationsApi.create(d),
+    onSuccess: (conversation: { id: number }) => router.visit(`/dashboard/buyer/messages?conversation=${conversation.id}`),
+    onError: () => showToast('Could not start the conversation. Please try again.', 'error'),
+  });
+
   const content = () => {
     if (isLoading) return (
       <div className="container-wide" style={{ padding: '60px 28px', textAlign: 'center' }}>
@@ -717,6 +727,12 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
                   setAddedToCart(true);
                   showToast('Added to your cart!');
                 }
+              }}
+              contactingVendor={contactVendorMutation.isPending}
+              onContactVendor={() => {
+                if (!user) { router.visit('/auth'); return; }
+                if (!service.vendorId) { showToast('Could not start the conversation. Please try again.', 'error'); return; }
+                contactVendorMutation.mutate({ vendor_id: service.vendorId, service_id: service.id });
               }} />
           </aside>
         </div>

@@ -274,6 +274,7 @@ export type HairConfig = MakeupConfig;
 export interface Service {
   id: number;
   slug: string;
+  vendorId?: number;
   vendor: string;
   title: string;
   location: string;

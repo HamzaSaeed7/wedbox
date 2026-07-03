@@ -226,7 +226,11 @@ function BuyerHome() {
 }
 
 function BuyerMessages() {
-  const [active, setActive] = useState<number | null>(null);
+  // Pre-select a conversation opened via "Contact vendor" (?conversation=123)
+  const [active, setActive] = useState<number | null>(() => {
+    const id = Number(new URLSearchParams(window.location.search).get('conversation'));
+    return id > 0 ? id : null;
+  });
   const [msg, setMsg] = useState('');
   const qc = useQueryClient();
   const user = useAuthUser();
@@ -283,8 +287,8 @@ function BuyerMessages() {
       <h1 style={{ fontSize: 32, marginBottom: 20 }}>Messages</h1>
       <div className="card dash-msg-pane dash-msg-wrap">
         <div style={{ overflow: 'auto' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-            <div className="input flex items-center gap-8" style={{ padding: '6px 12px' }}>
+          <div style={{ height: 57, padding: '0 16px', display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--line)', boxSizing: 'border-box' }}>
+            <div className="input flex items-center gap-8" style={{ padding: '6px 12px', flex: 1 }}>
               <Icon name="search" size={14} color="var(--muted)" />
               <input placeholder="Search" style={{ border: 0, outline: 'none', background: 'transparent', fontSize: 13, width: '100%' }} />
             </div>
@@ -316,7 +320,7 @@ function BuyerMessages() {
           })}
         </div>
         <div className="dash-msg-chat" style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ height: 57, padding: '0 20px', borderBottom: '1px solid var(--line)', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', gap: 12, boxSizing: 'border-box' }}>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <span className="fw-700">{(thread as any)?.vendor?.vendorProfile?.business_name ?? (thread as any)?.vendor?.name ?? '—'}</span>
           </div>

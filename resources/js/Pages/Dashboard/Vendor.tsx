@@ -104,7 +104,7 @@ function VendorHome() {
     : [];
 
   const profileChecks = [
-    { label: 'Profile photo',  done: !!(user as any)?.avatar, href: '/dashboard/vendor/settings' }, // eslint-disable-line @typescript-eslint/no-explicit-any
+    { label: 'Profile photo',  done: !!(user as any)?.vendorProfile?.avatar_url, href: '/dashboard/vendor/settings' }, // eslint-disable-line @typescript-eslint/no-explicit-any
     { label: 'Description',    done: !!(svc?.description?.trim()), href: '/dashboard/vendor/service' },
     { label: 'Pricing set',    done: !!(svc?.minimum_price && Number(svc.minimum_price) > 0), href: '/dashboard/vendor/service' },
     { label: 'Min. 2 images',  done: svcImages.length >= 2, href: '/dashboard/vendor/service' },
