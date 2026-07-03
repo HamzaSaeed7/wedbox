@@ -380,6 +380,7 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
 /* ---------- Dashboard layout helpers (responsive) ---------- */
 .dash-msg-wrap  { height: 600px; }
 .dash-msg-pane  { display: grid; grid-template-columns: 300px 1fr; overflow: hidden; }
+.dash-msg-pane > :first-child { border-right: 1px solid var(--line); }
 .dash-home-split{ display: grid; grid-template-columns: 2fr 1fr; }
 .dash-grid-2    { display: grid; grid-template-columns: 1fr 1fr; }
 .dash-grid-3    { display: grid; grid-template-columns: repeat(3, 1fr); }
