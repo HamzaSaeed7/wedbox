@@ -15,7 +15,7 @@ import type {
   PhotographyConfig, MusicConfig, BrideDressConfig, GroomSuiteConfig,
   BridesmaidConfig, BestManConfig, FlowerGirlConfig, YachtConfig,
   BachelorConfig, BacheloretteConfig, HotelConfig, BarConfig, MakeupConfig,
-  InvitationConfig,
+  InvitationConfig, CakeDessertConfig,
 } from '../../../lib/types';
 
 type FormProps = { service: Service; onChange: (s: FormState) => void; initialPayload?: Record<string, unknown> };
@@ -1133,6 +1133,202 @@ export function InvitationForm({ service, onChange }: FormProps) {
   );
 }
 
+// ─── 20. Cake & Desserts
+export function CakeDessertForm({ service, onChange }: FormProps) {
+  const cd = service.cakeDessert as CakeDessertConfig;
+  const [people, setPeople] = useState(50);
+  const [date, setDate] = useState('');
+  const [location, setLocation] = useState('');
+  const [time, setTime] = useState('');
+  const [flavor, setFlavor] = useState('');
+  const [layers, setLayers] = useState(0); // 0 = no wedding cake
+  const [cakeQty, setCakeQty] = useState(1);
+  const [inspoUrl, setInspoUrl] = useState('');
+  const [inspoUploading, setInspoUploading] = useState(false);
+  const [dessertQty, setDessertQty] = useState<Record<string, number>>({});
+  const [addonQty, setAddonQty] = useState<Record<string, number>>({});
+  const [tastingId, setTastingId] = useState(''); // '' = none
+  const [note, setNote] = useState('');
+
+  const layerOptions = Array.from({ length: Math.max(1, cd.maxLayers || 5) }, (_, i) => i + 1);
+  const cakePrice = layers >= 1
+    ? (cd.cakeBasePrice + Math.max(0, layers - 1) * cd.cakeLayerPrice) * Math.max(1, cakeQty)
+    : 0;
+  const dessertLines = cd.desserts.filter((d) => (dessertQty[d.id] ?? 0) > 0);
+  const addonLines = cd.addons.filter((a) => (addonQty[a.id] ?? 0) > 0);
+  const tasting = cd.tastingBoxes.find((t) => t.id === tastingId) ?? null;
+
+  const dessertsTotal = dessertLines.reduce((s, d) => s + d.price * dessertQty[d.id], 0);
+  const addonsTotal = addonLines.reduce((s, a) => s + a.price * addonQty[a.id], 0);
+  const total = cakePrice + dessertsTotal + addonsTotal + (tasting?.price ?? 0);
+
+  const cakeInvalid = layers >= 1 && !flavor; // layers chosen but no flavor picked
+
+  useEffect(() => {
+    const items: FormStateItem[] = [];
+    if (cakePrice > 0) items.push({ label: `${layers}-layer${flavor ? ' ' + flavor : ''} cake ×${cakeQty}`, detail: `€${cakePrice.toLocaleString()}` });
+    dessertLines.forEach((d) => items.push({ label: `${d.name} ×${dessertQty[d.id]}`, detail: `€${(d.price * dessertQty[d.id]).toLocaleString()}` }));
+    addonLines.forEach((a) => items.push({ label: `${a.name} ×${addonQty[a.id]}`, detail: `€${(a.price * addonQty[a.id]).toLocaleString()}` }));
+    if (tasting) items.push({ label: `Tasting: ${tasting.name}`, detail: `€${tasting.price.toLocaleString()}` });
+
+    onChange({
+      total,
+      valid: total > 0 && !cakeInvalid,
+      summary: items.map((i) => i.label).join(' · ') || 'No items selected',
+      items,
+      payload: {
+        people, event_date: date || null, location: location || null, event_time: time || null,
+        cake_flavor: layers >= 1 ? flavor : null,
+        cake_layers: layers >= 1 ? layers : null,
+        cake_quantity: cakeQty,
+        inspo_image_url: inspoUrl || null,
+        selected_desserts: dessertLines.map((d) => ({ id: d.id, name: d.name, price: d.price, qty: dessertQty[d.id] })),
+        selected_addons: addonLines.map((a) => ({ id: a.id, name: a.name, price: a.price, qty: addonQty[a.id] })),
+        tasting_box: tasting ? { id: tasting.id, name: tasting.name, price: tasting.price } : null,
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total, people, date, location, time, flavor, layers, cakeQty, inspoUrl,
+      JSON.stringify(dessertQty), JSON.stringify(addonQty), tastingId, note]);
+
+  return (
+    <div className="flex" style={{ flexDirection: 'column', gap: 22 }}>
+      {/* Event basics */}
+      <div className="flex gap-16" style={{ flexWrap: 'wrap' }}>
+        <StepperField label="How many people" value={people} onChange={setPeople} min={1} />
+        <div>
+          <Label>Date</Label>
+          <input type="date" className="input mt-8" value={date} onChange={(e) => setDate(e.target.value)} style={{ height: 44 }} />
+        </div>
+        <div>
+          <Label>Time</Label>
+          <input type="time" className="input mt-8" value={time} onChange={(e) => setTime(e.target.value)} style={{ height: 44 }} />
+        </div>
+        <div style={{ flex: 1, minWidth: 160 }}>
+          <Label>Location</Label>
+          <input className="input mt-8" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Venue or address" />
+        </div>
+      </div>
+
+      {/* Wedding cake */}
+      <div>
+        <Label>Wedding cake <span className="muted fw-500 text-12">(optional)</span></Label>
+        <div className="flex gap-12 mt-8" style={{ flexWrap: 'wrap' }}>
+          <div>
+            <div className="muted text-12 mb-4">Flavor</div>
+            <select className="select" value={flavor} onChange={(e) => setFlavor(e.target.value)} disabled={cd.flavors.length === 0}>
+              <option value="">Select flavor</option>
+              {cd.flavors.map((f) => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="muted text-12 mb-4">Layers</div>
+            <select className="select" value={layers} onChange={(e) => setLayers(Number(e.target.value))}>
+              <option value={0}>No cake</option>
+              {layerOptions.map((n) => <option key={n} value={n}>{n} layer{n > 1 ? 's' : ''}</option>)}
+            </select>
+          </div>
+          {layers >= 1 && <StepperField label="Cakes" value={cakeQty} onChange={setCakeQty} min={1} />}
+        </div>
+        {cakeInvalid && <p className="text-12 mt-4" style={{ color: '#E11D48' }}>Please pick a flavor for your cake.</p>}
+        {layers >= 1 && (
+          <div className="muted text-13 mt-8">Cake price: <span className="fw-700" style={{ color: 'var(--primary)' }}>€{cakePrice.toLocaleString()}</span></div>
+        )}
+        {/* Inspiration upload */}
+        <div className="mt-12">
+          {inspoUrl ? (
+            <div className="flex items-center gap-12">
+              <img src={inspoUrl} alt="Inspiration" style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover' }} />
+              <button type="button" onClick={() => setInspoUrl('')} style={{ background: 'transparent', border: 0, color: '#E11D48', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Remove</button>
+            </div>
+          ) : (
+            <label className="flex items-center justify-center" style={{ border: '2px dashed var(--line)', borderRadius: 14, padding: '20px 16px', cursor: inspoUploading ? 'wait' : 'pointer', flexDirection: 'column', gap: 8, color: 'var(--muted)', background: 'var(--bg-2)' }}>
+              <Icon name="upload" size={20} />
+              <span className="text-14">{inspoUploading ? 'Uploading…' : 'Upload your inspo'}</span>
+              <input type="file" accept="image/*" style={{ display: 'none' }} disabled={inspoUploading}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  e.target.value = '';
+                  setInspoUploading(true);
+                  try { setInspoUrl(await uploadApi.serviceImage(file)); }
+                  catch { /* optional field */ }
+                  finally { setInspoUploading(false); }
+                }} />
+            </label>
+          )}
+        </div>
+      </div>
+
+      {/* Individual desserts */}
+      {cd.desserts.length > 0 && (
+        <div>
+          <Label>Individual desserts</Label>
+          <div className="grid mt-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
+            {cd.desserts.map((d) => {
+              const qty = dessertQty[d.id] ?? 0;
+              return (
+                <div key={d.id} style={{ border: `1px solid ${qty > 0 ? 'var(--primary)' : 'var(--line)'}`, borderRadius: 14, overflow: 'hidden', background: qty > 0 ? 'var(--primary-50)' : 'white' }}>
+                  {d.image
+                    ? <img src={d.image} alt="" style={{ width: '100%', height: 110, objectFit: 'cover', display: 'block' }} />
+                    : <div style={{ width: '100%', height: 110, background: 'var(--bg-3)', display: 'grid', placeItems: 'center' }}><Icon name="cake" size={24} color="var(--line)" /></div>}
+                  <div style={{ padding: '10px 12px' }}>
+                    <div className="fw-600 text-13">{d.name}</div>
+                    <div className="muted text-12 mb-8">€{d.price} each</div>
+                    <StepperField label="" value={qty} onChange={(v) => setDessertQty({ ...dessertQty, [d.id]: v })} min={0} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Add-ons */}
+      {cd.addons.length > 0 && (
+        <div>
+          <Label>Add-ons</Label>
+          <div className="flex" style={{ flexDirection: 'column', gap: 10, marginTop: 8 }}>
+            {cd.addons.map((a) => {
+              const qty = addonQty[a.id] ?? 0;
+              return (
+                <div key={a.id} className="flex items-center justify-between" style={{ gap: 12, border: '1px solid var(--line)', borderRadius: 12, padding: '10px 14px' }}>
+                  <div>
+                    <span className="fw-600 text-14">{a.name}</span>
+                    <span className="muted text-12" style={{ marginLeft: 8 }}>€{a.price} each</span>
+                  </div>
+                  <StepperField label="" value={qty} onChange={(v) => setAddonQty({ ...addonQty, [a.id]: v })} min={0} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tasting box */}
+      {cd.tastingBoxes.length > 0 && (
+        <div>
+          <Label>Order a tasting box <span className="muted fw-500 text-12">(optional)</span></Label>
+          <div className="grid mt-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+            <RadioChip selected={tastingId === ''} onClick={() => setTastingId('')}>
+              <div className="fw-700">No tasting box</div>
+              <div className="muted text-12">Free</div>
+            </RadioChip>
+            {cd.tastingBoxes.map((t) => (
+              <RadioChip key={t.id} selected={tastingId === t.id} onClick={() => setTastingId(t.id)}>
+                <div className="fw-700">{t.name}</div>
+                <div className="muted text-12">€{t.price}</div>
+              </RadioChip>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <FieldNote note={note} onChange={setNote} />
+    </div>
+  );
+}
+
 // ─── Form map (slug → component)
 import type { ComponentType } from 'react';
 export const BOOKING_FORM_MAP: Record<string, ComponentType<FormProps>> = {
@@ -1155,4 +1351,5 @@ export const BOOKING_FORM_MAP: Record<string, ComponentType<FormProps>> = {
   'makeup':       MakeupForm,
   'hair':         HairForm,
   'invitation':   InvitationForm,
+  'cake-desserts': CakeDessertForm,
 };

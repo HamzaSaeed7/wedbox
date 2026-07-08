@@ -988,6 +988,7 @@ function extractSubdata(service: any): any {
     case 'makeup':       return service.makeup ?? null;                                         // DB: makeup
     case 'hair':         return service.hair ?? null;
     case 'invitation':   return service.invitation ?? null;
+    case 'cake-desserts':return service.cake_dessert ?? service.cakeDessert ?? null;
     default:             return null;
   }
 }
@@ -1070,6 +1071,84 @@ function InvitationForm({ data, onChange }: { data: any; onChange: (d: any) => v
   );
 }
 
+// ─── 20. Cake & Desserts ──────────────────────────────────────────────────────
+function CakeDessertForm({ data, onChange }: { data: any; onChange: (d: any) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const d = data ?? {};
+  const flavors: string[] = d.flavors ?? [];
+  const desserts: any[] = d.desserts ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const addons: any[] = d.addons ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const tastingBoxes: any[] = d.tasting_boxes ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const setDesserts = (v: any[]) => onChange({ ...d, desserts: v }); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const setAddons = (v: any[]) => onChange({ ...d, addons: v }); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const setTasting = (v: any[]) => onChange({ ...d, tasting_boxes: v }); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  return (
+    <div>
+      <SectionTitle title="Wedding cake" sub="Customers pick a flavor and number of layers. Price = base + (extra layers × per-layer), × quantity." />
+      <div>
+        <div className="field-label mb-4">Flavors <span className="muted fw-400">(press Enter to add each)</span></div>
+        <TagInput tags={flavors} onChange={(t) => onChange({ ...d, flavors: t })} placeholder="e.g. Vanilla, Chocolate, Red Velvet" />
+      </div>
+      <Row cols={3}>
+        <Field label="Max layers"><input className="input" type="number" min={1} max={10} value={d.max_layers ?? 5} onChange={(e) => onChange({ ...d, max_layers: +e.target.value })} /></Field>
+        <Field label="Base price — 1 layer (€)"><CurrencyInput value={d.cake_base_price ?? 0} onChange={(e) => onChange({ ...d, cake_base_price: +e.target.value })} /></Field>
+        <Field label="Per extra layer (€)"><CurrencyInput value={d.cake_layer_price ?? 0} onChange={(e) => onChange({ ...d, cake_layer_price: +e.target.value })} /></Field>
+      </Row>
+
+      <SectionTitle title="Individual desserts" sub="Each dessert is a card with a photo, name and per-item price. Customers pick a quantity of each." />
+      {desserts.map((ds, i) => (
+        <div key={i} className="card card-pad mt-8" style={{ background: 'var(--bg-2)' }}>
+          <div className="flex gap-8 items-center">
+            <label style={{ position: 'relative', width: 56, height: 56, borderRadius: 10, overflow: 'hidden', border: '2px dashed var(--line)', display: 'grid', placeItems: 'center', cursor: ds._uploading ? 'wait' : 'pointer', flexShrink: 0, background: 'var(--bg-3)' }}>
+              {ds.image
+                ? <img src={ds.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : ds._uploading ? <span className="text-10 muted">…</span> : <Icon name="plus" size={16} color="var(--muted)" />}
+              <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!!ds._uploading}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  e.target.value = '';
+                  setDesserts(desserts.map((x, j) => j === i ? { ...x, _uploading: true } : x));
+                  try {
+                    const url = await uploadApi.serviceImage(file);
+                    setDesserts(desserts.map((x, j) => j === i ? { ...x, image: url, _uploading: false } : x));
+                  } catch {
+                    setDesserts(desserts.map((x, j) => j === i ? { ...x, _uploading: false } : x));
+                  }
+                }} />
+            </label>
+            <input className="input" value={ds.name} onChange={(e) => setDesserts(desserts.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="e.g. Macarons" style={{ flex: 2 }} />
+            <CurrencyInput value={ds.price ?? 0} onChange={(e) => setDesserts(desserts.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€ each" containerStyle={{ width: 110 }} />
+            <RemoveBtn onClick={() => setDesserts(desserts.filter((_, j) => j !== i))} />
+          </div>
+        </div>
+      ))}
+      <AddBtn label="Add dessert" onClick={() => setDesserts([...desserts, { name: '', price: 0, image: '' }])} />
+
+      <SectionTitle title="Add-ons" sub="Optional extras customers can add with a quantity." />
+      {addons.map((a, i) => (
+        <div key={i} className="flex gap-8 mt-8 items-center">
+          <input className="input" value={a.name} onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="e.g. Extra topping" style={{ flex: 2 }} />
+          <CurrencyInput value={a.price ?? 0} onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€ each" containerStyle={{ width: 110 }} />
+          <RemoveBtn onClick={() => setAddons(addons.filter((_, j) => j !== i))} />
+        </div>
+      ))}
+      <AddBtn label="Add add-on" onClick={() => setAddons([...addons, { name: '', price: 0 }])} />
+
+      <SectionTitle title="Order tasting boxes" sub="Priced tasting boxes — the customer can pick one (or none)." />
+      {tastingBoxes.map((t, i) => (
+        <div key={i} className="flex gap-8 mt-8 items-center">
+          <input className="input" value={t.name} onChange={(e) => setTasting(tastingBoxes.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} placeholder="e.g. Standard box" style={{ flex: 2 }} />
+          <CurrencyInput value={t.price ?? 0} onChange={(e) => setTasting(tastingBoxes.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} placeholder="€" containerStyle={{ width: 110 }} />
+          <RemoveBtn onClick={() => setTasting(tastingBoxes.filter((_, j) => j !== i))} />
+        </div>
+      ))}
+      <AddBtn label="Add tasting box" onClick={() => setTasting([...tastingBoxes, { name: '', price: 0 }])} />
+    </div>
+  );
+}
+
 export default function ServiceSubdataEditor({ service, onSave, isSaving }: ServiceSubdataEditorProps) {
   const slug = service?.category?.slug ?? '';
   const [formData, setFormData] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -1110,6 +1189,11 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         payload = { ...payload, designs: payload.designs.map(({ _uploading: _, ...d }: any) => d) }; // eslint-disable-line @typescript-eslint/no-explicit-any
       }
     }
+    if (slug === 'cake-desserts') {
+      if (Array.isArray(payload.desserts)) {
+        payload = { ...payload, desserts: payload.desserts.map(({ _uploading: _, ...d }: any) => d) }; // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+    }
     await onSave(payload);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -1122,7 +1206,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
     'bridesmaid': 'Bridesmaids', 'flower-girl': 'Flower Girl Dress', 'yacht': 'Yacht Hire',
     'bachelor': 'Bachelor Party', 'bachelorette': 'Bachelorette Party',
     'hotel': 'Hotel / Accommodation', 'bar': 'Bar Service', 'makeup': 'Make-up', 'hair': 'Hair Styling',
-    'invitation': 'Invitation',
+    'invitation': 'Invitation', 'cake-desserts': 'Cake & Desserts',
   };
 
   return (
@@ -1157,6 +1241,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         {slug === 'makeup'       && <MakeupForm       data={formData} onChange={setFormData} />}
         {slug === 'hair'         && <HairVendorForm   data={formData} onChange={setFormData} />}
         {slug === 'invitation'   && <InvitationForm   data={formData} onChange={setFormData} />}
+        {slug === 'cake-desserts' && <CakeDessertForm data={formData} onChange={setFormData} />}
       </div>
     </div>
   );

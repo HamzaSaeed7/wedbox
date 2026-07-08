@@ -213,6 +213,30 @@ function normalizeInvitation(iv: any) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeCakeDessert(c: any) {
+  if (!c) return undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arr = (v: any): any[] => {
+    if (typeof v === 'string') { try { return JSON.parse(v); } catch { return []; } }
+    return Array.isArray(v) ? v : [];
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const items = (rows: any, withImage: boolean) => arr(rows).map((r: any, i: number) => ({
+    id: String(r.id ?? `cd-${i}`), name: r.name ?? '', price: Number(r.price) || 0,
+    ...(withImage ? { image: r.image ?? '' } : {}),
+  }));
+  return {
+    flavors: arr(c.flavors).map((f: unknown) => String(f)),
+    maxLayers: Number(c.max_layers) || 5,
+    cakeBasePrice: Number(c.cake_base_price) || 0,
+    cakeLayerPrice: Number(c.cake_layer_price) || 0,
+    desserts: items(c.desserts, true),
+    addons: items(c.addons, false),
+    tastingBoxes: items(c.tasting_boxes, false),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeService(s: any): Service {
   return {
     id: s.id, slug: s.category?.slug ?? s.slug ?? '',
@@ -220,6 +244,7 @@ function normalizeService(s: any): Service {
     vendor: s.vendor?.vendor_profile?.business_name ?? s.vendor?.vendorProfile?.business_name ?? s.vendor?.name ?? '',
     title: s.title, location: s.location ?? '',
     images: Array.isArray(s.images) ? s.images.map((img: { url: string } | string) => typeof img === 'string' ? img : img.url).filter(Boolean) : [],
+    blockedDates: Array.isArray(s.blocked_dates) ? s.blocked_dates.filter(Boolean) : [],
     minimum_price: Number(s.minimum_price) || 0, rating: Number(s.rating) || 0,
     reviews: s.review_count ?? 0, featured: s.is_featured ?? false, description: s.description ?? '',
     venue: normalizeVenue(s.venue), catering: normalizeCatering(s.catering), florist: normalizeFlorist(s.florist),
@@ -231,6 +256,7 @@ function normalizeService(s: any): Service {
     bachelorette: normalizeBachelorette(s.bachelorette), hotel: normalizeHotel(s.accommodation ?? s.hotel),
     bar: normalizeBar(s.bar), makeup: normalizeMakeup(s.makeup), hair: normalizeHair(s.hair),
     invitation: normalizeInvitation(s.invitation),
+    cakeDessert: normalizeCakeDessert(s.cake_dessert ?? s.cakeDessert),
   };
 }
 
@@ -264,13 +290,14 @@ function Gallery({ images, active, setActive }: { images: string[]; active: numb
   );
 }
 
-function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added, serviceTitle, onContactVendor, contactingVendor }: {
+function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, blockedDates, added, serviceTitle, onContactVendor, contactingVendor }: {
   cat: { name: string } | undefined;
   formState: FormState; date: string; setDate: (d: string) => void; onReserve: () => void;
-  minDate?: string; added?: boolean; serviceTitle?: string;
+  minDate?: string; blockedDates?: string[]; added?: boolean; serviceTitle?: string;
   onContactVendor?: () => void; contactingVendor?: boolean;
 }) {
   const total = formState.total || 0;
+  const dateBlocked = !!date && !!blockedDates?.includes(date);
   const showToast = useStore((s) => s.showToast);
   const copyToClipboard = async (text: string): Promise<boolean> => {
     // navigator.clipboard is unavailable outside secure contexts (e.g. http LAN IP),
@@ -309,12 +336,19 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
       <div className="mt-16">
         <div className="text-12 muted fw-600">Booking date</div>
         <input type="date" className="input mt-4" value={date} min={minDate} onChange={(e) => setDate(e.target.value)} />
-        {date && minDate && date < minDate
-          ? <div className="text-11 mt-4" style={{ color: '#E11D48' }}>⚠ Please select a future date</div>
-          : date
-            ? <div className="text-11 mt-4" style={{ color: 'var(--primary)' }}>✓ Date selected</div>
-            : <div className="text-11 mt-4 muted">Earliest available: {minDate}</div>
+        {dateBlocked
+          ? <div className="text-11 mt-4" style={{ color: '#E11D48' }}>⚠ This date is unavailable — please pick another</div>
+          : date && minDate && date < minDate
+            ? <div className="text-11 mt-4" style={{ color: '#E11D48' }}>⚠ Please select a future date</div>
+            : date
+              ? <div className="text-11 mt-4" style={{ color: 'var(--primary)' }}>✓ Date selected</div>
+              : <div className="text-11 mt-4 muted">Earliest available: {minDate}</div>
         }
+        {blockedDates && blockedDates.length > 0 && (
+          <div className="text-11 mt-8 muted">
+            Unavailable: {blockedDates.slice().sort().join(', ')}
+          </div>
+        )}
       </div>
       {(formState.items?.length || formState.summary) ? (
         <div className="mt-16" style={{ background: 'var(--bg-2)', borderRadius: 12, padding: 14 }}>
@@ -338,7 +372,7 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, added
         <span className="muted text-13">Total amount</span>
         <span className="total">€{total.toLocaleString()}</span>
       </div>
-      <button className="btn btn-primary btn-block btn-lg mt-16" onClick={onReserve} disabled={!total || formState.valid === false || added}>
+      <button className="btn btn-primary btn-block btn-lg mt-16" onClick={onReserve} disabled={!total || formState.valid === false || added || dateBlocked}>
         {added ? '✓ Added to cart' : 'Reserve'}
       </button>
       <button className="btn btn-ghost btn-block mt-8" onClick={onContactVendor} disabled={contactingVendor}>
@@ -654,7 +688,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
       'groom-suite': 'groomSuite', 'best-man': 'bestMan', bridesmaid: 'bridesmaid',
       'flower-girl': 'flowerGirl', 'yacht': 'yacht', bachelor: 'bachelor',
       bachelorette: 'bachelorette', hotel: 'hotel', bar: 'bar', 'makeup': 'makeup',
-      'invitation': 'invitation',
+      'invitation': 'invitation', 'cake-desserts': 'cakeDessert',
     };
     const subKey = SUB_DATA_KEYS[service.slug];
     const hasSubData = !subKey || service[subKey] != null;
@@ -705,7 +739,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
           </div>
           <aside>
             <BookingPanel cat={cat} formState={formState} date={date} setDate={setDate}
-              minDate={tomorrow} added={addedToCart} serviceTitle={service?.title}
+              minDate={tomorrow} blockedDates={service.blockedDates} added={addedToCart} serviceTitle={service?.title}
               onReserve={async () => {
                 if (user && apiData && !isError) {
                   try {

@@ -15,6 +15,9 @@ class ConversationController extends Controller
         $conversations = Conversation::with('customer.profile', 'vendor.vendorProfile', 'service')
             ->where('customer_id', $user->id)
             ->orWhere('vendor_id', $user->id)
+            ->withCount(['messages as unread_count' => function ($q) use ($user) {
+                $q->where('sender_id', '!=', $user->id)->whereNull('read_at');
+            }])
             ->orderByDesc('last_message_at')
             ->get();
 
@@ -43,6 +46,11 @@ class ConversationController extends Controller
         if ($conversation->customer_id !== $user->id && $conversation->vendor_id !== $user->id) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
+
+        $conversation->messages()
+            ->where('sender_id', '!=', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
 
         return response()->json(
             $conversation->messages()->with('sender.profile')->latest()->paginate(50)

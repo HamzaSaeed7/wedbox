@@ -59,9 +59,20 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 function CustomerSidebar({ active }: { active: string }) {
   const { logout } = useStore();
   const [open, setOpen] = useState(false);
+  const user = useAuthUser();
+
+  const { data: apiThreads } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => conversationsApi.list(),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const unreadTotal = (Array.isArray(apiThreads) ? apiThreads : []).reduce((s: number, t: any) => s + (t.unread_count ?? 0), 0);
+
   const items = [
     { id: '',          to: '/dashboard/buyer',           label: 'Dashboard',  icon: 'home' },
-    { id: 'messages',  to: '/dashboard/buyer/messages',  label: 'Messages',   icon: 'msg',      badge: 0 },
+    { id: 'messages',  to: '/dashboard/buyer/messages',  label: 'Messages',   icon: 'msg',      badge: unreadTotal },
     { id: 'favorites', to: '/dashboard/buyer/favorites', label: 'Favorites',  icon: 'heart' },
     { id: 'account',   to: '/dashboard/buyer/account',   label: 'My Account', icon: 'settings' },
   ];
@@ -254,6 +265,10 @@ function BuyerMessages() {
     enabled: !!activeId,
     staleTime: 10_000,
   });
+
+  // Opening a conversation marks its messages read on the backend — refresh
+  // the thread list so the unread badge clears.
+  useEffect(() => { if (apiMessages) qc.invalidateQueries({ queryKey: ['conversations'] }); }, [apiMessages, qc]);
 
   const sendMutation = useMutation({
     mutationFn: (body: string) => conversationsApi.send(activeId as number, body),

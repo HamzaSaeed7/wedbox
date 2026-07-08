@@ -84,12 +84,14 @@ class VendorServiceController extends Controller
         }
 
         $data = $request->validate([
-            'title'         => 'sometimes|string',
-            'description'   => 'nullable|string',
-            'location'      => 'nullable|string',
-            'minimum_price' => 'nullable|numeric|min:0',
-            'images'        => 'nullable|array',
-            'status'        => 'in:active,inactive,draft',
+            'title'           => 'sometimes|string',
+            'description'     => 'nullable|string',
+            'location'        => 'nullable|string',
+            'minimum_price'   => 'nullable|numeric|min:0',
+            'images'          => 'nullable|array',
+            'blocked_dates'   => 'nullable|array',
+            'blocked_dates.*' => 'date_format:Y-m-d',
+            'status'          => 'in:active,inactive,draft',
         ]);
 
         $service->update($data);

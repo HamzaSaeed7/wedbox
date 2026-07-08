@@ -64,6 +64,7 @@ trait HandlesServiceSubdata
             'makeup'        => $service->load('makeup'),
             'hair'          => $service->load('hair'),
             'invitation'    => $service->load('invitation.types', 'invitation.designs', 'invitation.addons'),
+            'cake-desserts' => $service->load('cakeDessert'),
             default         => null,
         };
     }
@@ -93,6 +94,7 @@ trait HandlesServiceSubdata
             'makeup'        => $this->saveMakeup($service->id, $d),
             'hair'          => $this->saveHair($service->id, $d),
             'invitation'    => $this->saveInvitation($service->id, $d),
+            'cake-desserts' => $this->saveCakeDessert($service->id, $d),
             default         => null,
         };
     }
@@ -391,6 +393,42 @@ trait HandlesServiceSubdata
             'price_trial_2'          => (float)($d['price_trial_2'] ?? 0),
             'available_date_trial_1' => $d['available_date_trial_1'] ?? null,
             'available_date_trial_2' => $d['available_date_trial_2'] ?? null,
+            'updated_at' => now(), 'created_at' => now(),
+        ]);
+    }
+
+    protected function saveCakeDessert(int $sid, array $d): void
+    {
+        // Flavor list — plain strings, drop blanks.
+        $flavors = array_values(array_filter(array_map(
+            fn ($f) => trim((string) $f),
+            (array) ($d['flavors'] ?? [])
+        ), fn ($f) => $f !== ''));
+
+        // Priced item lists — keep only named rows, coerce prices to float.
+        $items = function (array $rows, bool $withImage) {
+            $out = [];
+            foreach ($rows as $r) {
+                if (!is_array($r) || trim((string) ($r['name'] ?? '')) === '') continue;
+                $row = [
+                    'id'    => (string) ($r['id'] ?? \Illuminate\Support\Str::uuid()),
+                    'name'  => (string) $r['name'],
+                    'price' => (float) ($r['price'] ?? 0),
+                ];
+                if ($withImage) $row['image'] = $r['image'] ?? null;
+                $out[] = $row;
+            }
+            return $out;
+        };
+
+        DB::table('service_cake_desserts')->updateOrInsert(['service_id' => $sid], [
+            'flavors'          => json_encode($flavors),
+            'max_layers'       => max(1, (int) ($d['max_layers'] ?? 5)),
+            'cake_base_price'  => (float) ($d['cake_base_price'] ?? 0),
+            'cake_layer_price' => (float) ($d['cake_layer_price'] ?? 0),
+            'desserts'         => json_encode($items((array) ($d['desserts'] ?? []), true)),
+            'addons'           => json_encode($items((array) ($d['addons'] ?? []), false)),
+            'tasting_boxes'    => json_encode($items((array) ($d['tasting_boxes'] ?? []), false)),
             'updated_at' => now(), 'created_at' => now(),
         ]);
     }
