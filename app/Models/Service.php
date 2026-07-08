@@ -8,13 +8,14 @@ class Service extends Model
 {
     protected $fillable = [
         'vendor_id', 'category_id', 'title', 'description', 'location',
-        'images', 'minimum_price', 'rating', 'review_count', 'is_featured', 'status',
+        'images', 'blocked_dates', 'minimum_price', 'rating', 'review_count', 'is_featured', 'status',
     ];
 
     protected function casts(): array
     {
         return [
             'images' => 'array',
+            'blocked_dates' => 'array',
             'is_featured' => 'boolean',
             'rating' => 'decimal:2',
             'minimum_price' => 'decimal:2',
@@ -61,4 +62,5 @@ class Service extends Model
     public function makeup()     { return $this->hasOne(ServiceMakeup::class); }
     public function hair()       { return $this->hasOne(ServiceHair::class); }
     public function invitation() { return $this->hasOne(ServiceInvitation::class); }
+    public function cakeDessert(){ return $this->hasOne(ServiceCakeDessert::class); }
 }

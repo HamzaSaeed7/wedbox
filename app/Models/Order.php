@@ -43,6 +43,7 @@ class Order extends Model
             'makeup'       => $this->hasOne(OrderMakeup::class),
             'hair'         => $this->hasOne(OrderHair::class),
             'invitation'   => $this->hasOne(OrderInvitation::class),
+            'cake-desserts'=> $this->hasOne(OrderCakeDessert::class),
             default        => null,
         };
     }

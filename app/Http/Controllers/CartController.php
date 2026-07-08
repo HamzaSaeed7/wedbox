@@ -34,6 +34,14 @@ class CartController extends Controller
 
         $service = Service::findOrFail($data['service_id']);
 
+        // Reject bookings on dates the vendor has marked unavailable.
+        if ($data['deliver_date'] ?? null) {
+            $blocked = $service->blocked_dates ?? [];
+            if (in_array($data['deliver_date'], $blocked, true)) {
+                return response()->json(['message' => 'That date is unavailable. Please choose another.'], 422);
+            }
+        }
+
         $order = DB::transaction(function () use ($data, $service, $request) {
             $order = Order::create([
                 'user_id'      => $request->user()->id,
@@ -116,6 +124,7 @@ class CartController extends Controller
             'makeup'        => \App\Models\OrderMakeup::class,
             'hair'          => \App\Models\OrderHair::class,
             'invitation'    => \App\Models\OrderInvitation::class,
+            'cake-desserts' => \App\Models\OrderCakeDessert::class,
         ];
 
         $modelClass = $modelMap[$order->order_type] ?? null;
@@ -181,6 +190,17 @@ class CartController extends Controller
                               'selected_addons'  => $d['addons']          ?? [],
                               'invitation_text'  => $d['invitation_text'] ?? null,
                               'custom_design_url'=> $d['custom_design_url'] ?? null],
+            'cake-desserts' => ['people'           => $d['people']          ?? null,
+                              'event_date'       => $d['event_date']       ?? null,
+                              'location'         => $d['location']         ?? null,
+                              'event_time'       => $d['event_time']       ?? null,
+                              'cake_flavor'      => $d['cake_flavor']      ?? null,
+                              'cake_layers'      => $d['cake_layers']      ?? null,
+                              'cake_quantity'    => $d['cake_quantity']    ?? 1,
+                              'inspo_image_url'  => $d['inspo_image_url']  ?? null,
+                              'selected_desserts'=> $d['selected_desserts'] ?? [],
+                              'selected_addons'  => $d['selected_addons']  ?? [],
+                              'tasting_box'      => $d['tasting_box']      ?? null],
             default       => $d,
         };
 

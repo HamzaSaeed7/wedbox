@@ -26,11 +26,22 @@ function Stat({ tone, icon, label, value }: { tone: string; icon: string; label:
 function VendorSidebar({ active }: { active: string }) {
   const { logout } = useStore();
   const [open, setOpen] = useState(false);
+  const user = useAuthUser();
+
+  const { data: apiThreads } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => conversationsApi.list(),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const unreadTotal = (Array.isArray(apiThreads) ? apiThreads : []).reduce((s: number, t: any) => s + (t.unread_count ?? 0), 0);
+
   const items = [
     { id: '',        href: '/dashboard/vendor',          label: 'Dashboard', icon: 'home' },
     { id: 'service', href: '/dashboard/vendor/service',  label: 'Service',   icon: 'services' },
     { id: 'orders',  href: '/dashboard/vendor/orders',   label: 'Orders',    icon: 'bookings' },
-    { id: 'messages',href: '/dashboard/vendor/messages', label: 'Messages',  icon: 'msg' },
+    { id: 'messages',href: '/dashboard/vendor/messages', label: 'Messages',  icon: 'msg',      badge: unreadTotal },
     { id: 'billing', href: '/dashboard/vendor/billing',  label: 'Billing',   icon: 'billing' },
     { id: 'settings',href: '/dashboard/vendor/settings', label: 'Settings',  icon: 'settings' },
   ];
@@ -52,6 +63,7 @@ function VendorSidebar({ active }: { active: string }) {
               display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
               borderRadius: 10, fontSize: 14, textDecoration: 'none' }}>
             <Icon name={i.icon} size={18} color="white" /> {i.label}
+            {i.badge ? <span style={{ marginLeft: 'auto', background: '#E11D48', color: 'white', borderRadius: 999, fontSize: 11, fontWeight: 700, minWidth: 18, height: 18, display: 'grid', placeItems: 'center', padding: '0 5px' }}>{i.badge}</span> : null}
           </Link>
         ))}
       </nav>
@@ -249,6 +261,7 @@ function VendorService() {
   const [svcPrice, setSvcPrice]         = useState('');
   const [saved, setSaved]               = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
+  const [newDate, setNewDate]           = useState('');
 
   useEffect(() => {
     if (!apiSvc) return;
@@ -427,6 +440,48 @@ function VendorService() {
           {updateMutation.isError && <p className="mt-8 text-13" style={{ color: '#E11D48' }}>Save failed.</p>}
         </div>
       )}
+
+      {/* ── Blocked / unavailable dates ── */}
+      {tab === 'info' && apiSvc && (() => {
+        const blocked: string[] = (apiSvc.blocked_dates ?? []).filter(Boolean);
+        const today = new Date().toISOString().slice(0, 10);
+        const saveBlocked = (dates: string[]) => {
+          vendorApi.updateService(apiSvc.id, { blocked_dates: dates }).then(() => {
+            qc.invalidateQueries({ queryKey: ['vendor-services'] });
+            qc.invalidateQueries({ queryKey: ['vendor-service', apiSvc.id] });
+          }).catch(() => showToast('Could not save dates. Please try again.', 'error'));
+        };
+        const addDate = () => {
+          if (!newDate || blocked.includes(newDate)) { setNewDate(''); return; }
+          saveBlocked([...blocked, newDate].sort());
+          setNewDate('');
+        };
+        return (
+          <div className="card card-pad mt-16">
+            <label className="field-label">Blocked / unavailable dates</label>
+            <p className="muted text-12 mt-4">Customers won’t be able to book these dates.</p>
+            <div className="flex gap-8 mt-12" style={{ flexWrap: 'wrap' }}>
+              <input type="date" className="input" style={{ width: 180 }} min={today}
+                value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+              <button type="button" className="btn btn-primary" onClick={addDate} disabled={!newDate}>Add date</button>
+            </div>
+            {blocked.length > 0 ? (
+              <div className="flex gap-8 mt-16" style={{ flexWrap: 'wrap' }}>
+                {blocked.map((d) => (
+                  <span key={d} className="chip" style={{ background: 'var(--bg-2)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    {d}
+                    <button type="button" onClick={() => saveBlocked(blocked.filter((x) => x !== d))}
+                      style={{ border: 0, background: 'transparent', cursor: 'pointer', display: 'grid', placeItems: 'center', color: 'var(--muted)', padding: 0 }}
+                      aria-label={`Remove ${d}`}>
+                      <Icon name="close" size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : <p className="muted text-13 mt-16">No blocked dates. Customers can book any available day.</p>}
+          </div>
+        );
+      })()}
 
       {/* ── Service Details (merged into Service Info tab) ── */}
       {tab === 'info' && apiSvc && (
@@ -769,6 +824,10 @@ function VendorMessages() {
     staleTime: 10_000,
   });
 
+  // Opening a conversation marks its messages read on the backend — refresh
+  // the thread list so the unread badge clears.
+  useEffect(() => { if (apiMessages) qc.invalidateQueries({ queryKey: ['conversations'] }); }, [apiMessages, qc]);
+
   const sendMutation = useMutation({
     mutationFn: (body: string) => conversationsApi.send(activeId as number, body),
     onSuccess: () => {
@@ -809,6 +868,7 @@ function VendorMessages() {
             const avatar = t.customer?.profile?.avatar_url ?? t.avatar;
             const lastMsg = t.last_message?.body ?? t.last ?? '';
             const timeStr = t.last_message_at?.slice(11, 16) ?? '';
+            const unread  = t.unread_count ?? t.unread ?? 0;
             return (
               <div key={t.id} onClick={() => setActive(t.id)}
                 style={{ padding: '14px 16px', cursor: 'pointer', background: activeId === t.id ? 'var(--primary-50)' : 'white',
@@ -824,6 +884,7 @@ function VendorMessages() {
                   </div>
                   <div className="text-12 muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 2 }}>{lastMsg}</div>
                 </div>
+                {unread > 0 && <span style={{ background: 'var(--primary)', color: 'white', borderRadius: 999, fontSize: 10, fontWeight: 700, minWidth: 18, height: 18, display: 'grid', placeItems: 'center', flexShrink: 0 }}>{unread}</span>}
               </div>
             );
           })}

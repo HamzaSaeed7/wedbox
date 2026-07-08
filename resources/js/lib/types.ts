@@ -151,6 +151,23 @@ export interface InvitationConfig {
   addons: InvitationAddon[];
 }
 
+export interface CakeDessertItem {
+  id: string;
+  name: string;
+  price: number;
+  image?: string | null;
+}
+
+export interface CakeDessertConfig {
+  flavors: string[];
+  maxLayers: number;
+  cakeBasePrice: number;
+  cakeLayerPrice: number;
+  desserts: CakeDessertItem[];   // {id,name,price,image}
+  addons: CakeDessertItem[];     // {id,name,price}
+  tastingBoxes: CakeDessertItem[]; // {id,name,price}
+}
+
 export interface GroomSuiteConfig {
   priceRent: number;
   priceBuy: number;
@@ -279,6 +296,7 @@ export interface Service {
   title: string;
   location: string;
   images: string[];
+  blockedDates?: string[];
   minimum_price: number;
   rating: number;
   reviews: number;
@@ -304,6 +322,7 @@ export interface Service {
   makeup?: MakeupConfig;
   hair?: HairConfig;
   invitation?: InvitationConfig;
+  cakeDessert?: CakeDessertConfig;
 }
 
 export interface Order {
