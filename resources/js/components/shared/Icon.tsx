@@ -15,6 +15,8 @@ const PATHS: Record<string, React.ReactNode> = {
   'heart-filled': <path d="M12 20.5s-7.5-4.5-9.4-9.6C1.2 7.4 4 4 7.2 4c1.9 0 3.4 1 4.8 2.6C13.4 5 14.9 4 16.8 4 20 4 22.8 7.4 21.4 10.9 19.5 16 12 20.5 12 20.5Z" fill="currentColor"/>,
   cart: <><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2l2.5 12.5a2 2 0 0 0 2 1.5h8a2 2 0 0 0 2-1.4L21 9H6"/></>,
   cake: <><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/></>,
+  nail: <><path d="M9.5 3h5v3h-5z"/><path d="M10 6h4a1 1 0 0 1 1 1v12a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V7a1 1 0 0 1 1-1Z"/><path d="M9 12h6"/></>,
+  dance: <><circle cx="14" cy="4.5" r="1.6"/><path d="M14 6.5 12 12l4 3"/><path d="M12 12 7.5 10 5 14"/><path d="m12 12-1.5 9"/><path d="M12.5 15.5 16 21"/></>,
   user: <><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a8 8 0 0 1 15 0"/></>,
   menu: <><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></>,
   close: <><path d="M6 6l12 12"/><path d="M18 6 6 18"/></>,

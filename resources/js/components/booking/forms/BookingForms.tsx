@@ -15,7 +15,7 @@ import type {
   PhotographyConfig, MusicConfig, BrideDressConfig, GroomSuiteConfig,
   BridesmaidConfig, BestManConfig, FlowerGirlConfig, YachtConfig,
   BachelorConfig, BacheloretteConfig, HotelConfig, BarConfig, MakeupConfig,
-  InvitationConfig, CakeDessertConfig,
+  InvitationConfig, CakeDessertConfig, NailSalonConfig, DancingSchoolConfig,
 } from '../../../lib/types';
 
 type FormProps = { service: Service; onChange: (s: FormState) => void; initialPayload?: Record<string, unknown> };
@@ -1329,6 +1329,239 @@ export function CakeDessertForm({ service, onChange }: FormProps) {
   );
 }
 
+// ─── 21. Nail Salon
+export function NailSalonForm({ service, onChange }: FormProps) {
+  const ns = service.nailSalon as NailSalonConfig;
+  const [people, setPeople] = useState(1);
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [bridal, setBridal] = useState(false);
+  const [trial, setTrial] = useState(false);
+  const [nailStyle, setNailStyle] = useState('');
+  const [addonQty, setAddonQty] = useState<Record<string, number>>({});
+  const [note, setNote] = useState('');
+
+  const { data: apiCities } = useQuery({ queryKey: ['cities'], queryFn: () => publicApi.cities(), staleTime: 10 * 60 * 1000 });
+  const cityNames: string[] = Array.isArray(apiCities) && apiCities.length > 0
+    ? (apiCities as any[]).map((c) => c.name ?? c) // eslint-disable-line @typescript-eslint/no-explicit-any
+    : CITIES.map((c) => c.name);
+
+  const prices = ns.locationPrices ?? {};
+  const locOptions = [
+    { value: 'studio', label: 'In-salon', fee: 0 },
+    ...cityNames.map((name) => ({ value: name, label: `Mobile · ${name}`, fee: Number(prices[name] ?? 0) })),
+  ];
+  const loc = locOptions.find((l) => l.value === location);
+  const locFee = loc?.fee ?? 0;
+
+  const addonLines = ns.addons.filter((a) => (addonQty[a.id] ?? 0) > 0);
+  const addonsTotal = addonLines.reduce((s, a) => s + a.price * addonQty[a.id], 0);
+  const total = (bridal ? ns.bridalPackagePrice : 0) + (trial ? ns.trialPrice : 0) + locFee + addonsTotal;
+
+  useEffect(() => {
+    const items: FormStateItem[] = [];
+    if (bridal) items.push({ label: 'Bridal nails package', detail: `€${ns.bridalPackagePrice.toLocaleString()}` });
+    if (trial) items.push({ label: 'Trial session', detail: `€${ns.trialPrice.toLocaleString()}` });
+    addonLines.forEach((a) => items.push({ label: `${a.name} ×${addonQty[a.id]}`, detail: `€${(a.price * addonQty[a.id]).toLocaleString()}` }));
+    if (loc && loc.fee > 0) items.push({ label: loc.label, detail: `€${loc.fee.toLocaleString()}` });
+
+    onChange({
+      total,
+      valid: total > 0 && !!location,
+      summary: items.map((i) => i.label).join(' · ') || 'No services selected',
+      items,
+      payload: {
+        people, event_date: date || null, event_time: time || null,
+        location: loc?.value || null, location_fee: locFee,
+        nail_style: nailStyle || null,
+        bridal_package: bridal, trial,
+        selected_addons: addonLines.map((a) => ({ id: a.id, name: a.name, price: a.price, qty: addonQty[a.id] })),
+        note,
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total, people, date, time, location, bridal, trial, nailStyle, JSON.stringify(addonQty), note]);
+
+  return (
+    <div className="flex" style={{ flexDirection: 'column', gap: 22 }}>
+      {/* Basics */}
+      <div className="flex gap-16" style={{ flexWrap: 'wrap' }}>
+        <StepperField label="How many people" value={people} onChange={setPeople} min={1} />
+        <div>
+          <Label>Date</Label>
+          <input type="date" className="input mt-8" value={date} onChange={(e) => setDate(e.target.value)} style={{ height: 44 }} />
+        </div>
+        <div>
+          <Label>Time</Label>
+          <input type="time" className="input mt-8" value={time} onChange={(e) => setTime(e.target.value)} style={{ height: 44 }} />
+        </div>
+      </div>
+      {ns.maxGroupSize ? (
+        <div className="muted text-13" style={{ background: 'var(--bg-2)', borderRadius: 10, padding: '8px 12px' }}>
+          Max group size: <span className="fw-700">{ns.maxGroupSize}</span> clients at one time.
+        </div>
+      ) : null}
+
+      {/* Location */}
+      <div>
+        <Label required>Location</Label>
+        <select className="select mt-8" value={location} onChange={(e) => setLocation(e.target.value)}>
+          <option value="">Select location</option>
+          {locOptions.map((l) => (
+            <option key={l.value} value={l.value}>{l.label}{l.fee > 0 ? ` (+€${l.fee})` : ' · free'}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Core services */}
+      <div>
+        <Label>Services</Label>
+        <div className="flex" style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          {ns.bridalPackagePrice > 0 && (
+            <CheckRow checked={bridal} onChange={() => setBridal((v) => !v)} label="Bridal nails package (manicure + pedicure)" price={ns.bridalPackagePrice} />
+          )}
+          {ns.trialPrice > 0 && (
+            <CheckRow checked={trial} onChange={() => setTrial((v) => !v)} label="Trial session" price={ns.trialPrice} />
+          )}
+        </div>
+      </div>
+
+      {/* Nail style */}
+      {ns.nailStyles.length > 0 && (
+        <div>
+          <Label>Nail style</Label>
+          <select className="select mt-8" value={nailStyle} onChange={(e) => setNailStyle(e.target.value)}>
+            <option value="">No preference</option>
+            {ns.nailStyles.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
+
+      {/* Add-ons with quantity */}
+      {ns.addons.length > 0 && (
+        <div>
+          <Label>Add-ons</Label>
+          <div className="flex" style={{ flexDirection: 'column', gap: 10, marginTop: 8 }}>
+            {ns.addons.map((a) => {
+              const qty = addonQty[a.id] ?? 0;
+              return (
+                <div key={a.id} className="flex items-center justify-between" style={{ gap: 12, border: '1px solid var(--line)', borderRadius: 12, padding: '10px 14px' }}>
+                  <div>
+                    <span className="fw-600 text-14">{a.name}</span>
+                    <span className="muted text-12" style={{ marginLeft: 8 }}>€{a.price} each</span>
+                  </div>
+                  <StepperField label="" value={qty} onChange={(v) => setAddonQty({ ...addonQty, [a.id]: v })} min={0} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <FieldNote note={note} onChange={setNote} />
+    </div>
+  );
+}
+
+// ─── 22. Dancing School
+export function DancingSchoolForm({ service, onChange }: FormProps) {
+  const ds = service.dancingSchool as DancingSchoolConfig;
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [people, setPeople] = useState(2);
+  const [packageId, setPackageId] = useState('');
+  const [danceType, setDanceType] = useState('');
+  const [danceStyle, setDanceStyle] = useState('');
+  const [note, setNote] = useState('');
+
+  const pkg = ds.packages.find((p) => p.id === packageId) ?? null;
+  const total = pkg?.price ?? 0;
+
+  useEffect(() => {
+    const items: FormStateItem[] = [];
+    if (pkg) items.push({ label: `${pkg.name} (${pkg.sessions} sessions)`, detail: `€${pkg.price.toLocaleString()}` });
+    if (danceType) items.push({ label: danceType });
+    if (danceStyle) items.push({ label: danceStyle });
+
+    onChange({
+      total,
+      valid: !!pkg,
+      summary: items.map((i) => i.label).join(' · ') || 'No package selected',
+      items,
+      payload: {
+        start_date: startDate || null, start_time: startTime || null, people,
+        package: pkg ? { id: pkg.id, name: pkg.name, sessions: pkg.sessions, price: pkg.price } : null,
+        dance_type: danceType || null, dance_style: danceStyle || null, note,
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total, startDate, startTime, people, packageId, danceType, danceStyle, note]);
+
+  return (
+    <div className="flex" style={{ flexDirection: 'column', gap: 22 }}>
+      {ds.studioAddress ? (
+        <div className="muted text-13" style={{ background: 'var(--bg-2)', borderRadius: 10, padding: '8px 12px' }}>
+          <Icon name="location" size={14} /> {ds.studioAddress}
+        </div>
+      ) : null}
+
+      {/* Start date / time */}
+      <div className="flex gap-16" style={{ flexWrap: 'wrap' }}>
+        <div>
+          <Label>Start date</Label>
+          <input type="date" className="input mt-8" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ height: 44 }} />
+        </div>
+        <div>
+          <Label>Preferred time</Label>
+          <input type="time" className="input mt-8" value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{ height: 44 }} />
+        </div>
+        <StepperField label="Dancers" value={people} onChange={setPeople} min={1} />
+      </div>
+
+      {/* Package */}
+      <div>
+        <Label required>Choose a lesson package</Label>
+        <div className="grid mt-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+          {ds.packages.map((p) => (
+            <RadioChip key={p.id} selected={packageId === p.id} onClick={() => setPackageId(p.id)}>
+              <div className="fw-700">{p.name}</div>
+              <div className="muted text-12">{p.sessions} sessions · €{p.price.toLocaleString()}</div>
+              {Array.isArray(p.features) && p.features.length > 0 && (
+                <div className="muted text-11 mt-4">{p.features.join(' · ')}</div>
+              )}
+            </RadioChip>
+          ))}
+        </div>
+      </div>
+
+      {/* Dance type */}
+      {ds.danceTypes.length > 0 && (
+        <div>
+          <Label>What are you learning for?</Label>
+          <select className="select mt-8" value={danceType} onChange={(e) => setDanceType(e.target.value)}>
+            <option value="">Select an option</option>
+            {ds.danceTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+      )}
+
+      {/* Dance style */}
+      {ds.danceStyles.length > 0 && (
+        <div>
+          <Label>Dance style</Label>
+          <select className="select mt-8" value={danceStyle} onChange={(e) => setDanceStyle(e.target.value)}>
+            <option value="">Select a style</option>
+            {ds.danceStyles.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+      )}
+
+      <FieldNote note={note} onChange={setNote} />
+    </div>
+  );
+}
+
 // ─── Form map (slug → component)
 import type { ComponentType } from 'react';
 export const BOOKING_FORM_MAP: Record<string, ComponentType<FormProps>> = {
@@ -1352,4 +1585,6 @@ export const BOOKING_FORM_MAP: Record<string, ComponentType<FormProps>> = {
   'hair':         HairForm,
   'invitation':   InvitationForm,
   'cake-desserts': CakeDessertForm,
+  'nail-salon':    NailSalonForm,
+  'dancing-school': DancingSchoolForm,
 };

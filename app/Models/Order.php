@@ -44,6 +44,8 @@ class Order extends Model
             'hair'         => $this->hasOne(OrderHair::class),
             'invitation'   => $this->hasOne(OrderInvitation::class),
             'cake-desserts'=> $this->hasOne(OrderCakeDessert::class),
+            'nail-salon'   => $this->hasOne(OrderNailSalon::class),
+            'dancing-school'=> $this->hasOne(OrderDancingSchool::class),
             default        => null,
         };
     }

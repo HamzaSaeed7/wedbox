@@ -27,6 +27,8 @@ export const CATEGORIES: Category[] = [
   { slug: 'hair',          name: 'Hair',            icon: 'hair',          color: '#A0522D' },
   { slug: 'invitation',    name: 'Invitations',     icon: 'mail',          color: '#C98A5B' },
   { slug: 'cake-desserts', name: 'Cake & Desserts', icon: 'cake',          color: '#E07BA0' },
+  { slug: 'nail-salon',    name: 'Nail Salon',      icon: 'nail',          color: '#D98BB0' },
+  { slug: 'dancing-school',name: 'Dancing School',  icon: 'dance',         color: '#7A6BD8' },
 ];
 
 // ─── Cities (Cyprus) — used for location dropdowns

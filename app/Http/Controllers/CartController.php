@@ -125,6 +125,8 @@ class CartController extends Controller
             'hair'          => \App\Models\OrderHair::class,
             'invitation'    => \App\Models\OrderInvitation::class,
             'cake-desserts' => \App\Models\OrderCakeDessert::class,
+            'nail-salon'    => \App\Models\OrderNailSalon::class,
+            'dancing-school'=> \App\Models\OrderDancingSchool::class,
         ];
 
         $modelClass = $modelMap[$order->order_type] ?? null;
@@ -201,6 +203,21 @@ class CartController extends Controller
                               'selected_desserts'=> $d['selected_desserts'] ?? [],
                               'selected_addons'  => $d['selected_addons']  ?? [],
                               'tasting_box'      => $d['tasting_box']      ?? null],
+            'nail-salon'  => ['people'           => $d['people']          ?? null,
+                              'event_date'       => $d['event_date']       ?? null,
+                              'event_time'       => $d['event_time']       ?? null,
+                              'location'         => $d['location']         ?? null,
+                              'location_fee'     => $d['location_fee']     ?? 0,
+                              'nail_style'       => $d['nail_style']       ?? null,
+                              'bridal_package'   => $d['bridal_package']   ?? false,
+                              'trial'            => $d['trial']            ?? false,
+                              'selected_addons'  => $d['selected_addons']  ?? []],
+            'dancing-school' => ['start_date'    => $d['start_date']       ?? null,
+                              'start_time'       => $d['start_time']       ?? null,
+                              'people'           => $d['people']           ?? null,
+                              'package'          => $d['package']          ?? null,
+                              'dance_type'       => $d['dance_type']       ?? null,
+                              'dance_style'      => $d['dance_style']      ?? null],
             default       => $d,
         };
 

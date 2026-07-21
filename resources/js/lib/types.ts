@@ -168,6 +168,37 @@ export interface CakeDessertConfig {
   tastingBoxes: CakeDessertItem[]; // {id,name,price}
 }
 
+export interface NailSalonAddon {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface NailSalonConfig {
+  bridalPackagePrice: number;
+  trialPrice: number;
+  maxGroupSize: number | null;
+  nailStyles: string[];
+  // Per-city travel fee (mobile / on-site); in-salon is always free.
+  locationPrices?: Record<string, number>;
+  addons: NailSalonAddon[];   // {id,name,price}, customer picks a quantity of each
+}
+
+export interface DancingSchoolPackage {
+  id: string;
+  name: string;
+  sessions: number;
+  price: number;
+  features: string[];
+}
+
+export interface DancingSchoolConfig {
+  studioAddress: string;
+  packages: DancingSchoolPackage[];
+  danceTypes: string[];   // offered — customer picks one
+  danceStyles: string[];  // offered — customer picks one
+}
+
 export interface GroomSuiteConfig {
   priceRent: number;
   priceBuy: number;
@@ -323,6 +354,8 @@ export interface Service {
   hair?: HairConfig;
   invitation?: InvitationConfig;
   cakeDessert?: CakeDessertConfig;
+  nailSalon?: NailSalonConfig;
+  dancingSchool?: DancingSchoolConfig;
 }
 
 export interface Order {

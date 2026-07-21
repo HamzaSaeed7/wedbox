@@ -63,4 +63,6 @@ class Service extends Model
     public function hair()       { return $this->hasOne(ServiceHair::class); }
     public function invitation() { return $this->hasOne(ServiceInvitation::class); }
     public function cakeDessert(){ return $this->hasOne(ServiceCakeDessert::class); }
+    public function nailSalon()  { return $this->hasOne(ServiceNailSalon::class); }
+    public function dancingSchool(){ return $this->hasOne(ServiceDancingSchool::class); }
 }

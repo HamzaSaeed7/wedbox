@@ -34,18 +34,19 @@ function normalizeService(s: any): Service {
 
 function HeroSplit() {
   return (
-    <section style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-      <video autoPlay loop muted playsInline
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}>
+    <section className="hero-split" style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <video autoPlay loop muted playsInline className="hero-media"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}>
         <source src="https://wedbox-app-production-bucket.s3.ap-south-1.amazonaws.com/videos/hero-wedding.mp4" type="video/mp4" />
       </video>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)' }} />
-      <div style={{ position: 'relative', textAlign: 'center', padding: '80px 24px 100px', maxWidth: 760, width: '100%' }}>
+      <div className="hero-content" style={{ position: 'relative', textAlign: 'center', padding: '80px 24px 100px', maxWidth: 760, width: '100%' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,.9)', fontSize: 12, fontWeight: 700, letterSpacing: '.1em', marginBottom: 24 }}>
           ALL IN ONE PACKAGES
         </div>
-        <h1 style={{ color: 'white', fontSize: 'clamp(28px, 5.5vw, 64px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0 }}>
-          Plan your wedding in one click.
+        <h1 className="hero-title" style={{ color: 'white', fontSize: 'clamp(28px, 5.5vw, 64px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0 }}>
+          <span className="hero-line">Plan your wedding</span>{' '}
+          <span className="hero-line">in one click.</span>
         </h1>
         <p style={{ color: 'rgba(255,255,255,.82)', fontSize: 17, marginTop: 24, lineHeight: 1.6 }}>
           The best venues, vendors and packages in Cyprus - all in one place, with the total cost upfront.

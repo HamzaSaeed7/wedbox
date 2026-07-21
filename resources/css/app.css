@@ -334,8 +334,18 @@ input[type="date"]:not(:placeholder-shown):in-range:not(:focus) {
   .hide-tablet { display: none !important; }
 }
 
+/* Hero title stacks into two lines on one flow by default */
+.hero-line { display: inline; }
+
 @media (max-width: 640px) {
   h1 { font-size: 32px; } h2 { font-size: 24px; }
+  /* Show the groom (left of frame), not just the bride */
+  .hero-media { object-position: 33% center; }
+  /* Pull the title up closer to the logo */
+  .hero-split { align-items: flex-start; }
+  .hero-content { padding-top: 96px; padding-bottom: 48px; }
+  /* Break "Plan your wedding" / "in one click." onto two lines */
+  .hero-line { display: block; }
   .r-grid-4 { grid-template-columns: repeat(2, 1fr); }
   .r-grid-3 { grid-template-columns: 1fr; }
   .r-grid-2 { grid-template-columns: 1fr; }

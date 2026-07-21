@@ -65,6 +65,8 @@ trait HandlesServiceSubdata
             'hair'          => $service->load('hair'),
             'invitation'    => $service->load('invitation.types', 'invitation.designs', 'invitation.addons'),
             'cake-desserts' => $service->load('cakeDessert'),
+            'nail-salon'    => $service->load('nailSalon'),
+            'dancing-school'=> $service->load('dancingSchool'),
             default         => null,
         };
     }
@@ -95,6 +97,8 @@ trait HandlesServiceSubdata
             'hair'          => $this->saveHair($service->id, $d),
             'invitation'    => $this->saveInvitation($service->id, $d),
             'cake-desserts' => $this->saveCakeDessert($service->id, $d),
+            'nail-salon'    => $this->saveNailSalon($service->id, $d),
+            'dancing-school'=> $this->saveDancingSchool($service->id, $d),
             default         => null,
         };
     }
@@ -482,5 +486,73 @@ trait HandlesServiceSubdata
             if (trim((string)($a['name'] ?? '')) === '') continue;
             DB::table('service_invitation_addons')->insert(['service_invitation_id' => $iid, 'name' => $a['name'], 'price' => (float)($a['price'] ?? 0), 'created_at' => now(), 'updated_at' => now()]);
         }
+    }
+
+    protected function saveNailSalon(int $sid, array $d): void
+    {
+        // Offered styles — plain strings, drop blanks.
+        $styles = array_values(array_filter(array_map(
+            fn ($s) => trim((string) $s),
+            (array) ($d['nail_styles'] ?? [])
+        ), fn ($s) => $s !== ''));
+
+        // Per-city travel fees: { "Nicosia": 30, … } — coerce values to numbers.
+        $locationPrices = [];
+        foreach ((array) ($d['location_prices'] ?? []) as $city => $fee) {
+            $locationPrices[$city] = (float) $fee;
+        }
+
+        // Flexible add-ons: [{ id, name, price }] — keep only named rows.
+        $addons = [];
+        foreach ((array) ($d['addons'] ?? []) as $a) {
+            if (!is_array($a) || trim((string) ($a['name'] ?? '')) === '') continue;
+            $addons[] = [
+                'id'    => (string) ($a['id'] ?? \Illuminate\Support\Str::uuid()),
+                'name'  => (string) $a['name'],
+                'price' => (float) ($a['price'] ?? 0),
+            ];
+        }
+
+        DB::table('service_nail_salons')->updateOrInsert(['service_id' => $sid], [
+            'bridal_package_price' => (float) ($d['bridal_package_price'] ?? 0),
+            'trial_price'          => (float) ($d['trial_price'] ?? 0),
+            'max_group_size'       => isset($d['max_group_size']) && $d['max_group_size'] !== '' ? (int) $d['max_group_size'] : null,
+            'nail_styles'          => json_encode($styles),
+            'location_prices'      => json_encode((object) $locationPrices),
+            'addons'               => json_encode($addons),
+            'updated_at' => now(), 'created_at' => now(),
+        ]);
+    }
+
+    protected function saveDancingSchool(int $sid, array $d): void
+    {
+        // Session packages: [{ id, name, sessions, price, features[] }]
+        $packages = [];
+        foreach ((array) ($d['packages'] ?? []) as $p) {
+            if (!is_array($p) || trim((string) ($p['name'] ?? '')) === '') continue;
+            $packages[] = [
+                'id'       => (string) ($p['id'] ?? \Illuminate\Support\Str::uuid()),
+                'name'     => (string) $p['name'],
+                'sessions' => (int) ($p['sessions'] ?? 0),
+                'price'    => (float) ($p['price'] ?? 0),
+                'features' => array_values(array_filter((array) ($p['features'] ?? []))),
+            ];
+        }
+
+        // Offered checklists — plain strings, drop blanks.
+        $strings = function (array $rows): array {
+            return array_values(array_filter(array_map(
+                fn ($s) => trim((string) $s),
+                $rows
+            ), fn ($s) => $s !== ''));
+        };
+
+        DB::table('service_dancing_schools')->updateOrInsert(['service_id' => $sid], [
+            'studio_address' => $d['studio_address'] ?? null,
+            'packages'       => json_encode($packages),
+            'dance_types'    => json_encode($strings((array) ($d['dance_types'] ?? []))),
+            'dance_styles'   => json_encode($strings((array) ($d['dance_styles'] ?? []))),
+            'updated_at' => now(), 'created_at' => now(),
+        ]);
     }
 }
