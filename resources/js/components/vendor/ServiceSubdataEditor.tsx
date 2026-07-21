@@ -933,6 +933,163 @@ function HairVendorForm({ data, onChange }: { data: any; onChange: (d: any) => v
   );
 }
 
+// ─── 21. Nail Salon ───────────────────────────────────────────────────────────
+const NAIL_STYLE_OPTIONS = ['Gel', 'Acrylic', 'BIAB (Builder Gel)', 'Nail Art/Design', 'Extensions', 'Express Manicures'];
+
+function NailSalonForm({ data, onChange }: { data: any; onChange: (d: any) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const d = data ?? {};
+  const styles: string[] = d.nail_styles ?? [];
+  const addons: any[] = d.addons ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const setAddons = (a: any[]) => onChange({ ...d, addons: a }); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const { data: apiCities } = useQuery({ queryKey: ['cities'], queryFn: () => publicApi.cities(), staleTime: 10 * 60 * 1000 });
+  const cityNames: string[] = Array.isArray(apiCities) && apiCities.length > 0
+    ? (apiCities as any[]).map((c) => c.name ?? c) // eslint-disable-line @typescript-eslint/no-explicit-any
+    : CITIES.map((c) => c.name);
+  const locPrices: Record<string, number> = d.location_prices ?? {};
+  const setLocPrice = (city: string, val: number) => onChange({ ...d, location_prices: { ...locPrices, [city]: val } });
+
+  const toggleStyle = (s: string) =>
+    onChange({ ...d, nail_styles: styles.includes(s) ? styles.filter((x) => x !== s) : [...styles, s] });
+
+  return (
+    <div>
+      <SectionTitle title="Core services" sub="Your headline bridal nails package (manicure + pedicure) and an optional trial session." />
+      <Row cols={3}>
+        <Field label="Bridal nails package (€)"><CurrencyInput value={d.bridal_package_price ?? ''} onChange={(e) => onChange({ ...d, bridal_package_price: +e.target.value })} /></Field>
+        <Field label="Trial session (€)"><CurrencyInput value={d.trial_price ?? ''} onChange={(e) => onChange({ ...d, trial_price: +e.target.value })} /></Field>
+        <Field label="Max group size"><input className="input" type="number" min={1} placeholder="e.g. 6" value={d.max_group_size ?? ''} onChange={(e) => onChange({ ...d, max_group_size: e.target.value === '' ? null : +e.target.value })} /></Field>
+      </Row>
+      <p className="muted text-12 mt-4">Max group size is shown to customers as a note — the most clients you can accommodate at one time (e.g. for the bride + bridesmaids).</p>
+
+      <SectionTitle title="Nail styles offered" sub="Tick the styles you offer — shown as chips on your profile and selectable by customers." />
+      <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
+        {NAIL_STYLE_OPTIONS.map((s) => {
+          const on = styles.includes(s);
+          return (
+            <button key={s} type="button" onClick={() => toggleStyle(s)}
+              className={`chip ${on ? 'chip-blue' : 'chip-soft'}`}
+              style={{ cursor: 'pointer', border: on ? '1px solid var(--primary)' : '1px solid var(--line)', fontWeight: on ? 700 : 400 }}>
+              {on ? '✓ ' : ''}{s}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-8">
+        <div className="field-label mb-4">Other styles <span className="muted fw-400">(press Enter to add each)</span></div>
+        <TagInput tags={styles.filter((s) => !NAIL_STYLE_OPTIONS.includes(s))}
+          onChange={(custom) => onChange({ ...d, nail_styles: [...styles.filter((s) => NAIL_STYLE_OPTIONS.includes(s)), ...custom] })}
+          placeholder="e.g. French, Chrome" />
+      </div>
+
+      <SectionTitle title="Mobile / on-site travel fees"
+        sub="In-salon is always free. Set the fee you charge to travel to the bride's home or venue in each city — leave a city at 0 to offer it free too." />
+      <Row cols={3}>
+        {cityNames.map((name) => (
+          <Field key={name} label={`${name} (€)`}>
+            <CurrencyInput value={locPrices[name] ?? ''} onChange={(e) => setLocPrice(name, +e.target.value)} />
+          </Field>
+        ))}
+      </Row>
+
+      <SectionTitle title="Add-ons" sub="Optional extras customers can add with a quantity (e.g. Manicure, Pedicure, Additional person)." />
+      {addons.map((a, i) => (
+        <div key={a.id ?? i} className="flex gap-8 items-center mt-8">
+          <input className="input" value={a.name ?? ''} placeholder="Add-on name" style={{ flex: 2 }}
+            onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
+          <CurrencyInput value={a.price ?? 0} placeholder="€ each" containerStyle={{ width: 110 }}
+            onChange={(e) => setAddons(addons.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} />
+          <RemoveBtn onClick={() => setAddons(addons.filter((_, j) => j !== i))} />
+        </div>
+      ))}
+      <div className="flex gap-8">
+        <AddBtn label="Add add-on" onClick={() => setAddons([...addons, { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())), name: '', price: 0 }])} />
+        {addons.length === 0 && (
+          <AddBtn label="Add Manicure / Pedicure / Additional person" onClick={() => setAddons([
+            { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now() + 1)), name: 'Manicure', price: 0 },
+            { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now() + 2)), name: 'Pedicure', price: 0 },
+            { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now() + 3)), name: 'Additional person', price: 0 },
+          ])} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── 22. Dancing School ───────────────────────────────────────────────────────
+const DANCE_TYPE_OPTIONS = ['First Dance (Couples)', "Parents' Dance (Father-Daughter/Mother-Son)", 'Bridal Party/Groomsmen Flash Mobs', 'Bachelorette/Hen Party group classes'];
+const DANCE_STYLE_OPTIONS = ['Waltz', 'Tango', 'Salsa/Bachata', 'Contemporary', 'Hip Hop', 'Swing', 'Custom Mashups'];
+
+function DancingSchoolForm({ data, onChange }: { data: any; onChange: (d: any) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const d = data ?? {};
+  const packages: any[] = d.packages ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const setPackages = (p: any[]) => onChange({ ...d, packages: p }); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const danceTypes: string[] = d.dance_types ?? [];
+  const danceStyles: string[] = d.dance_styles ?? [];
+
+  const toggle = (key: 'dance_types' | 'dance_styles', list: string[], v: string) =>
+    onChange({ ...d, [key]: list.includes(v) ? list.filter((x) => x !== v) : [...list, v] });
+
+  const Chips = ({ options, selected, keyName }: { options: string[]; selected: string[]; keyName: 'dance_types' | 'dance_styles' }) => (
+    <div className="flex gap-8" style={{ flexWrap: 'wrap' }}>
+      {options.map((o) => {
+        const on = selected.includes(o);
+        return (
+          <button key={o} type="button" onClick={() => toggle(keyName, selected, o)}
+            className={`chip ${on ? 'chip-blue' : 'chip-soft'}`}
+            style={{ cursor: 'pointer', border: on ? '1px solid var(--primary)' : '1px solid var(--line)', fontWeight: on ? 700 : 400 }}>
+            {on ? '✓ ' : ''}{o}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <div>
+      <SectionTitle title="Dancing school" sub="Where your lessons take place." />
+      <Field label="Studio location / address">
+        <input className="input" value={d.studio_address ?? ''} placeholder="e.g. 12 Makarios Ave, Limassol" onChange={(e) => onChange({ ...d, studio_address: e.target.value })} />
+      </Field>
+
+      <SectionTitle title="Lesson packages" sub="Offer packages by number of sessions (e.g. 5, 10, 20). Customers pick one when booking." />
+      {packages.map((p, i) => (
+        <div key={p.id ?? i} className="card card-pad mt-8" style={{ background: 'var(--bg-2)' }}>
+          <div className="flex gap-8 items-center">
+            <input className="input" value={p.name ?? ''} placeholder="Package name (e.g. Starter)" style={{ flex: 2 }}
+              onChange={(e) => setPackages(packages.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} />
+            <input className="input" type="number" min={1} value={p.sessions ?? ''} placeholder="Sessions" style={{ width: 100 }}
+              onChange={(e) => setPackages(packages.map((x, j) => j === i ? { ...x, sessions: +e.target.value } : x))} />
+            <CurrencyInput value={p.price ?? 0} placeholder="€" containerStyle={{ width: 100 }}
+              onChange={(e) => setPackages(packages.map((x, j) => j === i ? { ...x, price: +e.target.value } : x))} />
+            <RemoveBtn onClick={() => setPackages(packages.filter((_, j) => j !== i))} />
+          </div>
+          <div className="mt-10">
+            <div className="field-label mb-4">What's included (press Enter)</div>
+            <TagInput tags={p.features ?? []} onChange={(f) => setPackages(packages.map((x, j) => j === i ? { ...x, features: f } : x))} placeholder="e.g. 1-on-1 coaching, Choreography" />
+          </div>
+        </div>
+      ))}
+      <div className="flex gap-8">
+        <AddBtn label="Add package" onClick={() => setPackages([...packages, { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now())), name: '', sessions: 5, price: 0, features: [] }])} />
+        {packages.length === 0 && (
+          <AddBtn label="Add 5 / 10 / 20 session packages" onClick={() => setPackages([
+            { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now() + 1)), name: '5 Sessions', sessions: 5, price: 0, features: [] },
+            { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now() + 2)), name: '10 Sessions', sessions: 10, price: 0, features: [] },
+            { id: (globalThis.crypto?.randomUUID?.() ?? String(Date.now() + 3)), name: '20 Sessions', sessions: 20, price: 0, features: [] },
+          ])} />
+        )}
+      </div>
+
+      <SectionTitle title="Dance types offered" sub="Tick what you offer — shown on your profile and selectable by customers." />
+      <Chips options={DANCE_TYPE_OPTIONS} selected={danceTypes} keyName="dance_types" />
+
+      <SectionTitle title="Dance styles offered" sub="Tick the styles you teach." />
+      <Chips options={DANCE_STYLE_OPTIONS} selected={danceStyles} keyName="dance_styles" />
+    </div>
+  );
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 export interface ServiceSubdataEditorProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -989,6 +1146,8 @@ function extractSubdata(service: any): any {
     case 'hair':         return service.hair ?? null;
     case 'invitation':   return service.invitation ?? null;
     case 'cake-desserts':return service.cake_dessert ?? service.cakeDessert ?? null;
+    case 'nail-salon':   return service.nail_salon ?? service.nailSalon ?? null;
+    case 'dancing-school':return service.dancing_school ?? service.dancingSchool ?? null;
     default:             return null;
   }
 }
@@ -1207,6 +1366,7 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
     'bachelor': 'Bachelor Party', 'bachelorette': 'Bachelorette Party',
     'hotel': 'Hotel / Accommodation', 'bar': 'Bar Service', 'makeup': 'Make-up', 'hair': 'Hair Styling',
     'invitation': 'Invitation', 'cake-desserts': 'Cake & Desserts',
+    'nail-salon': 'Nail Salon', 'dancing-school': 'Dancing School',
   };
 
   return (
@@ -1242,6 +1402,8 @@ export default function ServiceSubdataEditor({ service, onSave, isSaving }: Serv
         {slug === 'hair'         && <HairVendorForm   data={formData} onChange={setFormData} />}
         {slug === 'invitation'   && <InvitationForm   data={formData} onChange={setFormData} />}
         {slug === 'cake-desserts' && <CakeDessertForm data={formData} onChange={setFormData} />}
+        {slug === 'nail-salon'    && <NailSalonForm    data={formData} onChange={setFormData} />}
+        {slug === 'dancing-school'&& <DancingSchoolForm data={formData} onChange={setFormData} />}
       </div>
     </div>
   );

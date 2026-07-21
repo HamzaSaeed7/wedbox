@@ -358,6 +358,26 @@ class DatabaseSeeder extends Seeder
                 'city'        => 'Nicosia',
                 'description' => 'Expert bridal hair stylists creating stunning up-dos, braids, waves, and romantic styles for your perfect wedding day.',
             ],
+            [
+                'tag'         => 'nail-salon',
+                'cat'         => 'nail-salon',
+                'business'    => 'Polished Bridal Nails',
+                'first'       => 'Elina',
+                'last'        => 'Charalambous',
+                'phone'       => '+35722100019',
+                'city'        => 'Limassol',
+                'description' => 'Bridal manicures, pedicures and nail art — in our salon or on-site at your venue. Gel, acrylic, BIAB and more.',
+            ],
+            [
+                'tag'         => 'dancing-school',
+                'cat'         => 'dancing-school',
+                'business'    => 'First Dance Studio',
+                'first'       => 'Marios',
+                'last'        => 'Georgiou',
+                'phone'       => '+35722100020',
+                'city'        => 'Nicosia',
+                'description' => 'Wedding dance lessons for couples and wedding parties — from an elegant first dance to full flash-mob choreography.',
+            ],
         ];
 
         foreach ($vendors as $v) {
@@ -456,6 +476,8 @@ class DatabaseSeeder extends Seeder
             'bar'          => $this->seedBar($serviceId, $now),
             'makeup'       => $this->seedMakeup($serviceId, $now),
             'hair'         => $this->seedHair($serviceId, $now),
+            'nail-salon'   => $this->seedNailSalon($serviceId, $now),
+            'dancing-school'=> $this->seedDancingSchool($serviceId, $now),
             default        => null,
         };
     }
@@ -481,6 +503,8 @@ class DatabaseSeeder extends Seeder
             'bar'          => 400.00,
             'makeup'       => 250.00,
             'hair'         => 200.00,
+            'nail-salon'   => 120.00,
+            'dancing-school'=> 250.00,
             default        => 100.00,
         };
     }
@@ -905,6 +929,42 @@ class DatabaseSeeder extends Seeder
             'available_date_trial_2' => Carbon::now()->addDays(17)->toDateString(),
             'created_at'             => $now,
             'updated_at'             => $now,
+        ]);
+    }
+
+    private function seedNailSalon(int $serviceId, Carbon $now): void
+    {
+        DB::table('service_nail_salons')->insert([
+            'service_id'           => $serviceId,
+            'bridal_package_price' => 120.00,
+            'trial_price'          => 40.00,
+            'max_group_size'       => 6,
+            'nail_styles'          => json_encode(['Gel', 'Acrylic', 'BIAB (Builder Gel)', 'Nail Art/Design', 'Extensions', 'Express Manicures']),
+            'location_prices'      => json_encode(['Limassol' => 0, 'Nicosia' => 40, 'Larnaca' => 35, 'Paphos' => 50]),
+            'addons'               => json_encode([
+                ['id' => (string) \Illuminate\Support\Str::uuid(), 'name' => 'Manicure',          'price' => 30.00],
+                ['id' => (string) \Illuminate\Support\Str::uuid(), 'name' => 'Pedicure',          'price' => 35.00],
+                ['id' => (string) \Illuminate\Support\Str::uuid(), 'name' => 'Additional person',  'price' => 90.00],
+            ]),
+            'created_at'           => $now,
+            'updated_at'           => $now,
+        ]);
+    }
+
+    private function seedDancingSchool(int $serviceId, Carbon $now): void
+    {
+        DB::table('service_dancing_schools')->insert([
+            'service_id'     => $serviceId,
+            'studio_address' => '12 Makarios Avenue, Nicosia, Cyprus',
+            'packages'       => json_encode([
+                ['id' => (string) \Illuminate\Support\Str::uuid(), 'name' => '5 Sessions',  'sessions' => 5,  'price' => 250.00, 'features' => ['1-on-1 coaching', 'Song choice help']],
+                ['id' => (string) \Illuminate\Support\Str::uuid(), 'name' => '10 Sessions', 'sessions' => 10, 'price' => 450.00, 'features' => ['1-on-1 coaching', 'Custom choreography']],
+                ['id' => (string) \Illuminate\Support\Str::uuid(), 'name' => '20 Sessions', 'sessions' => 20, 'price' => 800.00, 'features' => ['1-on-1 coaching', 'Custom choreography', 'Video recording']],
+            ]),
+            'dance_types'    => json_encode(['First Dance (Couples)', "Parents' Dance (Father-Daughter/Mother-Son)", 'Bridal Party/Groomsmen Flash Mobs', 'Bachelorette/Hen Party group classes']),
+            'dance_styles'   => json_encode(['Waltz', 'Tango', 'Salsa/Bachata', 'Contemporary', 'Hip Hop', 'Swing', 'Custom Mashups']),
+            'created_at'     => $now,
+            'updated_at'     => $now,
         ]);
     }
 }

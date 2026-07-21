@@ -237,6 +237,50 @@ function normalizeCakeDessert(c: any) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeNailSalon(c: any) {
+  if (!c) return undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arr = (v: any): any[] => {
+    if (typeof v === 'string') { try { return JSON.parse(v); } catch { return []; } }
+    return Array.isArray(v) ? v : [];
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const obj = (v: any): Record<string, number> => {
+    if (typeof v === 'string') { try { v = JSON.parse(v); } catch { return {}; } }
+    return v && typeof v === 'object' ? v : {};
+  };
+  return {
+    bridalPackagePrice: Number(c.bridal_package_price) || 0,
+    trialPrice: Number(c.trial_price) || 0,
+    maxGroupSize: c.max_group_size != null ? Number(c.max_group_size) : null,
+    nailStyles: arr(c.nail_styles).map((s: unknown) => String(s)),
+    locationPrices: obj(c.location_prices),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    addons: arr(c.addons).map((r: any, i: number) => ({ id: String(r.id ?? `na-${i}`), name: r.name ?? '', price: Number(r.price) || 0 })),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeDancingSchool(c: any) {
+  if (!c) return undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const arr = (v: any): any[] => {
+    if (typeof v === 'string') { try { return JSON.parse(v); } catch { return []; } }
+    return Array.isArray(v) ? v : [];
+  };
+  return {
+    studioAddress: c.studio_address ?? '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    packages: arr(c.packages).map((p: any, i: number) => ({
+      id: String(p.id ?? `dp-${i}`), name: p.name ?? '', sessions: Number(p.sessions) || 0,
+      price: Number(p.price) || 0, features: arr(p.features).map((f: unknown) => String(f)),
+    })),
+    danceTypes: arr(c.dance_types).map((t: unknown) => String(t)),
+    danceStyles: arr(c.dance_styles).map((s: unknown) => String(s)),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeService(s: any): Service {
   return {
     id: s.id, slug: s.category?.slug ?? s.slug ?? '',
@@ -257,6 +301,8 @@ function normalizeService(s: any): Service {
     bar: normalizeBar(s.bar), makeup: normalizeMakeup(s.makeup), hair: normalizeHair(s.hair),
     invitation: normalizeInvitation(s.invitation),
     cakeDessert: normalizeCakeDessert(s.cake_dessert ?? s.cakeDessert),
+    nailSalon: normalizeNailSalon(s.nail_salon ?? s.nailSalon),
+    dancingSchool: normalizeDancingSchool(s.dancing_school ?? s.dancingSchool),
   };
 }
 
@@ -689,6 +735,7 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
       'flower-girl': 'flowerGirl', 'yacht': 'yacht', bachelor: 'bachelor',
       bachelorette: 'bachelorette', hotel: 'hotel', bar: 'bar', 'makeup': 'makeup',
       'invitation': 'invitation', 'cake-desserts': 'cakeDessert',
+      'nail-salon': 'nailSalon', 'dancing-school': 'dancingSchool',
     };
     const subKey = SUB_DATA_KEYS[service.slug];
     const hasSubData = !subKey || service[subKey] != null;
