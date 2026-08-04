@@ -1289,8 +1289,8 @@ export default function VendorDashboard({ sub: subProp }: VendorProps) {
   }, [user]);
 
   useEffect(() => {
-    document.title = 'Vendor Dashboard | WedBox';
-    return () => { document.title = 'WedBox'; };
+    document.title = 'Vendor Dashboard | Wedbi';
+    return () => { document.title = 'Wedbi'; };
   }, []);
 
   if (!user) return null;

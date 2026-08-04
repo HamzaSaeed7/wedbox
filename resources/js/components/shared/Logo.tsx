@@ -1,6 +1,4 @@
-import logoSrc from '../../assets/logo.png';
-import logo2Src from '../../assets/logo2.svg';
-import logo3Src from '../../assets/logo3.svg';
+import { WEDBI_LOGO, WEDBI_LOGO_WHITE } from '../../lib/brand';
 
 interface LogoProps {
   /** White+teal horizontal lockup — used in transparent header over hero */
@@ -13,11 +11,11 @@ interface LogoProps {
 
 export default function Logo({ white = false, light = false, compact = false }: LogoProps) {
   const height = compact ? 36 : 52;
-  const src = white ? logo2Src : light ? logo3Src : logoSrc;
+  const src = white || light ? WEDBI_LOGO_WHITE : WEDBI_LOGO;
   return (
     <img
       src={src}
-      alt="WedBox"
+      alt="Wedbi"
       style={{ height, width: 'auto', display: 'block' }}
     />
   );

@@ -26,17 +26,17 @@ export default function About() {
     <PublicLayout>
       <div>
         <section style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, overflow: 'hidden' }}>
-          <img src={about1} alt="About WedBox" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+          <img src={about1} alt="About Wedbi" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.22) 38%, rgba(0,0,0,.15) 100%)' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
             <div className="container-wide" style={{ width: '100%', padding: '0 28px', pointerEvents: 'none' }}>
               <div style={{ background: 'rgba(20,58,60,0.62)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', borderRadius: 20, border: '1px solid rgba(255,255,255,.22)', padding: '44px 48px', maxWidth: 560, color: 'white', boxShadow: '0 18px 50px rgba(0,0,0,.28)', pointerEvents: 'auto' }}>
                 <h2 style={{ color: 'white', fontSize: 34, fontWeight: 700, marginBottom: 20 }}>About Us</h2>
                 <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(255,255,255,.95)', marginBottom: 16 }}>
-                  Welcome to WedBox, your ultimate destination for planning and organizing your dream wedding in sunny Cyprus!
+                  Welcome to Wedbi, your ultimate destination for planning and organizing your dream wedding in sunny Cyprus!
                 </p>
                 <p style={{ fontSize: 15, lineHeight: 1.75, color: 'rgba(255,255,255,.95)' }}>
-                  At WedBox, we understand that your wedding day is one of the most cherished moments of your life. That's why we've created a one-stop platform to make your wedding planning experience seamless, stress-free, and unforgettable.
+                  At Wedbi, we understand that your wedding day is one of the most cherished moments of your life. That's why we've created a one-stop platform to make your wedding planning experience seamless, stress-free, and unforgettable.
                 </p>
               </div>
             </div>
@@ -46,7 +46,7 @@ export default function About() {
         <section style={{ padding: '80px 28px', textAlign: 'center' }}>
           <h2 style={{ fontSize: 32 }}>Who We Are</h2>
           <p className="muted mt-16" style={{ maxWidth: 560, marginInline: 'auto', fontSize: 15, lineHeight: 1.7 }}>
-            Founded in 2024, WedBox was born out of a passion for delivering exceptional wedding experiences. Our mission is simple: to provide couples with an all-in-one solution for planning their perfect day.
+            Founded in 2024, Wedbi was born out of a passion for delivering exceptional wedding experiences. Our mission is simple: to provide couples with an all-in-one solution for planning their perfect day.
           </p>
         </section>
 
@@ -54,7 +54,7 @@ export default function About() {
           <div className="container">
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
               <h2 style={{ fontSize: 32 }}>What We Offer</h2>
-              <p className="muted mt-12" style={{ maxWidth: 560, marginInline: 'auto', fontSize: 15 }}>From the grand essentials to the smallest details, WedBox provides everything you need for your special day:</p>
+              <p className="muted mt-12" style={{ maxWidth: 560, marginInline: 'auto', fontSize: 15 }}>From the grand essentials to the smallest details, Wedbi provides everything you need for your special day:</p>
             </div>
             <div className="grid r-grid-4" style={{ gap: 28 }}>
               {OFFERS.map((o) => (
@@ -76,10 +76,10 @@ export default function About() {
           <div className="container">
             <div className="grid r-grid-halves" style={{ gap: 60, alignItems: 'center' }}>
               <div>
-                <h2 style={{ fontSize: 30 }}>Why Choose WedBox?</h2>
+                <h2 style={{ fontSize: 30 }}>Why Choose Wedbi?</h2>
                 <div className="mt-24" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   {[
-                    { title: 'All-In-One Platform', desc: 'Say goodbye to the stress of juggling multiple vendors. With WedBox, everything you need is just a click away.' },
+                    { title: 'All-In-One Platform', desc: 'Say goodbye to the stress of juggling multiple vendors. With Wedbi, everything you need is just a click away.' },
                     { title: 'Transparency in Costs', desc: "No surprises or hidden fees! With our platform, you'll know the total cost of your wedding upfront." },
                     { title: 'Cyprus Expertise', desc: "Our team has an in-depth understanding of Cyprus' unique charm, ensuring your wedding is nothing short of magical." },
                     { title: 'Tailored to You', desc: 'Every wedding is unique, and we work closely with you to ensure your special day reflects your personality and love story.' },
@@ -92,7 +92,7 @@ export default function About() {
                 </div>
               </div>
               <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-                <img src={about3} alt="Why WedBox" style={{ width: '100%', height: 420, objectFit: 'cover', display: 'block' }} />
+                <img src={about3} alt="Why Wedbi" style={{ width: '100%', height: 420, objectFit: 'cover', display: 'block' }} />
               </div>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function About() {
               <div>
                 <h2 style={{ fontSize: 30 }}>Let's Make Your Dream Wedding a Reality</h2>
                 <p className="muted mt-16" style={{ fontSize: 15, lineHeight: 1.75 }}>
-                  With WedBox, planning your perfect wedding in Cyprus has never been easier. Whether you're a local couple or coming from abroad for a destination wedding, we're here to make every moment extraordinary.
+                  With Wedbi, planning your perfect wedding in Cyprus has never been easier. Whether you're a local couple or coming from abroad for a destination wedding, we're here to make every moment extraordinary.
                 </p>
                 <Link href="/contact" className="btn btn-primary mt-24" style={{ display: 'inline-flex' }}>Contact us</Link>
               </div>

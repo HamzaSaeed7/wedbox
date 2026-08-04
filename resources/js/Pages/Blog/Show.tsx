@@ -23,8 +23,8 @@ export default function BlogShow({ slug: slugProp }: ShowProps) {
 
   useEffect(() => {
     if (post?.title) {
-      document.title = `${post.title} | WedBox`;
-      return () => { document.title = 'WedBox'; };
+      document.title = `${post.title} | Wedbi`;
+      return () => { document.title = 'Wedbi'; };
     }
   }, [post?.title]);
 

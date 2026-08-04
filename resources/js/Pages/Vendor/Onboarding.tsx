@@ -128,7 +128,7 @@ export default function VendorOnboarding({ categories, cities }: Props) {
         phone:                form.phoneCode + ' ' + form.phoneNumber || undefined,
         avatar_url:           avatarUrl     || undefined,
       });
-      showToast('Welcome to WedBox! 🎉', 'success');
+      showToast('Welcome to Wedbi! 🎉', 'success');
       router.visit('/dashboard/vendor');
     } catch (err: unknown) {
       const resp = (err as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } })?.response?.data;
@@ -158,7 +158,7 @@ export default function VendorOnboarding({ categories, cities }: Props) {
             </svg>
           </div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#38b2ac] mb-1">Vendor setup</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome to WedBox</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome to Wedbi</h1>
           <p className="text-gray-500 text-sm mt-1.5">Tell us about your business to get started.</p>
         </div>
 

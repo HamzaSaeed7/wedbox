@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
 })
 
 createInertiaApp({
-  title: (title) => title ? `${title} | WedBox` : 'WedBox',
+  title: (title) => title ? `${title} | Wedbi` : 'Wedbi',
   resolve: (name) => {
     const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true })
     return pages[`./Pages/${name}.tsx`]

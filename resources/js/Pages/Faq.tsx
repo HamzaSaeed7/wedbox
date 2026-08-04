@@ -4,9 +4,9 @@ import PublicLayout from '../Layouts/PublicLayout';
 
 export default function Faq() {
   const qa: [string, string][] = [
-    ['How does WedBox work?', 'Browse vendors, add them to your cart, and reserve everything in one place. We aggregate the total so there are no surprise costs.'],
+    ['How does Wedbi work?', 'Browse vendors, add them to your cart, and reserve everything in one place. We aggregate the total so there are no surprise costs.'],
     ['Can I cancel a booking?', 'You can request cancellation from your dashboard. Refund terms vary by vendor and are shown before you checkout.'],
-    ['Do you charge couples?', 'No. WedBox is free for couples — vendors pay a small commission on confirmed bookings.'],
+    ['Do you charge couples?', 'No. Wedbi is free for couples — vendors pay a small commission on confirmed bookings.'],
     ['How do you vet vendors?', 'Every vendor is interviewed, document-checked and re-reviewed every season based on customer ratings.'],
     ['What about countries outside Cyprus?', 'We launched in Cyprus and are expanding across the Mediterranean. Sign up to hear when we open your destination.'],
   ];

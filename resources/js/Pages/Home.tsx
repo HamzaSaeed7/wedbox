@@ -141,7 +141,7 @@ function HowItWorks() {
   return (
     <section className="container-wide" style={{ padding: '64px 28px', background: 'var(--bg-2)', borderRadius: 32 }}>
       <div style={{ textAlign: 'center', maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--primary-700)', marginBottom: 12 }}>How WedBox Works</div>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--primary-700)', marginBottom: 12 }}>How Wedbi Works</div>
         <h2>Three steps to your dream wedding</h2>
         <p className="mt-12" style={{ fontSize: 16, color: 'var(--muted)' }}>No endless phone calls. No deposit fees on our platform. Just one place to secure your entire wedding team.</p>
       </div>

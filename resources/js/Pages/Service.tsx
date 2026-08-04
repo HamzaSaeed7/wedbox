@@ -443,7 +443,7 @@ function BookingPanel({ cat, formState, date, setDate, onReserve, minDate, block
                 return;
               }
               const pageUrl = encodeURIComponent(window.location.href);
-              const title   = encodeURIComponent(serviceTitle ?? 'Check out this wedding service on WedBox');
+              const title   = encodeURIComponent(serviceTitle ?? 'Check out this wedding service on Wedbi');
               window.open(url(pageUrl, title), '_blank', 'noopener,noreferrer,width=600,height=500');
             }}>
             <Icon name={name} size={14} />
@@ -670,8 +670,8 @@ export default function ServicePage({ serviceId }: ServicePageProps) {
   }, [apiData, isError]);
 
   useEffect(() => {
-    if (service?.title) document.title = `${service.title} | WedBox`;
-    return () => { document.title = 'WedBox'; };
+    if (service?.title) document.title = `${service.title} | Wedbi`;
+    return () => { document.title = 'Wedbi'; };
   }, [service?.title]);
 
   const [formState, setFormState] = useState<FormState>({ total: 0, summary: '', payload: {} });
