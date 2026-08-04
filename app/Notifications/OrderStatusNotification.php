@@ -36,16 +36,16 @@ class OrderStatusNotification extends Notification
                 ->line('You can view the full details in your dashboard.')
                 ->action('View My Bookings', $dashboardUrl)
                 ->line('Congratulations on your upcoming wedding!')
-                ->salutation('Warm regards, The WedBox Team');
+                ->salutation('Warm regards, The Wedbi Team');
         }
 
         return (new MailMessage)
             ->subject("Your booking was not accepted — {$serviceTitle}")
             ->greeting('Booking update')
             ->line("{$vendorName} was unable to accept your reservation for **{$serviceTitle}** at this time.")
-            ->line('You can browse other vendors and make a new booking from the WedBox marketplace.')
+            ->line('You can browse other vendors and make a new booking from the Wedbi marketplace.')
             ->action('Find Another Vendor', url('/search'))
-            ->line('We\'re sorry for the inconvenience. The WedBox team is here to help!')
-            ->salutation('Warm regards, The WedBox Team');
+            ->line('We\'re sorry for the inconvenience. The Wedbi team is here to help!')
+            ->salutation('Warm regards, The Wedbi Team');
     }
 }

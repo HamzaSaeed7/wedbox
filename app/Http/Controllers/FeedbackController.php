@@ -27,19 +27,19 @@ class FeedbackController extends Controller
         // Notify the team by email. Don't fail the request if mail delivery is
         // down — the feedback is already saved and visible in the admin panel.
         try {
-            $body = "New feedback was submitted on WedBox.\n\n"
+            $body = "New feedback was submitted on Wedbi.\n\n"
                 . 'Experience: ' . ucfirst($data['experience']) . "\n"
                 . "From: {$user->name} <{$user->email}> (role: {$user->role})\n"
                 . "User ID: {$user->id}\n\n"
                 . "Comments:\n{$data['feedback_text']}\n";
 
             Mail::raw($body, function ($message) use ($user) {
-                $message->to('info@wedbox.io')
-                    ->subject('New WedBox feedback (' . $user->email . ')')
+                $message->to('info@wedbi.io')
+                    ->subject('New Wedbi feedback (' . $user->email . ')')
                     ->replyTo($user->email, $user->name);
             });
         } catch (\Throwable $e) {
-            Log::error('Failed to email feedback to info@wedbox.io', [
+            Log::error('Failed to email feedback to info@wedbi.io', [
                 'feedback_id' => $feedback->id,
                 'error'       => $e->getMessage(),
             ]);

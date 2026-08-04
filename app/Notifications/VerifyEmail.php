@@ -25,12 +25,12 @@ class VerifyEmail extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Verify your WedBox email address')
-            ->greeting('Welcome to WedBox!')
+            ->subject('Verify your Wedbi email address')
+            ->greeting('Welcome to Wedbi!')
             ->line('Thanks for signing up. Please click the button below to verify your email address.')
             ->action('Verify Email Address', $this->verifyUrl)
             ->line('This link will expire in 60 minutes.')
             ->line('If you did not create an account, you can safely ignore this email.')
-            ->salutation('Warm regards, The WedBox Team');
+            ->salutation('Warm regards, The Wedbi Team');
     }
 }
