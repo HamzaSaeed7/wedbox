@@ -12,15 +12,15 @@ interface Props {
 
 // Page title map
 const TITLE_MAP: Record<string, string> = {
-  '/':         'Home | WedBox',
-  '/search':   'Search | WedBox',
-  '/about':    'About Us | WedBox',
-  '/contact':  'Contact | WedBox',
-  '/faq':      'FAQ | WedBox',
-  '/cart':     'My Cart | WedBox',
-  '/auth':     'Sign In | WedBox',
-  '/login':    'Sign In | WedBox',
-  '/blog':     'Blog | WedBox',
+  '/':         'Home | Wedbi',
+  '/search':   'Search | Wedbi',
+  '/about':    'About Us | Wedbi',
+  '/contact':  'Contact | Wedbi',
+  '/faq':      'FAQ | Wedbi',
+  '/cart':     'My Cart | Wedbi',
+  '/auth':     'Sign In | Wedbi',
+  '/login':    'Sign In | Wedbi',
+  '/blog':     'Blog | Wedbi',
 };
 
 export default function PublicLayout({ children }: Props) {
@@ -37,7 +37,7 @@ export default function PublicLayout({ children }: Props) {
 
   // Page title
   useEffect(() => {
-    document.title = TITLE_MAP[pathname] ?? 'WedBox';
+    document.title = TITLE_MAP[pathname] ?? 'Wedbi';
   }, [pathname]);
 
   // Scroll to top on navigation

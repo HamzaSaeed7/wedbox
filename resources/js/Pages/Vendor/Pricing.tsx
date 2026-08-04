@@ -15,7 +15,7 @@ const PLANS = [
     savingBadge: null,
     features: [
       'Full vendor profile',
-      'Professional setup by WedBox',
+      'Professional setup by Wedbi',
       'Unlimited listings',
       'Direct booking enquiries',
       'No commission on bookings',
@@ -58,7 +58,7 @@ const FAQS = [
   },
   {
     q: 'Are there any hidden fees?',
-    a: 'None. WedBox charges a flat subscription fee and takes zero commission on bookings or enquiries.',
+    a: 'None. Wedbi charges a flat subscription fee and takes zero commission on bookings or enquiries.',
   },
   {
     q: 'How quickly will my profile go live?',
@@ -72,8 +72,8 @@ export default function VendorPricing() {
   const showToast = useStore((s) => s.showToast);
 
   useEffect(() => {
-    document.title = 'Pricing | WedBox';
-    return () => { document.title = 'WedBox'; };
+    document.title = 'Pricing | Wedbi';
+    return () => { document.title = 'Wedbi'; };
   }, []);
 
   const handleJoin = async (planId: '3month' | '12month') => {
@@ -104,7 +104,7 @@ export default function VendorPricing() {
           </span>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
             Grow Your Wedding<br />
-            <span className="text-[#38b2ac]">Business with WedBox</span>
+            <span className="text-[#38b2ac]">Business with Wedbi</span>
           </h1>
           <p className="text-gray-500 text-lg mb-2">
             Connect with couples planning their perfect day — no middlemen, no commission.

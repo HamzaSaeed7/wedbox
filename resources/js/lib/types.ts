@@ -1,4 +1,4 @@
-// WedBox — TypeScript type definitions
+// Wedbi — TypeScript type definitions
 
 export interface Category {
   slug: string;

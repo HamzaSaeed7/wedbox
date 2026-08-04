@@ -5,7 +5,7 @@
 @source '../../storage/framework/views/*.php';
 @source '../js/**/*.{js,jsx,ts,tsx}';
 
-/* WedBox — global styles + design tokens */
+/* Wedbi — global styles + design tokens */
 
 :root {
   --primary: #79cdd0;

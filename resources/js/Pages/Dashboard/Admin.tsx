@@ -1751,8 +1751,8 @@ export default function AdminDashboard({ sub: subProp }: AdminProps) {
   }, [user]);
 
   useEffect(() => {
-    document.title = 'Admin Dashboard | WedBox';
-    return () => { document.title = 'WedBox'; };
+    document.title = 'Admin Dashboard | Wedbi';
+    return () => { document.title = 'Wedbi'; };
   }, []);
 
   if (!user) return null;

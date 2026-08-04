@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import Icon from '../components/shared/Icon';
 import Logo from '../components/shared/Logo';
-import logoWhite from '../assets/logo-white.svg';
+import { WEDBI_LOGO_WHITE as logoWhite } from '../lib/brand';
 import { useStore } from '../store';
 import { authApi } from '../lib/api';
 import ToastStack from '../components/shared/Toast';
@@ -133,7 +133,7 @@ const { login, register, authLoading } = useStore();
         <div style={{ position: 'relative', padding: '40px 52px', color: 'white', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           {/* Top bar */}
           <div className="flex items-center justify-between">
-            <img src={logoWhite} alt="WedBox" style={{ height: 36, width: 'auto' }} />
+            <img src={logoWhite} alt="Wedbi" style={{ height: 36, width: 'auto' }} />
             <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,.85)', fontSize: 13, fontWeight: 600, background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,.22)', borderRadius: 999, padding: '8px 16px', textDecoration: 'none' }}>
               ← Back to site
             </Link>
@@ -159,9 +159,9 @@ const { login, register, authLoading } = useStore();
               From venues and photographers to floristry and yacht hire — every vendor, every message, every payment in one seamless place.
             </p>
 
-            {/* Why WedBox — value props */}
+            {/* Why Wedbi — value props */}
             <div style={{ background: 'rgba(255,255,255,.10)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.15)', borderRadius: 18, padding: '20px 24px', maxWidth: 460 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.08em', color: 'rgba(255,255,255,.6)', marginBottom: 16 }}>WHY COUPLES CHOOSE WEDBOX</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.08em', color: 'rgba(255,255,255,.6)', marginBottom: 16 }}>WHY COUPLES CHOOSE WEDBI</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
                 {[
                   { icon: '✦', label: 'All-in-one platform', desc: 'Every vendor and detail — one dashboard' },
@@ -300,7 +300,7 @@ const { login, register, authLoading } = useStore();
                 </button>
                 <div className="text-14 muted" style={{ textAlign: 'center' }}>
                   {mode === 'login' ? (
-                    <>New to WedBox? <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(''); }} style={{ color: 'var(--primary-700)', fontWeight: 600 }}>Create an account</a></>
+                    <>New to Wedbi? <a href="#" onClick={(e) => { e.preventDefault(); setMode('signup'); setError(''); }} style={{ color: 'var(--primary-700)', fontWeight: 600 }}>Create an account</a></>
                   ) : (
                     <>Already have one? <a href="#" onClick={(e) => { e.preventDefault(); setMode('login'); setError(''); }} style={{ color: 'var(--primary-700)', fontWeight: 600 }}>Sign in</a></>
                   )}

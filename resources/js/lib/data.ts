@@ -1,4 +1,4 @@
-// WedBox — Static config data (categories, cities) + image utility
+// Wedbi — Static config data (categories, cities) + image utility
 import type { Category, City } from './types';
 
 // ─── Image helper — picsum.photos seeds consistent images from an ID string

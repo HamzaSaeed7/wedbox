@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import Icon from '../shared/Icon';
-import logoWhite from '../../assets/logo-white.svg';
+import { WEDBI_LOGO_WHITE as logoWhite } from '../../lib/brand';
 
 function FooterCol({ title, links }: { title: string; links: { label: string; to: string }[] }) {
   return (
@@ -26,9 +26,9 @@ export default function Footer() {
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 40 }}>
           {/* Brand */}
           <div>
-            <img src={logoWhite} alt="WedBox" style={{ height: 40, width: 'auto' }} />
+            <img src={logoWhite} alt="Wedbi" style={{ height: 40, width: 'auto' }} />
             <p style={{ color: 'rgba(255,255,255,.78)', marginTop: 16, fontSize: 14, maxWidth: 300, lineHeight: 1.6 }}>
-              WedBox Ltd is incorporated in England, Wales and Cyprus.<br />Reg. No. 12345678
+              Wedbi Ltd is incorporated in England, Wales and Cyprus.<br />Reg. No. 12345678
             </p>
             <div className="flex gap-12" style={{ marginTop: 24 }}>
               <a href="https://www.facebook.com/profile.php?id=61565211685376" target="_blank" rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: 999, background: 'rgba(255,255,255,.18)', display: 'grid', placeItems: 'center' }}>
@@ -60,7 +60,7 @@ export default function Footer() {
 
         <hr style={{ border: 0, borderTop: '1px solid rgba(255,255,255,.18)', margin: '40px 0 16px' }} />
         <div className="flex items-center justify-between" style={{ fontSize: 13, color: 'rgba(255,255,255,.7)', flexWrap: 'wrap', gap: 8 }}>
-          <span>© 2026 WedBox Limited and its affiliated companies. All rights reserved.</span>
+          <span>© 2026 Wedbi Limited and its affiliated companies. All rights reserved.</span>
           <span>Made with care in Cyprus 🇨🇾</span>
         </div>
       </div>

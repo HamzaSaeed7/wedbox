@@ -523,8 +523,8 @@ export default function CustomerDashboard({ sub: subProp }: CustomerProps) {
   }, [user]);
 
   useEffect(() => {
-    document.title = 'My Dashboard | WedBox';
-    return () => { document.title = 'WedBox'; };
+    document.title = 'My Dashboard | Wedbi';
+    return () => { document.title = 'Wedbi'; };
   }, []);
 
   if (!user) return null;
