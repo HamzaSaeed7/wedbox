@@ -28,7 +28,7 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} WedBox. {{ __('All rights reserved.') }}
+© {{ date('Y') }} Wedbi. {{ __('All rights reserved.') }}
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>
