@@ -45,4 +45,23 @@ class FileUploadController extends Controller
 
         return response()->json(['url' => Storage::disk('s3')->url($filename)]);
     }
+
+    /**
+     * Upload a blog post cover image.
+     * POST /api/admin/upload/blog-cover
+     */
+    public function blogCover(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|max:10240', // 10 MB max
+        ]);
+
+        $file      = $request->file('file');
+        $extension = $file->getClientOriginalExtension();
+        $filename  = 'blog/' . Str::uuid() . '.' . $extension;
+
+        Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()));
+
+        return response()->json(['url' => Storage::disk('s3')->url($filename)]);
+    }
 }

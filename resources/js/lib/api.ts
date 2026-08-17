@@ -164,6 +164,13 @@ export const uploadApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }).then((r: { data: { url: string } }) => r.data.url);
   },
+  blogCover: async (file: File) => {
+    const form = new FormData();
+    form.append('file', await downscaleImage(file, 1600));
+    return api.post('/admin/upload/blog-cover', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r: { data: { url: string } }) => r.data.url);
+  },
 };
 
 // ─── Vendor
