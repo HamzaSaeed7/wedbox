@@ -977,8 +977,8 @@ function AdminBlog() {
   });
 
   interface DisplayPost { id: number; cover: string; published: boolean; readTime: number; title: string; excerpt: string; author: string; date: string; slug: string; body: string; cover_image_url: string; read_time_minutes: string; published_at: string }
-  const apiPosts: DisplayPost[] = Array.isArray(blogResult?.data)
-    ? blogResult.data.map((p: any): DisplayPost => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+  const apiPosts: DisplayPost[] = Array.isArray(blogResult)
+    ? blogResult.map((p: any): DisplayPost => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
         id: p.id,
         slug: p.slug,
         title: p.title,

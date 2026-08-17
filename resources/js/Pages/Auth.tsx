@@ -194,6 +194,9 @@ const { login, register, authLoading } = useStore();
 
       {/* ── Right form ── */}
       <div className="auth-form">
+        <Link href="/" style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+          <Logo size={56} />
+        </Link>
         <div style={{ maxWidth: 420, width: '100%', marginInline: 'auto' }}>
 
           {step === 'verify-email' ? (
@@ -237,9 +240,6 @@ const { login, register, authLoading } = useStore();
                 </div>
               )}
 
-              <Link href="/" style={{ display: 'flex', justifyContent: 'center', marginTop: -24, marginBottom: 24 }}>
-                <Logo />
-              </Link>
               <h2>{mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
               <p className="muted mt-8">{mode === 'login' ? 'Sign in to continue planning.' : 'Plan your wedding without spreadsheets.'}</p>
 

@@ -25,8 +25,8 @@ export default function About() {
   return (
     <PublicLayout>
       <div>
-        <section style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, overflow: 'hidden' }}>
-          <img src={about1} alt="About Wedbi" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+        <section className="about-hero" style={{ position: 'relative', width: '100%', marginTop: -72, overflow: 'hidden' }}>
+          <img className="about-hero-media" src={about1} alt="About Wedbi" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.22) 38%, rgba(0,0,0,.15) 100%)' }} />
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
             <div className="container-wide" style={{ width: '100%', padding: '0 28px', pointerEvents: 'none' }}>
@@ -91,7 +91,7 @@ export default function About() {
                   ))}
                 </div>
               </div>
-              <div style={{ borderRadius: 16, overflow: 'hidden' }}>
+              <div className="stack-media-first" style={{ borderRadius: 16, overflow: 'hidden' }}>
                 <img src={about3} alt="Why Wedbi" style={{ width: '100%', height: 420, objectFit: 'cover', display: 'block' }} />
               </div>
             </div>

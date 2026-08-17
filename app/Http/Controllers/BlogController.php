@@ -37,6 +37,19 @@ class BlogController extends Controller
         return response()->json($posts->map(fn ($p) => $this->transform($p))->values());
     }
 
+    /**
+     * Admin listing — returns raw model rows (not the public DTO) and includes
+     * unpublished drafts, which the admin needs in order to edit them.
+     */
+    public function adminIndex()
+    {
+        $posts = BlogPost::orderByRaw('published_at IS NULL DESC')
+            ->orderBy('published_at', 'desc')
+            ->get();
+
+        return response()->json($posts);
+    }
+
     public function show(string $slug)
     {
         $post = BlogPost::where('slug', $slug)->whereNotNull('published_at')->firstOrFail();

@@ -135,7 +135,7 @@ class DatabaseSeeder extends Seeder
         // Second admin account
         $adminId2 = DB::table('users')->insertGetId([
             'name'                       => 'Admin',
-            'email'                      => 'admin@wedbox.io',
+            'email'                      => 'admin@wedbi.io',
             'email_verified_at'          => $now,
             'password'                   => Hash::make('abcd1234'),
             'role'                       => 'admin',
