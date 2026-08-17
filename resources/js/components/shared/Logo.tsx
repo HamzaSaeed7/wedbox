@@ -7,10 +7,12 @@ interface LogoProps {
   light?: boolean;
   /** Smaller size — used in sidebar brand area */
   compact?: boolean;
+  /** Explicit height override (px) — takes precedence over compact */
+  size?: number;
 }
 
-export default function Logo({ white = false, light = false, compact = false }: LogoProps) {
-  const height = compact ? 36 : 52;
+export default function Logo({ white = false, light = false, compact = false, size }: LogoProps) {
+  const height = size ?? (compact ? 36 : 48);
   const src = white || light ? WEDBI_LOGO_WHITE : WEDBI_LOGO;
   return (
     <img

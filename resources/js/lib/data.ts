@@ -15,7 +15,7 @@ export const CATEGORIES: Category[] = [
   { slug: 'music',         name: 'Music',           icon: 'music',         color: '#E0B85B' },
   { slug: 'bride-dress',   name: 'Bride Dress',     icon: 'dress',         color: '#E085B8' },
   { slug: 'groom-suite',   name: 'Groom Suite',     icon: 'suit',          color: '#3A4A4A' },
-  { slug: 'bridesmaid',    name: 'Bridesmaids',     icon: 'dress',         color: '#D89BBA' },
+  { slug: 'bridesmaid',    name: 'Bridesmaids',     icon: 'bridesmaid-dress', color: '#D89BBA' },
   { slug: 'best-man',      name: 'Best Man',        icon: 'suit',          color: '#516B6B' },
   { slug: 'flower-girl',   name: 'Flower Girl',     icon: 'dress',         color: '#F1B0C9' },
   { slug: 'yacht',         name: 'Yacht Hire',      icon: 'yacht',         color: '#3996C9' },
