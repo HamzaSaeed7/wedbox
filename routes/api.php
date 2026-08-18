@@ -125,6 +125,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/services', [AdminController::class, 'services']);
         Route::delete('/services/{service}', [AdminController::class, 'deleteService']);
         Route::patch('/services/{service}/feature', [AdminController::class, 'toggleFeatured']);
+        Route::post('/upload/blog-cover', [FileUploadController::class, 'blogCover']);
         Route::get('/blog', [BlogController::class, 'adminIndex']);
         Route::post('/blog', [BlogController::class, 'store']);
         Route::put('/blog/{blogPost}', [BlogController::class, 'update']);

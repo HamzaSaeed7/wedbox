@@ -3,6 +3,7 @@ import { Link, usePage, router } from '@inertiajs/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Icon from '../../components/shared/Icon';
 import Logo from '../../components/shared/Logo';
+import ImageUploader from '../../components/shared/ImageUploader';
 import { useStore, useAuthUser } from '../../store';
 import { CATEGORIES } from '../../lib/data';
 import { adminApi, profileApi, uploadApi } from '../../lib/api';
@@ -941,7 +942,16 @@ function PostModal({ post, onClose }: { post?: { id: number } & PostForm; onClos
           <div><label className="field-label">Title *</label><input className="input mt-8" value={form.title} onChange={set('title')} /></div>
           <div><label className="field-label">Slug *</label><input className="input mt-8" value={form.slug} onChange={set('slug')} /></div>
           <div><label className="field-label">Body *</label><textarea className="textarea mt-8" rows={6} value={form.body} onChange={set('body')} /></div>
-          <div><label className="field-label">Cover image URL</label><input className="input mt-8" value={form.cover_image_url} onChange={set('cover_image_url')} /></div>
+          <div>
+            <label className="field-label">Cover image</label>
+            <div className="mt-8">
+              <ImageUploader
+                value={form.cover_image_url}
+                onChange={(url) => setForm((f) => ({ ...f, cover_image_url: url }))}
+                upload={uploadApi.blogCover}
+              />
+            </div>
+          </div>
           <div className="flex gap-12">
             <div style={{ flex: 1 }}><label className="field-label">Read time (min)</label><input type="number" className="input mt-8" value={form.read_time_minutes} onChange={set('read_time_minutes')} /></div>
             <div style={{ flex: 1 }}><label className="field-label">Publish date</label><input type="datetime-local" className="input mt-8" value={form.published_at} onChange={set('published_at')} /></div>
