@@ -36,8 +36,9 @@ function HeroSplit() {
   return (
     <section className="hero-split" style={{ position: 'relative', width: '100%', height: '100vh', marginTop: -72, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
       <video autoPlay loop muted playsInline className="hero-media"
+        preload="auto" poster="/videos/hero-wedding-poster.jpg"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}>
-        <source src="https://wedbox-app-production-bucket.s3.ap-south-1.amazonaws.com/videos/hero-wedding.mp4" type="video/mp4" />
+        <source src="/videos/hero-wedding.mp4" type="video/mp4" />
       </video>
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)' }} />
       <div className="hero-content" style={{ position: 'relative', textAlign: 'center', padding: '80px 24px 100px', maxWidth: 760, width: '100%' }}>
@@ -49,7 +50,7 @@ function HeroSplit() {
           <span className="hero-line">in one click.</span>
         </h1>
         <p style={{ color: 'rgba(255,255,255,.82)', fontSize: 17, marginTop: 24, lineHeight: 1.6 }}>
-          The best venues, vendors and packages in Cyprus - all in one place, with the total cost upfront.
+          Everything you need for your wedding in one place, with total upfront costs.
         </p>
         <div style={{ marginTop: 40, maxWidth: 680, marginInline: 'auto' }}>
           <SearchBar big dark />
